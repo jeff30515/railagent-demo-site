@@ -1,0 +1,72 @@
+{
+  "coreThesis": "跨大眾運輸資訊與服務事件整合（以轉乘交接為核心）是票務 App 沒有的能力",
+  "method": [
+    "以 service_events 為事實表，event_status_history 還原時間軸",
+    "以 event_handoffs 專責捷運／臺鐵／高鐵交接成功率與耗時",
+    "以 attributes（語言、無障礙、站點、優先級）做多維交叉",
+    "以 feedback 做旅客結果閉環（滿意度／是否解決）",
+    "以 data_source_snapshots 區分 Open Data／Simulated／Future"
+  ],
+  "metadataToInsights": [
+    {
+      "fields": [
+        "event_type",
+        "station",
+        "registered_at"
+      ],
+      "insight": "站點×類型熱點與時段擁塞"
+    },
+    {
+      "fields": [
+        "language",
+        "assistance_need",
+        "complete_minutes"
+      ],
+      "insight": "多語與無障礙需求對處理工時的影響"
+    },
+    {
+      "fields": [
+        "handoff_requested",
+        "handoff_accepted",
+        "handoff_minutes"
+      ],
+      "insight": "跨運具交接瓶頸節點與耗時分布"
+    },
+    {
+      "fields": [
+        "sla_state",
+        "sla_reason"
+      ],
+      "insight": "SLA 違約主因與可改善流程"
+    },
+    {
+      "fields": [
+        "lost_match_hit",
+        "lost_human_confirmed",
+        "lost_recovered"
+      ],
+      "insight": "遺失物自動化媒合價值與人工確認缺口"
+    },
+    {
+      "fields": [
+        "ai_correct",
+        "human_reassign"
+      ],
+      "insight": "規則／AI 建議品質與改派成本"
+    },
+    {
+      "fields": [
+        "user_prior_events",
+        "abandoned",
+        "satisfaction"
+      ],
+      "insight": "重複開案、中途放棄與體驗結果"
+    }
+  ],
+  "storage": {
+    "engine": "SQLite (stdlib sqlite3)",
+    "dbPath": "data/railagent-demo.db",
+    "pagesJson": "web/public/data/*.json",
+    "cost": "zero cloud spend for demo"
+  }
+}

@@ -1,0 +1,579 @@
+{
+  "generatedAt": "2026-07-13T13:20:01.632271+08:00",
+  "scope": "greater-taipei-demo",
+  "headline": "跨運具服務事件即時營運監控（Demo）",
+  "totals": {
+    "active": 175,
+    "open": 43,
+    "claimed": 27,
+    "inProgress": 42,
+    "waitingPassenger": 33,
+    "waitingHandoff": 30,
+    "overdue": 58,
+    "risk": 27,
+    "handoffPending": 41,
+    "facilityImpacted": 24
+  },
+  "waitAge": {
+    "p50": 45.0,
+    "p90": 81.6,
+    "max": 90.0
+  },
+  "stationHotspots": [
+    [
+      "台北",
+      37
+    ],
+    [
+      "板橋",
+      33
+    ],
+    [
+      "台北車站",
+      29
+    ],
+    [
+      "桃園",
+      29
+    ],
+    [
+      "南港",
+      24
+    ],
+    [
+      "板橋高鐵",
+      23
+    ]
+  ],
+  "hourHotspots": [
+    [
+      11,
+      19
+    ],
+    [
+      12,
+      118
+    ],
+    [
+      13,
+      38
+    ]
+  ],
+  "staffAvailability": [
+    {
+      "name": "板橋站務 A",
+      "skills": [
+        "wheelchair",
+        "transfer"
+      ],
+      "available": true
+    },
+    {
+      "name": "板橋站務 B",
+      "skills": [
+        "lost_item",
+        "language:vi"
+      ],
+      "available": true
+    },
+    {
+      "name": "客服專員 C",
+      "skills": [
+        "language:en",
+        "transfer"
+      ],
+      "available": false
+    },
+    {
+      "name": "轉乘台 D",
+      "skills": [
+        "handoff",
+        "thsr"
+      ],
+      "available": true
+    }
+  ],
+  "queue": [
+    {
+      "id": "SE-SEED-0123",
+      "type": "transfer_guidance",
+      "status": "waiting_passenger",
+      "priority": "high",
+      "station": "板橋",
+      "language": "vi",
+      "slaState": "逾時",
+      "waitAgeMinutes": 89.0,
+      "handoffPending": false,
+      "summary": "板橋｜transfer_guidance｜vi｜wheelchair"
+    },
+    {
+      "id": "SE-SEED-0409",
+      "type": "language_assist",
+      "status": "waiting_handoff",
+      "priority": "high",
+      "station": "台北",
+      "language": "zh-TW",
+      "slaState": "逾時",
+      "waitAgeMinutes": 89.0,
+      "handoffPending": false,
+      "summary": "台北｜language_assist｜zh-TW｜hearing"
+    },
+    {
+      "id": "SE-SEED-0312",
+      "type": "station_help",
+      "status": "in_progress",
+      "priority": "high",
+      "station": "台北",
+      "language": "nan",
+      "slaState": "逾時",
+      "waitAgeMinutes": 88.0,
+      "handoffPending": false,
+      "summary": "台北｜station_help｜nan｜hearing"
+    },
+    {
+      "id": "SE-SEED-0043",
+      "type": "lost_item",
+      "status": "waiting_passenger",
+      "priority": "high",
+      "station": "板橋",
+      "language": "nan",
+      "slaState": "逾時",
+      "waitAgeMinutes": 86.0,
+      "handoffPending": false,
+      "summary": "板橋｜lost_item｜nan｜family"
+    },
+    {
+      "id": "SE-SEED-0274",
+      "type": "accessible_transfer",
+      "status": "waiting_handoff",
+      "priority": "high",
+      "station": "台北車站",
+      "language": "en",
+      "slaState": "逾時",
+      "waitAgeMinutes": 82.0,
+      "handoffPending": true,
+      "summary": "台北車站｜accessible_transfer｜en｜none"
+    },
+    {
+      "id": "SE-SEED-0192",
+      "type": "lost_item",
+      "status": "open",
+      "priority": "high",
+      "station": "桃園",
+      "language": "id",
+      "slaState": "逾時",
+      "waitAgeMinutes": 80.0,
+      "handoffPending": false,
+      "summary": "桃園｜lost_item｜id｜wheelchair"
+    },
+    {
+      "id": "SE-SEED-0013",
+      "type": "transfer_guidance",
+      "status": "in_progress",
+      "priority": "high",
+      "station": "桃園",
+      "language": "ko",
+      "slaState": "逾時",
+      "waitAgeMinutes": 79.0,
+      "handoffPending": false,
+      "summary": "桃園｜transfer_guidance｜ko｜none"
+    },
+    {
+      "id": "SE-SEED-0187",
+      "type": "transfer_guidance",
+      "status": "in_progress",
+      "priority": "high",
+      "station": "板橋",
+      "language": "en",
+      "slaState": "逾時",
+      "waitAgeMinutes": 77.0,
+      "handoffPending": false,
+      "summary": "板橋｜transfer_guidance｜en｜none"
+    },
+    {
+      "id": "SE-SEED-0398",
+      "type": "transfer_guidance",
+      "status": "waiting_passenger",
+      "priority": "high",
+      "station": "台北",
+      "language": "zh-TW",
+      "slaState": "逾時",
+      "waitAgeMinutes": 77.0,
+      "handoffPending": true,
+      "summary": "台北｜transfer_guidance｜zh-TW｜wheelchair"
+    },
+    {
+      "id": "SE-SEED-0346",
+      "type": "lost_item",
+      "status": "in_progress",
+      "priority": "high",
+      "station": "台北",
+      "language": "en",
+      "slaState": "逾時",
+      "waitAgeMinutes": 75.0,
+      "handoffPending": false,
+      "summary": "台北｜lost_item｜en｜none"
+    },
+    {
+      "id": "SE-SEED-0075",
+      "type": "station_help",
+      "status": "claimed",
+      "priority": "high",
+      "station": "板橋高鐵",
+      "language": "ko",
+      "slaState": "逾時",
+      "waitAgeMinutes": 73.0,
+      "handoffPending": false,
+      "summary": "板橋高鐵｜station_help｜ko｜wheelchair"
+    },
+    {
+      "id": "SE-SEED-0100",
+      "type": "lost_item",
+      "status": "waiting_handoff",
+      "priority": "high",
+      "station": "桃園",
+      "language": "th",
+      "slaState": "逾時",
+      "waitAgeMinutes": 73.0,
+      "handoffPending": false,
+      "summary": "桃園｜lost_item｜th｜vision"
+    },
+    {
+      "id": "SE-SEED-0254",
+      "type": "transfer_guidance",
+      "status": "in_progress",
+      "priority": "high",
+      "station": "南港",
+      "language": "en",
+      "slaState": "逾時",
+      "waitAgeMinutes": 73.0,
+      "handoffPending": false,
+      "summary": "南港｜transfer_guidance｜en｜none"
+    },
+    {
+      "id": "SE-SEED-0140",
+      "type": "facility_report",
+      "status": "claimed",
+      "priority": "high",
+      "station": "桃園",
+      "language": "vi",
+      "slaState": "逾時",
+      "waitAgeMinutes": 70.0,
+      "handoffPending": false,
+      "summary": "桃園｜facility_report｜vi｜vision"
+    },
+    {
+      "id": "SE-SEED-0295",
+      "type": "accessible_transfer",
+      "status": "in_progress",
+      "priority": "high",
+      "station": "台北",
+      "language": "zh-TW",
+      "slaState": "逾時",
+      "waitAgeMinutes": 67.0,
+      "handoffPending": false,
+      "summary": "台北｜accessible_transfer｜zh-TW｜wheelchair"
+    },
+    {
+      "id": "SE-SEED-0175",
+      "type": "transfer_guidance",
+      "status": "in_progress",
+      "priority": "high",
+      "station": "板橋",
+      "language": "hak",
+      "slaState": "逾時",
+      "waitAgeMinutes": 66.0,
+      "handoffPending": false,
+      "summary": "板橋｜transfer_guidance｜hak｜none"
+    },
+    {
+      "id": "SE-SEED-0052",
+      "type": "station_help",
+      "status": "waiting_passenger",
+      "priority": "high",
+      "station": "桃園",
+      "language": "zh-TW",
+      "slaState": "逾時",
+      "waitAgeMinutes": 51.0,
+      "handoffPending": false,
+      "summary": "桃園｜station_help｜zh-TW｜hearing"
+    },
+    {
+      "id": "SE-SEED-0064",
+      "type": "station_help",
+      "status": "claimed",
+      "priority": "high",
+      "station": "台北",
+      "language": "zh-TW",
+      "slaState": "逾時",
+      "waitAgeMinutes": 50.0,
+      "handoffPending": false,
+      "summary": "台北｜station_help｜zh-TW｜family"
+    },
+    {
+      "id": "SE-SEED-0026",
+      "type": "station_help",
+      "status": "waiting_passenger",
+      "priority": "high",
+      "station": "板橋高鐵",
+      "language": "en",
+      "slaState": "逾時",
+      "waitAgeMinutes": 48.0,
+      "handoffPending": false,
+      "summary": "板橋高鐵｜station_help｜en｜none"
+    },
+    {
+      "id": "SE-SEED-0153",
+      "type": "accessible_transfer",
+      "status": "waiting_handoff",
+      "priority": "high",
+      "station": "台北車站",
+      "language": "ja",
+      "slaState": "逾時",
+      "waitAgeMinutes": 44.0,
+      "handoffPending": true,
+      "summary": "台北車站｜accessible_transfer｜ja｜step_free"
+    },
+    {
+      "id": "SE-SEED-0354",
+      "type": "language_assist",
+      "status": "claimed",
+      "priority": "high",
+      "station": "台北",
+      "language": "ko",
+      "slaState": "逾時",
+      "waitAgeMinutes": 43.0,
+      "handoffPending": false,
+      "summary": "台北｜language_assist｜ko｜none"
+    },
+    {
+      "id": "SE-SEED-0271",
+      "type": "facility_report",
+      "status": "in_progress",
+      "priority": "high",
+      "station": "桃園",
+      "language": "id",
+      "slaState": "逾時",
+      "waitAgeMinutes": 40.0,
+      "handoffPending": false,
+      "summary": "桃園｜facility_report｜id｜none"
+    },
+    {
+      "id": "SE-SEED-0402",
+      "type": "transfer_guidance",
+      "status": "waiting_passenger",
+      "priority": "high",
+      "station": "台北",
+      "language": "zh-TW",
+      "slaState": "逾時",
+      "waitAgeMinutes": 40.0,
+      "handoffPending": false,
+      "summary": "台北｜transfer_guidance｜zh-TW｜none"
+    },
+    {
+      "id": "SE-SEED-0304",
+      "type": "transfer_guidance",
+      "status": "open",
+      "priority": "high",
+      "station": "桃園",
+      "language": "nan",
+      "slaState": "逾時",
+      "waitAgeMinutes": 39.0,
+      "handoffPending": true,
+      "summary": "桃園｜transfer_guidance｜nan｜step_free"
+    },
+    {
+      "id": "SE-SEED-0278",
+      "type": "station_help",
+      "status": "waiting_passenger",
+      "priority": "high",
+      "station": "南港",
+      "language": "zh-TW",
+      "slaState": "逾時",
+      "waitAgeMinutes": 38.0,
+      "handoffPending": false,
+      "summary": "南港｜station_help｜zh-TW｜vision"
+    },
+    {
+      "id": "SE-SEED-0335",
+      "type": "facility_report",
+      "status": "in_progress",
+      "priority": "high",
+      "station": "板橋",
+      "language": "zh-TW",
+      "slaState": "逾時",
+      "waitAgeMinutes": 38.0,
+      "handoffPending": false,
+      "summary": "板橋｜facility_report｜zh-TW｜none"
+    },
+    {
+      "id": "SE-SEED-0331",
+      "type": "facility_report",
+      "status": "open",
+      "priority": "high",
+      "station": "南港",
+      "language": "vi",
+      "slaState": "逾時",
+      "waitAgeMinutes": 37.0,
+      "handoffPending": false,
+      "summary": "南港｜facility_report｜vi｜step_free"
+    },
+    {
+      "id": "SE-SEED-0102",
+      "type": "language_assist",
+      "status": "waiting_handoff",
+      "priority": "high",
+      "station": "板橋",
+      "language": "vi",
+      "slaState": "逾時",
+      "waitAgeMinutes": 35.0,
+      "handoffPending": false,
+      "summary": "板橋｜language_assist｜vi｜wheelchair"
+    },
+    {
+      "id": "SE-SEED-0401",
+      "type": "station_help",
+      "status": "in_progress",
+      "priority": "high",
+      "station": "台北",
+      "language": "en",
+      "slaState": "逾時",
+      "waitAgeMinutes": 34.0,
+      "handoffPending": false,
+      "summary": "台北｜station_help｜en｜none"
+    },
+    {
+      "id": "SE-SEED-0090",
+      "type": "lost_item",
+      "status": "waiting_handoff",
+      "priority": "high",
+      "station": "桃園",
+      "language": "vi",
+      "slaState": "逾時",
+      "waitAgeMinutes": 33.0,
+      "handoffPending": false,
+      "summary": "桃園｜lost_item｜vi｜wheelchair"
+    },
+    {
+      "id": "SE-SEED-0162",
+      "type": "station_help",
+      "status": "open",
+      "priority": "high",
+      "station": "板橋",
+      "language": "zh-TW",
+      "slaState": "風險",
+      "waitAgeMinutes": 23.0,
+      "handoffPending": false,
+      "summary": "板橋｜station_help｜zh-TW｜step_free"
+    },
+    {
+      "id": "SE-SEED-0039",
+      "type": "facility_report",
+      "status": "in_progress",
+      "priority": "high",
+      "station": "板橋",
+      "language": "zh-TW",
+      "slaState": "正常",
+      "waitAgeMinutes": 21.0,
+      "handoffPending": false,
+      "summary": "板橋｜facility_report｜zh-TW｜vision"
+    },
+    {
+      "id": "SE-SEED-0088",
+      "type": "station_help",
+      "status": "in_progress",
+      "priority": "high",
+      "station": "台北",
+      "language": "zh-TW",
+      "slaState": "正常",
+      "waitAgeMinutes": 20.0,
+      "handoffPending": false,
+      "summary": "台北｜station_help｜zh-TW｜family"
+    },
+    {
+      "id": "SE-SEED-0248",
+      "type": "accessible_transfer",
+      "status": "in_progress",
+      "priority": "high",
+      "station": "桃園",
+      "language": "zh-TW",
+      "slaState": "正常",
+      "waitAgeMinutes": 19.0,
+      "handoffPending": true,
+      "summary": "桃園｜accessible_transfer｜zh-TW｜family"
+    },
+    {
+      "id": "SE-SEED-0087",
+      "type": "facility_report",
+      "status": "claimed",
+      "priority": "high",
+      "station": "南港",
+      "language": "hak",
+      "slaState": "正常",
+      "waitAgeMinutes": 17.0,
+      "handoffPending": false,
+      "summary": "南港｜facility_report｜hak｜none"
+    },
+    {
+      "id": "SE-SEED-0144",
+      "type": "accessible_transfer",
+      "status": "waiting_passenger",
+      "priority": "high",
+      "station": "板橋",
+      "language": "zh-TW",
+      "slaState": "正常",
+      "waitAgeMinutes": 17.0,
+      "handoffPending": false,
+      "summary": "板橋｜accessible_transfer｜zh-TW｜none"
+    },
+    {
+      "id": "SE-SEED-0388",
+      "type": "transfer_guidance",
+      "status": "waiting_handoff",
+      "priority": "high",
+      "station": "桃園",
+      "language": "zh-TW",
+      "slaState": "正常",
+      "waitAgeMinutes": 17.0,
+      "handoffPending": true,
+      "summary": "桃園｜transfer_guidance｜zh-TW｜family"
+    },
+    {
+      "id": "SE-SEED-0048",
+      "type": "accessible_transfer",
+      "status": "open",
+      "priority": "high",
+      "station": "台北",
+      "language": "zh-TW",
+      "slaState": "正常",
+      "waitAgeMinutes": 15.0,
+      "handoffPending": true,
+      "summary": "台北｜accessible_transfer｜zh-TW｜none"
+    },
+    {
+      "id": "SE-SEED-0203",
+      "type": "language_assist",
+      "status": "in_progress",
+      "priority": "high",
+      "station": "台北",
+      "language": "ja",
+      "slaState": "正常",
+      "waitAgeMinutes": 12.0,
+      "handoffPending": false,
+      "summary": "台北｜language_assist｜ja｜none"
+    },
+    {
+      "id": "SE-SEED-0323",
+      "type": "facility_report",
+      "status": "claimed",
+      "priority": "high",
+      "station": "板橋高鐵",
+      "language": "en",
+      "slaState": "正常",
+      "waitAgeMinutes": 11.0,
+      "handoffPending": false,
+      "summary": "板橋高鐵｜facility_report｜en｜none"
+    }
+  ],
+  "crossModeNote": "以捷運→臺鐵／高鐵交接狀態凸顯跨大眾運輸服務事件核心價值"
+}
