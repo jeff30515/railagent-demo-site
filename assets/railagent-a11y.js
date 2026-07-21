@@ -113,6 +113,17 @@
   let talkbackEnabled = false;
   let lastSpoken = '';
   let lastSpokenAt = 0;
+  const nativeSpeech = window.speechSynthesis && window.speechSynthesis.speak
+    ? window.speechSynthesis.speak.bind(window.speechSynthesis)
+    : null;
+  let allowA11ySpeech = false;
+
+  if (window.speechSynthesis && nativeSpeech) {
+    window.speechSynthesis.speak = function railAgentSpeechGuard(utterance) {
+      if (!allowA11ySpeech) return;
+      nativeSpeech(utterance);
+    };
+  }
 
   function speak(text) {
     const cleanText = (text || '').replace(/\s+/g, ' ').trim();
@@ -125,7 +136,25 @@
     const utterance = new SpeechSynthesisUtterance(cleanText);
     utterance.lang = activeSpeechLang();
     utterance.rate = 0.95;
+    allowA11ySpeech = true;
     window.speechSynthesis.speak(utterance);
+    allowA11ySpeech = false;
+  }
+
+  function removeLegacyVoiceControls() {
+    document.querySelectorAll('.mp-voice-actions, .mp-voice-bar, .mp-voice-btn, .mp-voice-live').forEach((element) => {
+      element.hidden = true;
+      element.setAttribute('aria-hidden', 'true');
+    });
+
+    document.querySelectorAll('button').forEach((button) => {
+      const label = textOf(button);
+      if (/語音|朗讀|voice|speech|speak/i.test(label) && !button.closest('.mp-access-vision')) {
+        button.hidden = true;
+        button.setAttribute('aria-hidden', 'true');
+        button.setAttribute('tabindex', '-1');
+      }
+    });
   }
 
   function enableTalkbackSimulation() {
@@ -144,6 +173,7 @@
     const languageKey = detectLanguage();
     const copy = languages[languageKey] || languages.zh;
     document.documentElement.lang = copy.htmlLang;
+    removeLegacyVoiceControls();
 
     document.querySelectorAll('.mp-lang-row, .mp-lang-bar').forEach((element) => {
       element.setAttribute('role', 'group');
