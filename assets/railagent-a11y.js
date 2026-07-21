@@ -93,6 +93,53 @@
     return textOf(candidate) || textOf(element).slice(0, 80);
   }
 
+  function activeSpeechLang() {
+    return (languages[detectLanguage()] || languages.zh).htmlLang;
+  }
+
+  function speechTextFor(element) {
+    if (!element) return '';
+    const target = element.closest(
+      '.mp-lang-chip, .mp-access-btn, button, a, input, textarea, select, .mp-service, .mp-list-item, .mp-card, .mp-kpi, .mp-field, [aria-label]'
+    );
+    if (!target) return '';
+    if (target.matches('input, textarea, select')) {
+      return target.getAttribute('aria-label') || target.getAttribute('placeholder') || target.getAttribute('name') || '';
+    }
+    const visible = firstMeaningfulText(target);
+    return visible || target.getAttribute('aria-label') || '';
+  }
+
+  let talkbackEnabled = false;
+  let lastSpoken = '';
+  let lastSpokenAt = 0;
+
+  function speak(text) {
+    const cleanText = (text || '').replace(/\s+/g, ' ').trim();
+    if (!cleanText || !('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) return;
+    const now = Date.now();
+    if (cleanText === lastSpoken && now - lastSpokenAt < 700) return;
+    lastSpoken = cleanText;
+    lastSpokenAt = now;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.lang = activeSpeechLang();
+    utterance.rate = 0.95;
+    window.speechSynthesis.speak(utterance);
+  }
+
+  function enableTalkbackSimulation() {
+    talkbackEnabled = true;
+    document.documentElement.setAttribute('data-railagent-talkback', 'on');
+    speak(speechTextFor(document.querySelector('.mp-access-vision')) || 'TalkBack');
+  }
+
+  function maybeSpeakFromEvent(event) {
+    if (!talkbackEnabled) return;
+    const text = speechTextFor(event.target);
+    if (text) speak(text);
+  }
+
   function enhance() {
     const languageKey = detectLanguage();
     const copy = languages[languageKey] || languages.zh;
@@ -194,8 +241,15 @@
     scheduleEnhance();
   }
 
-  document.addEventListener('click', () => setTimeout(scheduleEnhance, 0), true);
+  document.addEventListener('click', (event) => {
+    if (event.target && event.target.closest && event.target.closest('.mp-access-vision')) {
+      setTimeout(enableTalkbackSimulation, 0);
+    }
+    setTimeout(scheduleEnhance, 0);
+  }, true);
   document.addEventListener('change', () => setTimeout(scheduleEnhance, 0), true);
+  document.addEventListener('mouseover', maybeSpeakFromEvent, true);
+  document.addEventListener('focusin', maybeSpeakFromEvent, true);
 
   new MutationObserver(scheduleEnhance).observe(document.documentElement, {
     childList: true,
