@@ -149,7 +149,20 @@
     element.style.setProperty('display', 'none', 'important');
   }
 
+  function restoreVisionFriendlyControl() {
+    document.querySelectorAll('.mp-access-vision, .mp-access-btn').forEach((element) => {
+      const label = textOf(element);
+      if (!/視障|vision|TalkBack/i.test(label) && !element.classList.contains('mp-access-vision')) return;
+      element.hidden = false;
+      element.removeAttribute('aria-hidden');
+      element.removeAttribute('tabindex');
+      element.style.removeProperty('display');
+    });
+  }
+
   function removeLegacyVoiceControls() {
+    restoreVisionFriendlyControl();
+
     document.querySelectorAll('.mp-voice-actions, .mp-voice-bar, .mp-voice-btn, .mp-voice-live').forEach((element) => {
       hideElement(element);
     });
@@ -165,7 +178,8 @@
 
     document.querySelectorAll('button').forEach((button) => {
       const label = textOf(button);
-      if (/語音|朗讀|voice|speech|speak/i.test(label) && !button.closest('.mp-access-vision')) {
+      const isVisionFriendly = button.matches('.mp-access-vision, .mp-access-btn') || button.closest('.mp-access-vision, .mp-access-btn');
+      if (/語音|朗讀|voice|speech|speak/i.test(label) && !isVisionFriendly) {
         hideElement(button);
       }
     });
