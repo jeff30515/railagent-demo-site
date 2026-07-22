@@ -1,15 +1,40 @@
 (function () {
   const languageChips = [
-    { code: 'zh', lang: 'zh-Hant-TW', match: /繁中|繁體|中文|zh/i, spoken: '繁體中文' },
-    { code: 'tw', lang: 'zh-Hant-TW', match: /臺語|台語|taigi|tw/i, spoken: '臺語' },
-    { code: 'hak', lang: 'zh-Hant-TW', match: /客語|hakka/i, spoken: '客語' },
-    { code: 'en', lang: 'en', match: /^en$|english/i, spoken: 'English' },
-    { code: 'ja', lang: 'ja', match: /日本語|日文|japanese|ja/i, spoken: '日本語' },
-    { code: 'ko', lang: 'ko', match: /한국어|韓文|korean|ko/i, spoken: '한국어' },
-    { code: 'vi', lang: 'vi', match: /^vi$|vietnam|tiếng việt|越南/i, spoken: 'Tiếng Việt' },
-    { code: 'id', lang: 'id', match: /^id$|indonesia|印尼/i, spoken: 'Bahasa Indonesia' },
-    { code: 'th', lang: 'th', match: /^th$|thai|泰語|ภาษาไทย/i, spoken: 'ภาษาไทย' }
+    { code: 'zh', lang: 'zh-Hant-TW', voiceLangs: ['zh-TW', 'zh-Hant-TW', 'zh'], match: /繁中|繁體|中文|zh/i, spoken: '繁體中文' },
+    { code: 'tw', lang: 'zh-Hant-TW', voiceLangs: ['zh-TW', 'zh-Hant-TW', 'zh'], match: /臺語|台語|taigi|tw/i, spoken: '臺語' },
+    { code: 'hak', lang: 'zh-Hant-TW', voiceLangs: ['zh-TW', 'zh-Hant-TW', 'zh'], match: /客語|hakka/i, spoken: '客語' },
+    { code: 'en', lang: 'en-US', voiceLangs: ['en-US', 'en-GB', 'en'], match: /^en$|english/i, spoken: 'English' },
+    { code: 'ja', lang: 'ja-JP', voiceLangs: ['ja-JP', 'ja'], match: /日本語|日文|japanese|ja/i, spoken: '日本語' },
+    { code: 'ko', lang: 'ko-KR', voiceLangs: ['ko-KR', 'ko'], match: /한국어|韓文|korean|ko/i, spoken: '한국어' },
+    { code: 'vi', lang: 'vi-VN', voiceLangs: ['vi-VN', 'vi'], match: /^vi$|vietnam|tiếng việt|越南/i, spoken: 'Tiếng Việt' },
+    { code: 'id', lang: 'id-ID', voiceLangs: ['id-ID', 'id'], match: /^id$|indonesia|印尼/i, spoken: 'Bahasa Indonesia' },
+    { code: 'th', lang: 'th-TH', voiceLangs: ['th-TH', 'th'], match: /^th$|thai|泰語|ภาษาไทย/i, spoken: 'ภาษาไทย' }
   ];
+
+  const roleLabels = {
+    passenger: {
+      zh: '我是旅客',
+      tw: 'Guá sī lú-kheh',
+      hak: 'Ngai he li-hak',
+      en: 'Passenger',
+      ja: '乗客',
+      ko: '승객',
+      vi: 'Hành khách',
+      id: 'Penumpang',
+      th: 'ผู้โดยสาร'
+    },
+    staff: {
+      zh: '站務 / 主管',
+      tw: 'Chām-bū / chú-koán',
+      hak: 'Zam-vu / zhu-gon',
+      en: 'Station staff / supervisor',
+      ja: '駅係員 / 管理者',
+      ko: '역무원 / 관리자',
+      vi: 'Nhân viên nhà ga / giám sát',
+      id: 'Petugas stasiun / supervisor',
+      th: 'เจ้าหน้าที่สถานี / หัวหน้างาน'
+    }
+  };
 
   const uiCopy = {
     zh: {
@@ -175,28 +200,47 @@
     return { text: info.spoken, lang: info.lang };
   }
 
-  function targetForSpeech(element) {
+  function roleTypeFor(element) {
+    const service = element && element.closest ? element.closest('.mp-service') : null;
+    if (!service) return null;
+    const label = textOf(service).toLowerCase();
+    if (/旅客|passenger|hành khách|penumpang|ผู้โดยสาร|乗客|승객/i.test(label)) return 'passenger';
+    if (/站務|主管|station staff|supervisor|nhân viên|giám sát|petugas|เจ้าหน้าที่|หัวหน้างาน|駅係員|管理者|역무원|관리자/i.test(label)) return 'staff';
+    return null;
+  }
+
+  function allowedSpeechTarget(element) {
     if (!element || !element.closest) return null;
-    return element.closest(
-      '.mp-lang-chip, .mp-access-btn, button, a, input, textarea, select, .mp-service, .mp-list-item, .mp-card, .mp-kpi, .mp-field, [aria-label]'
-    );
+
+    const chip = element.closest('.mp-lang-chip');
+    if (chip) return { type: 'language', element: chip };
+
+    const access = element.closest('.mp-access-vision, .mp-access-hearing');
+    if (access) return { type: access.classList.contains('mp-access-vision') ? 'vision' : 'hearing', element: access };
+
+    const roleType = roleTypeFor(element);
+    if (roleType) return { type: roleType, element: element.closest('.mp-service') };
+
+    return null;
   }
 
   function speechFor(element) {
     const chipSpeech = languageChipSpeech(element);
     if (chipSpeech) return chipSpeech;
 
-    const target = targetForSpeech(element);
-    if (!target) return null;
-
     const active = activeLanguageInfo();
-    if (target.matches('input, textarea, select')) {
-      const text = target.getAttribute('aria-label') || target.getAttribute('placeholder') || target.getAttribute('name') || '';
-      return { text, lang: active.lang };
+    const allowed = allowedSpeechTarget(element);
+    if (!allowed) return null;
+
+    if (allowed.type === 'passenger' || allowed.type === 'staff') {
+      return {
+        text: (roleLabels[allowed.type] && roleLabels[allowed.type][active.code]) || firstMeaningfulText(allowed.element),
+        lang: active.lang
+      };
     }
 
-    const visible = firstMeaningfulText(target);
-    const label = visible || target.getAttribute('aria-label') || '';
+    const visible = firstMeaningfulText(allowed.element);
+    const label = visible || allowed.element.getAttribute('aria-label') || '';
     return { text: label, lang: active.lang };
   }
 
@@ -213,6 +257,26 @@
       if (!allowA11ySpeech) return;
       nativeSpeech(utterance);
     };
+  }
+
+  function preferredVoiceFor(lang) {
+    if (!window.speechSynthesis || typeof window.speechSynthesis.getVoices !== 'function') return null;
+    const voices = window.speechSynthesis.getVoices();
+    if (!voices || !voices.length) return null;
+    const langLower = (lang || '').toLowerCase();
+    const active = languageChips.find((chip) => chip.lang.toLowerCase() === langLower);
+    const candidates = active ? active.voiceLangs : [lang];
+    for (const candidate of candidates) {
+      const normalized = candidate.toLowerCase();
+      const exact = voices.find((voice) => (voice.lang || '').toLowerCase() === normalized);
+      if (exact) return exact;
+    }
+    for (const candidate of candidates) {
+      const prefix = candidate.toLowerCase().split('-')[0];
+      const prefixMatch = voices.find((voice) => (voice.lang || '').toLowerCase().split('-')[0] === prefix);
+      if (prefixMatch) return prefixMatch;
+    }
+    return null;
   }
 
   function speak(payload) {
@@ -232,6 +296,8 @@
     }
     const utterance = new SpeechSynthesisUtterance(cleanText);
     utterance.lang = lang;
+    const voice = preferredVoiceFor(lang);
+    if (voice) utterance.voice = voice;
     utterance.rate = 0.95;
     allowA11ySpeech = true;
     window.speechSynthesis.speak(utterance);
@@ -344,51 +410,11 @@
       setLabel(nav, copy.nav);
     });
 
-    document.querySelectorAll('button, a').forEach((element) => {
-      if (element.classList.contains('mp-lang-chip')) return;
-      const name = firstMeaningfulText(element);
-      setLabel(element, copy.button(name));
-    });
-
-    document.querySelectorAll('.mp-service, .mp-service-list > *').forEach((element) => {
-      setLabel(element, copy.service(firstMeaningfulText(element)));
-    });
-
-    document.querySelectorAll('.mp-list-item').forEach((element) => {
-      setLabel(element, copy.task(firstMeaningfulText(element)));
-    });
-
-    document.querySelectorAll('.mp-card').forEach((element) => {
-      setLabel(element, copy.card(firstMeaningfulText(element)));
-    });
-
-    document.querySelectorAll('.mp-kpi').forEach((element) => {
-      setLabel(element, copy.kpi(firstMeaningfulText(element)));
-    });
-
-    document.querySelectorAll('.mp-field').forEach((field) => {
-      const label = textOf(field.querySelector('label')) || firstMeaningfulText(field) || copy.form;
-      setLabel(field, copy.field(label));
-      field.querySelectorAll('input, textarea, select').forEach((input) => setLabel(input, copy.field(label)));
-    });
-
-    document.querySelectorAll('.mp-input, input, textarea, select').forEach((input) => {
-      const label = input.getAttribute('aria-label') || input.getAttribute('placeholder') || input.getAttribute('name') || copy.form;
-      setLabel(input, copy.field(label));
-    });
-
-    document.querySelectorAll('.mp-data-table, table').forEach((table) => {
-      const name = firstMeaningfulText(table.closest('section, article')) || copy.table('');
-      setLabel(table, copy.table(name));
-    });
-
-    document.querySelectorAll('.mp-status, .mp-notice, .mp-error').forEach((element) => {
-      if (!element.hasAttribute('role')) element.setAttribute('role', 'status');
-      setLabel(element, `${copy.status}: ${textOf(element)}`);
-    });
-
-    document.querySelectorAll('section').forEach((section) => {
-      setLabel(section, copy.region(firstMeaningfulText(section)));
+    document.querySelectorAll('.mp-service').forEach((element) => {
+      const roleType = roleTypeFor(element);
+      if (!roleType) return;
+      const text = (roleLabels[roleType] && roleLabels[roleType][active.code]) || firstMeaningfulText(element);
+      setLabel(element, copy.service(text));
     });
   }
 
