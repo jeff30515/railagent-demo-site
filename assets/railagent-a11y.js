@@ -247,6 +247,18 @@
   let talkbackEnabled = false;
   let lastSpoken = '';
   let lastSpokenAt = 0;
+  const nativeSpeak = window.speechSynthesis && window.speechSynthesis.speak
+    ? window.speechSynthesis.speak.bind(window.speechSynthesis)
+    : null;
+
+  if (window.speechSynthesis && nativeSpeak) {
+    window.speechSynthesis.speak = function railAgentSpeechFilter(utterance) {
+      const text = utterance && utterance.text ? String(utterance.text).replace(/\s+/g, ' ').trim() : '';
+      if (!utterance || utterance.__railAgentHoverSpeech === true || text.length <= 18) {
+        nativeSpeak(utterance);
+      }
+    };
+  }
 
   function preferredVoiceFor(lang) {
     if (!window.speechSynthesis || typeof window.speechSynthesis.getVoices !== 'function') return null;
@@ -284,6 +296,7 @@
       window.speechSynthesis.resume();
     }
     const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.__railAgentHoverSpeech = true;
     utterance.lang = lang;
     const voice = preferredVoiceFor(lang);
     if (voice) utterance.voice = voice;
@@ -418,7 +431,14 @@
 
   document.addEventListener('click', (event) => {
     if (event.target && event.target.closest && event.target.closest('.mp-access-vision')) {
+      event.preventDefault();
+      event.stopPropagation();
+      if (typeof event.stopImmediatePropagation === 'function') {
+        event.stopImmediatePropagation();
+      }
       enableTalkbackSimulation();
+      setTimeout(removeLegacyVoiceControls, 0);
+      return;
     }
     setTimeout(scheduleEnhance, 0);
   }, true);
