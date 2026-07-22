@@ -106,22 +106,62 @@
     tw: {
       language: '/railagent-demo-site/assets/voice/tw-language.wav',
       passenger: '/railagent-demo-site/assets/voice/tw-passenger.wav',
-      staff: '/railagent-demo-site/assets/voice/tw-staff.wav'
+      staff: '/railagent-demo-site/assets/voice/tw-staff.wav',
+      'switch-role': '/railagent-demo-site/assets/voice/tw-switch-role.wav',
+      'friendly-transfer': '/railagent-demo-site/assets/voice/tw-friendly-transfer.wav',
+      'lost-item': '/railagent-demo-site/assets/voice/tw-lost-item.wav',
+      'facility-report': '/railagent-demo-site/assets/voice/tw-facility-report.wav',
+      'quick-help': '/railagent-demo-site/assets/voice/tw-quick-help.wav',
+      'more-services': '/railagent-demo-site/assets/voice/tw-more-services.wav',
+      'nav-home': '/railagent-demo-site/assets/voice/tw-nav-home.wav',
+      'nav-cases': '/railagent-demo-site/assets/voice/tw-nav-cases.wav',
+      'nav-info': '/railagent-demo-site/assets/voice/tw-nav-info.wav',
+      'nav-me': '/railagent-demo-site/assets/voice/tw-nav-me.wav'
     },
     hak: {
       language: '/railagent-demo-site/assets/voice/hak-language.wav',
       passenger: '/railagent-demo-site/assets/voice/hak-passenger.wav',
-      staff: '/railagent-demo-site/assets/voice/hak-staff.wav'
+      staff: '/railagent-demo-site/assets/voice/hak-staff.wav',
+      'switch-role': '/railagent-demo-site/assets/voice/hak-switch-role.wav',
+      'friendly-transfer': '/railagent-demo-site/assets/voice/hak-friendly-transfer.wav',
+      'lost-item': '/railagent-demo-site/assets/voice/hak-lost-item.wav',
+      'facility-report': '/railagent-demo-site/assets/voice/hak-facility-report.wav',
+      'quick-help': '/railagent-demo-site/assets/voice/hak-quick-help.wav',
+      'more-services': '/railagent-demo-site/assets/voice/hak-more-services.wav',
+      'nav-home': '/railagent-demo-site/assets/voice/hak-nav-home.wav',
+      'nav-cases': '/railagent-demo-site/assets/voice/hak-nav-cases.wav',
+      'nav-info': '/railagent-demo-site/assets/voice/hak-nav-info.wav',
+      'nav-me': '/railagent-demo-site/assets/voice/hak-nav-me.wav'
     },
     vi: {
       language: '/railagent-demo-site/assets/voice/vi-language.wav',
       passenger: '/railagent-demo-site/assets/voice/vi-passenger.wav',
-      staff: '/railagent-demo-site/assets/voice/vi-staff.wav'
+      staff: '/railagent-demo-site/assets/voice/vi-staff.wav',
+      'switch-role': '/railagent-demo-site/assets/voice/vi-switch-role.wav',
+      'friendly-transfer': '/railagent-demo-site/assets/voice/vi-friendly-transfer.wav',
+      'lost-item': '/railagent-demo-site/assets/voice/vi-lost-item.wav',
+      'facility-report': '/railagent-demo-site/assets/voice/vi-facility-report.wav',
+      'quick-help': '/railagent-demo-site/assets/voice/vi-quick-help.wav',
+      'more-services': '/railagent-demo-site/assets/voice/vi-more-services.wav',
+      'nav-home': '/railagent-demo-site/assets/voice/vi-nav-home.wav',
+      'nav-cases': '/railagent-demo-site/assets/voice/vi-nav-cases.wav',
+      'nav-info': '/railagent-demo-site/assets/voice/vi-nav-info.wav',
+      'nav-me': '/railagent-demo-site/assets/voice/vi-nav-me.wav'
     },
     th: {
       language: '/railagent-demo-site/assets/voice/th-language.wav',
       passenger: '/railagent-demo-site/assets/voice/th-passenger.wav',
-      staff: '/railagent-demo-site/assets/voice/th-staff.wav'
+      staff: '/railagent-demo-site/assets/voice/th-staff.wav',
+      'switch-role': '/railagent-demo-site/assets/voice/th-switch-role.wav',
+      'friendly-transfer': '/railagent-demo-site/assets/voice/th-friendly-transfer.wav',
+      'lost-item': '/railagent-demo-site/assets/voice/th-lost-item.wav',
+      'facility-report': '/railagent-demo-site/assets/voice/th-facility-report.wav',
+      'quick-help': '/railagent-demo-site/assets/voice/th-quick-help.wav',
+      'more-services': '/railagent-demo-site/assets/voice/th-more-services.wav',
+      'nav-home': '/railagent-demo-site/assets/voice/th-nav-home.wav',
+      'nav-cases': '/railagent-demo-site/assets/voice/th-nav-cases.wav',
+      'nav-info': '/railagent-demo-site/assets/voice/th-nav-info.wav',
+      'nav-me': '/railagent-demo-site/assets/voice/th-nav-me.wav'
     }
   };
 
@@ -134,9 +174,13 @@
     return languages.find((language) => language.match.test(clean)) || null;
   }
 
+  let selectedLanguageCode = 'zh';
+
   function activeLanguage() {
     const selected = document.querySelector('.mp-lang-chip.active, .mp-lang-chip[aria-pressed="true"]');
-    return languageForText(textOf(selected)) || languages[0];
+    const detected = languageForText(textOf(selected));
+    if (detected) selectedLanguageCode = detected.code;
+    return languages.find((language) => language.code === selectedLanguageCode) || languages[0];
   }
 
   function languageChipFor(element) {
@@ -174,6 +218,37 @@
     return null;
   }
 
+  function passengerHomeControlFor(element) {
+    if (!element || !element.closest) return null;
+    const home = document.querySelector('section[aria-label="旅客首頁"]');
+    if (!home) return null;
+
+    const switchRole = element.closest('.mp-switch');
+    if (switchRole) return { element: switchRole, cue: 'switch-role' };
+
+    const service = element.closest('.mp-service');
+    if (service && home.contains(service)) {
+      const services = Array.from(home.querySelectorAll('.mp-service'));
+      const cues = ['friendly-transfer', 'lost-item', 'facility-report'];
+      const cue = cues[services.indexOf(service)];
+      if (cue) return { element: service, cue };
+    }
+
+    const primary = element.closest('.mp-primary');
+    if (primary && home.contains(primary)) return { element: primary, cue: 'quick-help' };
+    const secondary = element.closest('.mp-secondary');
+    if (secondary && home.contains(secondary)) return { element: secondary, cue: 'more-services' };
+
+    const navigationButton = element.closest('.mp-bottom-nav button');
+    if (navigationButton) {
+      const buttons = Array.from(document.querySelectorAll('.mp-bottom-nav button'));
+      const cues = ['nav-home', 'nav-cases', 'nav-info', 'nav-me'];
+      const cue = cues[buttons.indexOf(navigationButton)];
+      if (cue) return { element: navigationButton, cue };
+    }
+    return null;
+  }
+
   function speechFor(element) {
     const chip = languageChipFor(element);
     if (chip) {
@@ -182,6 +257,17 @@
         lang: chip.language.lang,
         languageCode: chip.language.code,
         cue: 'language'
+      };
+    }
+
+    const homeControl = passengerHomeControlFor(element);
+    if (homeControl) {
+      const language = activeLanguage();
+      return {
+        text: homeControl.element.getAttribute('aria-label') || textOf(homeControl.element),
+        lang: language.lang,
+        languageCode: language.code,
+        cue: homeControl.cue
       };
     }
 
@@ -326,6 +412,22 @@
       service.setAttribute('aria-label', roleLabels[role][selectedLanguage.code]);
       service.setAttribute('lang', selectedLanguage.lang);
     });
+
+    const passengerHome = document.querySelector('section[aria-label="旅客首頁"]');
+    if (passengerHome) {
+      const controls = [
+        document.querySelector('.mp-switch'),
+        ...passengerHome.querySelectorAll('.mp-service, .mp-primary, .mp-secondary'),
+        ...document.querySelectorAll('.mp-bottom-nav button')
+      ].filter(Boolean);
+      controls.forEach((control) => {
+        const homeControl = passengerHomeControlFor(control);
+        if (!homeControl) return;
+        control.setAttribute('data-railagent-speech-cue', homeControl.cue);
+        control.setAttribute('lang', selectedLanguage.lang);
+        if (!control.getAttribute('aria-label')) control.setAttribute('aria-label', textOf(control));
+      });
+    }
 
     document.querySelectorAll('.mp-access-btn.vision, .mp-access-vision').forEach((control) => {
       control.hidden = false;
