@@ -247,17 +247,6 @@
   let talkbackEnabled = false;
   let lastSpoken = '';
   let lastSpokenAt = 0;
-  const nativeSpeech = window.speechSynthesis && window.speechSynthesis.speak
-    ? window.speechSynthesis.speak.bind(window.speechSynthesis)
-    : null;
-  let allowA11ySpeech = false;
-
-  if (window.speechSynthesis && nativeSpeech) {
-    window.speechSynthesis.speak = function railAgentSpeechGuard(utterance) {
-      if (!allowA11ySpeech) return;
-      nativeSpeech(utterance);
-    };
-  }
 
   function preferredVoiceFor(lang) {
     if (!window.speechSynthesis || typeof window.speechSynthesis.getVoices !== 'function') return null;
@@ -299,21 +288,14 @@
     const voice = preferredVoiceFor(lang);
     if (voice) utterance.voice = voice;
     utterance.rate = 0.95;
-    allowA11ySpeech = true;
     window.speechSynthesis.speak(utterance);
-    allowA11ySpeech = false;
   }
 
-  function unlockSpeechEngine() {
+  function resumeSpeechEngine() {
     if (!('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) return;
     if (typeof window.speechSynthesis.resume === 'function') {
       window.speechSynthesis.resume();
     }
-    const utterance = new SpeechSynthesisUtterance('');
-    utterance.lang = activeLanguageInfo().lang;
-    allowA11ySpeech = true;
-    window.speechSynthesis.speak(utterance);
-    allowA11ySpeech = false;
   }
 
   function hideElement(element) {
@@ -368,7 +350,7 @@
   function enableTalkbackSimulation() {
     talkbackEnabled = true;
     document.documentElement.setAttribute('data-railagent-talkback', 'on');
-    unlockSpeechEngine();
+    resumeSpeechEngine();
     const vision = document.querySelector('.mp-access-vision');
     speak(speechFor(vision) || { text: '視障友善', lang: activeLanguageInfo().lang });
   }
