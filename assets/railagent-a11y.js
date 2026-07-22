@@ -1,67 +1,124 @@
 (function () {
-  const languages = {
+  const languageChips = [
+    { code: 'zh', lang: 'zh-Hant-TW', match: /繁中|繁體|中文|zh/i, spoken: '繁體中文' },
+    { code: 'tw', lang: 'zh-Hant-TW', match: /臺語|台語|taigi|tw/i, spoken: '臺語' },
+    { code: 'hak', lang: 'zh-Hant-TW', match: /客語|hakka/i, spoken: '客語' },
+    { code: 'en', lang: 'en', match: /^en$|english/i, spoken: 'English' },
+    { code: 'ja', lang: 'ja', match: /日本語|日文|japanese|ja/i, spoken: '日本語' },
+    { code: 'ko', lang: 'ko', match: /한국어|韓文|korean|ko/i, spoken: '한국어' },
+    { code: 'vi', lang: 'vi', match: /^vi$|vietnam|tiếng việt|越南/i, spoken: 'Tiếng Việt' },
+    { code: 'id', lang: 'id', match: /^id$|indonesia|印尼/i, spoken: 'Bahasa Indonesia' },
+    { code: 'th', lang: 'th', match: /^th$|thai|泰語|ภาษาไทย/i, spoken: 'ภาษาไทย' }
+  ];
+
+  const uiCopy = {
     zh: {
-      htmlLang: 'zh-Hant-TW',
       languageBar: '語言選擇',
-      languageButton: (name) => `切換語言為${name}`,
-      selected: '目前已選取',
+      selected: '目前選取',
       gate: 'RailAgent 身分與模式選擇',
-      vision: '視障輔助模式，啟用給 TalkBack 使用的語音導覽與區塊標籤',
-      hearing: '聽障輔助模式，啟用文字提示與視覺化狀態',
-      nav: 'RailAgent 主要功能分頁',
-      button: (name) => `${name} 按鈕`,
-      card: (name) => `${name} 區塊`,
-      service: (name) => `${name} 服務功能`,
-      task: (name) => `${name} 任務卡片`,
-      field: (name) => `${name} 輸入欄位`,
-      kpi: (name) => `${name} 指標`,
-      table: (name) => `${name} 資料表`,
-      region: (name) => `${name} 區域`,
-      form: '表單輸入區',
-      voice: '語音操作區',
-      status: '狀態訊息'
+      vision: '視障友善，開啟後滑鼠指到哪個功能就朗讀該功能名稱',
+      hearing: '聽障友善，文字和視覺提示優先',
+      nav: '主要功能導覽',
+      button: (name) => name,
+      card: (name) => name,
+      service: (name) => name,
+      task: (name) => name,
+      field: (name) => name,
+      kpi: (name) => name,
+      table: (name) => name,
+      region: (name) => name,
+      form: '表單欄位',
+      status: '狀態'
     },
     en: {
-      htmlLang: 'en',
       languageBar: 'Language selection',
-      languageButton: (name) => `Switch language to ${name}`,
       selected: 'selected',
       gate: 'RailAgent identity and mode selection',
-      vision: 'Vision assistance mode, enables TalkBack voice navigation and labeled areas',
-      hearing: 'Hearing assistance mode, enables text prompts and visual status',
-      nav: 'RailAgent primary function tabs',
-      button: (name) => `${name} button`,
-      card: (name) => `${name} area`,
-      service: (name) => `${name} service function`,
-      task: (name) => `${name} task card`,
-      field: (name) => `${name} input field`,
-      kpi: (name) => `${name} metric`,
-      table: (name) => `${name} data table`,
-      region: (name) => `${name} region`,
-      form: 'Form input area',
-      voice: 'Voice action area',
-      status: 'Status message'
+      vision: 'Vision friendly mode. After enabling it, hover over a function to hear its name.',
+      hearing: 'Hearing friendly mode. Text and visual prompts first.',
+      nav: 'Primary navigation',
+      button: (name) => name,
+      card: (name) => name,
+      service: (name) => name,
+      task: (name) => name,
+      field: (name) => name,
+      kpi: (name) => name,
+      table: (name) => name,
+      region: (name) => name,
+      form: 'Form field',
+      status: 'Status'
     },
     ja: {
-      htmlLang: 'ja',
       languageBar: '言語選択',
-      languageButton: (name) => `${name}に言語を切り替え`,
       selected: '選択中',
-      gate: 'RailAgent の身分とモード選択',
-      vision: '視覚支援モード、TalkBack 用の音声案内と領域ラベルを有効にします',
-      hearing: '聴覚支援モード、文字案内と視覚的な状態表示を有効にします',
-      nav: 'RailAgent の主な機能タブ',
-      button: (name) => `${name}ボタン`,
-      card: (name) => `${name}領域`,
-      service: (name) => `${name}サービス機能`,
-      task: (name) => `${name}タスクカード`,
-      field: (name) => `${name}入力欄`,
-      kpi: (name) => `${name}指標`,
-      table: (name) => `${name}データ表`,
-      region: (name) => `${name}領域`,
-      form: 'フォーム入力領域',
-      voice: '音声操作領域',
-      status: '状態メッセージ'
+      gate: 'RailAgent の利用者種別とモード選択',
+      vision: '視覚支援モード。オンにすると、マウスを当てた機能名を読み上げます。',
+      hearing: '聴覚支援モード。文字と視覚的な案内を優先します。',
+      nav: '主なナビゲーション',
+      button: (name) => name,
+      card: (name) => name,
+      service: (name) => name,
+      task: (name) => name,
+      field: (name) => name,
+      kpi: (name) => name,
+      table: (name) => name,
+      region: (name) => name,
+      form: '入力欄',
+      status: '状態'
+    },
+    vi: {
+      languageBar: 'Chọn ngôn ngữ',
+      selected: 'đang chọn',
+      gate: 'Chọn vai trò và chế độ RailAgent',
+      vision: 'Chế độ thân thiện cho người khiếm thị. Khi bật, trỏ vào chức năng nào sẽ đọc tên chức năng đó.',
+      hearing: 'Chế độ thân thiện cho người khiếm thính. Ưu tiên chữ và tín hiệu trực quan.',
+      nav: 'Điều hướng chính',
+      button: (name) => name,
+      card: (name) => name,
+      service: (name) => name,
+      task: (name) => name,
+      field: (name) => name,
+      kpi: (name) => name,
+      table: (name) => name,
+      region: (name) => name,
+      form: 'Ô nhập liệu',
+      status: 'Trạng thái'
+    },
+    id: {
+      languageBar: 'Pilihan bahasa',
+      selected: 'dipilih',
+      gate: 'Pilih peran dan mode RailAgent',
+      vision: 'Mode ramah tunanetra. Setelah aktif, arahkan kursor ke fungsi untuk membacakan namanya.',
+      hearing: 'Mode ramah tunarungu. Mengutamakan teks dan petunjuk visual.',
+      nav: 'Navigasi utama',
+      button: (name) => name,
+      card: (name) => name,
+      service: (name) => name,
+      task: (name) => name,
+      field: (name) => name,
+      kpi: (name) => name,
+      table: (name) => name,
+      region: (name) => name,
+      form: 'Kolom input',
+      status: 'Status'
+    },
+    th: {
+      languageBar: 'เลือกภาษา',
+      selected: 'เลือกอยู่',
+      gate: 'เลือกบทบาทและโหมดของ RailAgent',
+      vision: 'โหมดสำหรับผู้พิการทางสายตา เมื่อเปิดแล้ว ชี้เมาส์ไปที่ฟังก์ชันใด ระบบจะอ่านชื่อฟังก์ชันนั้น',
+      hearing: 'โหมดสำหรับผู้พิการทางการได้ยิน เน้นข้อความและสัญญาณภาพ',
+      nav: 'การนำทางหลัก',
+      button: (name) => name,
+      card: (name) => name,
+      service: (name) => name,
+      task: (name) => name,
+      field: (name) => name,
+      kpi: (name) => name,
+      table: (name) => name,
+      region: (name) => name,
+      form: 'ช่องกรอกข้อมูล',
+      status: 'สถานะ'
     }
   };
 
@@ -69,17 +126,19 @@
     return (element && element.textContent ? element.textContent : '').replace(/\s+/g, ' ').trim();
   }
 
-  function detectLanguage() {
-    const activeChip = document.querySelector('.mp-lang-chip.active, .mp-lang-chip[aria-pressed="true"]');
-    const activeText = textOf(activeChip).toLowerCase();
-    if (/日本|japanese|ja\b/.test(activeText)) return 'ja';
-    if (/english|en\b/.test(activeText)) return 'en';
-    if (activeText) return 'zh';
+  function chipInfoForText(text) {
+    const clean = (text || '').trim();
+    return languageChips.find((chip) => chip.match.test(clean)) || null;
+  }
 
-    const pageText = textOf(document.body).toLowerCase();
-    if (/日本/.test(pageText)) return 'ja';
-    if (/english|accessibility|service case/.test(pageText)) return 'en';
-    return 'zh';
+  function activeLanguageInfo() {
+    const activeChip = document.querySelector('.mp-lang-chip.active, .mp-lang-chip[aria-pressed="true"]');
+    return chipInfoForText(textOf(activeChip)) || languageChips[0];
+  }
+
+  function currentCopy() {
+    const active = activeLanguageInfo();
+    return uiCopy[active.code] || uiCopy.zh;
   }
 
   function setLabel(element, label) {
@@ -89,25 +148,56 @@
 
   function firstMeaningfulText(element) {
     if (!element) return '';
-    const candidate = element.querySelector('h1, h2, h3, strong, .mp-access-btn-text, .mp-status, .mp-tag');
-    return textOf(candidate) || textOf(element).slice(0, 80);
+    const candidates = [
+      '.mp-access-btn-text',
+      'h1',
+      'h2',
+      'h3',
+      'strong',
+      '.mp-status',
+      '.mp-tag',
+      '.mp-chip',
+      'label'
+    ];
+    for (const selector of candidates) {
+      const candidate = element.matches && element.matches(selector) ? element : element.querySelector(selector);
+      const text = textOf(candidate);
+      if (text) return text;
+    }
+    return textOf(element).slice(0, 80);
   }
 
-  function activeSpeechLang() {
-    return (languages[detectLanguage()] || languages.zh).htmlLang;
+  function languageChipSpeech(element) {
+    const chip = element && element.closest ? element.closest('.mp-lang-chip') : null;
+    if (!chip) return null;
+    const info = chipInfoForText(textOf(chip));
+    if (!info) return null;
+    return { text: info.spoken, lang: info.lang };
   }
 
-  function speechTextFor(element) {
-    if (!element) return '';
-    const target = element.closest(
+  function targetForSpeech(element) {
+    if (!element || !element.closest) return null;
+    return element.closest(
       '.mp-lang-chip, .mp-access-btn, button, a, input, textarea, select, .mp-service, .mp-list-item, .mp-card, .mp-kpi, .mp-field, [aria-label]'
     );
-    if (!target) return '';
+  }
+
+  function speechFor(element) {
+    const chipSpeech = languageChipSpeech(element);
+    if (chipSpeech) return chipSpeech;
+
+    const target = targetForSpeech(element);
+    if (!target) return null;
+
+    const active = activeLanguageInfo();
     if (target.matches('input, textarea, select')) {
-      return target.getAttribute('aria-label') || target.getAttribute('placeholder') || target.getAttribute('name') || '';
+      const text = target.getAttribute('aria-label') || target.getAttribute('placeholder') || target.getAttribute('name') || '';
+      return { text, lang: active.lang };
     }
+
     const visible = firstMeaningfulText(target);
-    return visible || target.getAttribute('aria-label') || '';
+    const label = visible || target.getAttribute('aria-label') || '';
+    return { text: label, lang: active.lang };
   }
 
   let talkbackEnabled = false;
@@ -125,16 +215,20 @@
     };
   }
 
-  function speak(text) {
+  function speak(payload) {
+    const text = typeof payload === 'string' ? payload : payload && payload.text;
+    const lang = (payload && payload.lang) || activeLanguageInfo().lang;
     const cleanText = (text || '').replace(/\s+/g, ' ').trim();
     if (!cleanText || !('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) return;
+
     const now = Date.now();
     if (cleanText === lastSpoken && now - lastSpokenAt < 700) return;
     lastSpoken = cleanText;
     lastSpokenAt = now;
+
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(cleanText);
-    utterance.lang = activeSpeechLang();
+    utterance.lang = lang;
     utterance.rate = 0.95;
     allowA11ySpeech = true;
     window.speechSynthesis.speak(utterance);
@@ -149,23 +243,23 @@
     element.style.setProperty('display', 'none', 'important');
   }
 
+  function showElement(element) {
+    if (!element) return;
+    element.hidden = false;
+    element.removeAttribute('aria-hidden');
+    element.removeAttribute('tabindex');
+    element.style.removeProperty('display');
+  }
+
   function restoreAppContainers() {
-    document.querySelectorAll('#root, .mp-shell, .mp-shell-gate, .mp-gate, .mp-gate-hero, .mp-gate-cards, .mp-access-footer').forEach((element) => {
-      element.hidden = false;
-      element.removeAttribute('aria-hidden');
-      element.removeAttribute('tabindex');
-      element.style.removeProperty('display');
-    });
+    document.querySelectorAll('#root, .mp-shell, .mp-shell-gate, .mp-gate, .mp-gate-hero, .mp-gate-cards, .mp-access-footer').forEach(showElement);
   }
 
   function restoreVisionFriendlyControl() {
     document.querySelectorAll('.mp-access-vision, .mp-access-btn').forEach((element) => {
       const label = textOf(element);
       if (!/視障|vision|TalkBack/i.test(label) && !element.classList.contains('mp-access-vision')) return;
-      element.hidden = false;
-      element.removeAttribute('aria-hidden');
-      element.removeAttribute('tabindex');
-      element.style.removeProperty('display');
+      showElement(element);
     });
   }
 
@@ -193,31 +287,37 @@
   function enableTalkbackSimulation() {
     talkbackEnabled = true;
     document.documentElement.setAttribute('data-railagent-talkback', 'on');
-    speak(speechTextFor(document.querySelector('.mp-access-vision')) || 'TalkBack');
+    const vision = document.querySelector('.mp-access-vision');
+    speak(speechFor(vision) || { text: '視障友善', lang: activeLanguageInfo().lang });
   }
 
   function maybeSpeakFromEvent(event) {
     if (!talkbackEnabled) return;
-    const text = speechTextFor(event.target);
-    if (text) speak(text);
+    const speech = speechFor(event.target);
+    if (speech && speech.text) speak(speech);
   }
 
-  function enhance() {
-    const languageKey = detectLanguage();
-    const copy = languages[languageKey] || languages.zh;
-    document.documentElement.lang = copy.htmlLang;
-    removeLegacyVoiceControls();
-
+  function labelLanguageChips(copy) {
     document.querySelectorAll('.mp-lang-row, .mp-lang-bar').forEach((element) => {
       element.setAttribute('role', 'group');
       setLabel(element, copy.languageBar);
     });
 
     document.querySelectorAll('.mp-lang-chip').forEach((button) => {
-      const name = textOf(button) || button.getAttribute('data-lang') || '';
+      const info = chipInfoForText(textOf(button));
+      const spoken = info ? info.spoken : textOf(button);
       const isSelected = button.classList.contains('active') || button.getAttribute('aria-pressed') === 'true';
-      setLabel(button, `${copy.languageButton(name)}${isSelected ? `, ${copy.selected}` : ''}`);
+      setLabel(button, `${spoken}${isSelected ? `, ${copy.selected}` : ''}`);
+      if (info) button.setAttribute('lang', info.lang);
     });
+  }
+
+  function enhance() {
+    const active = activeLanguageInfo();
+    const copy = currentCopy();
+    document.documentElement.lang = active.lang;
+    removeLegacyVoiceControls();
+    labelLanguageChips(copy);
 
     document.querySelectorAll('.mp-gate, .mp-shell-gate').forEach((element) => setLabel(element, copy.gate));
     document.querySelectorAll('.mp-access-vision').forEach((element) => setLabel(element, copy.vision));
@@ -228,63 +328,51 @@
       setLabel(nav, copy.nav);
     });
 
-    document.querySelectorAll('button').forEach((button) => {
-      if (button.classList.contains('mp-lang-chip') || button.hasAttribute('aria-label')) return;
-      const name = firstMeaningfulText(button);
-      setLabel(button, copy.button(name));
+    document.querySelectorAll('button, a').forEach((element) => {
+      if (element.classList.contains('mp-lang-chip')) return;
+      const name = firstMeaningfulText(element);
+      setLabel(element, copy.button(name));
     });
 
     document.querySelectorAll('.mp-service, .mp-service-list > *').forEach((element) => {
-      const name = firstMeaningfulText(element);
-      setLabel(element, copy.service(name));
+      setLabel(element, copy.service(firstMeaningfulText(element)));
     });
 
     document.querySelectorAll('.mp-list-item').forEach((element) => {
-      const name = firstMeaningfulText(element);
-      setLabel(element, copy.task(name));
+      setLabel(element, copy.task(firstMeaningfulText(element)));
     });
 
     document.querySelectorAll('.mp-card').forEach((element) => {
-      if (element.hasAttribute('aria-label')) return;
-      const name = firstMeaningfulText(element);
-      setLabel(element, copy.card(name));
+      setLabel(element, copy.card(firstMeaningfulText(element)));
     });
 
     document.querySelectorAll('.mp-kpi').forEach((element) => {
-      const name = firstMeaningfulText(element);
-      setLabel(element, copy.kpi(name));
+      setLabel(element, copy.kpi(firstMeaningfulText(element)));
     });
 
     document.querySelectorAll('.mp-field').forEach((field) => {
-      const label = textOf(field.querySelector('label')) || firstMeaningfulText(field);
+      const label = textOf(field.querySelector('label')) || firstMeaningfulText(field) || copy.form;
       setLabel(field, copy.field(label));
       field.querySelectorAll('input, textarea, select').forEach((input) => setLabel(input, copy.field(label)));
     });
 
-    document.querySelectorAll('.mp-input').forEach((input) => {
-      if (input.hasAttribute('aria-label')) return;
-      const label = input.getAttribute('placeholder') || input.getAttribute('name') || copy.form;
+    document.querySelectorAll('.mp-input, input, textarea, select').forEach((input) => {
+      const label = input.getAttribute('aria-label') || input.getAttribute('placeholder') || input.getAttribute('name') || copy.form;
       setLabel(input, copy.field(label));
     });
 
-    document.querySelectorAll('.mp-data-table').forEach((table) => {
+    document.querySelectorAll('.mp-data-table, table').forEach((table) => {
       const name = firstMeaningfulText(table.closest('section, article')) || copy.table('');
       setLabel(table, copy.table(name));
     });
 
-    document.querySelectorAll('.mp-voice-actions, .mp-voice-bar').forEach((element) => {
-      setLabel(element, copy.voice);
-    });
-
-    document.querySelectorAll('.mp-status, .mp-notice, .mp-error, .mp-voice-live').forEach((element) => {
+    document.querySelectorAll('.mp-status, .mp-notice, .mp-error').forEach((element) => {
       if (!element.hasAttribute('role')) element.setAttribute('role', 'status');
-      if (!element.hasAttribute('aria-label')) setLabel(element, `${copy.status}: ${textOf(element)}`);
+      setLabel(element, `${copy.status}: ${textOf(element)}`);
     });
 
     document.querySelectorAll('section').forEach((section) => {
-      if (section.hasAttribute('aria-label')) return;
-      const name = firstMeaningfulText(section);
-      setLabel(section, copy.region(name));
+      setLabel(section, copy.region(firstMeaningfulText(section)));
     });
   }
 
@@ -317,6 +405,7 @@
   new MutationObserver(scheduleEnhance).observe(document.documentElement, {
     childList: true,
     subtree: true,
+    characterData: true,
     attributes: true,
     attributeFilter: ['class', 'aria-pressed']
   });
