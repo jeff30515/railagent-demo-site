@@ -72,3 +72,40 @@
 ### Fix Commit
 
 - Fix commit SHA: `b8ceea74ffdb9577532dcdebcbf431b5b2f75e3d`
+
+## Re-review Fix - A11y Chip Alias Parity
+
+### Files Changed
+
+- `assets/passenger-i18n.js` - Corrected the existing a11y chip alias `tw` to resolve to `nan` and added `hak-TW` normalization to `hak`.
+- `tests/passenger-i18n.test.cjs` - Updated the alias regression table so `tw` protects Taiwanese (`nan`) behavior and added `hak-TW` coverage without removing the other region aliases.
+
+### TDD Evidence
+
+1. Red test command:
+
+   `node --test tests/passenger-i18n.test.cjs`
+
+   Result: failed as expected, 3 passed and 1 failed. Failure showed `tw` still resolved to `zh-TW` instead of `nan`.
+
+2. Green targeted test command:
+
+   `node --test tests/passenger-i18n.test.cjs`
+
+   Result: passed, 4 tests, 0 failures, duration 60.1807 ms.
+
+3. Syntax check:
+
+   `node --check assets/passenger-i18n.js`
+
+   Result: passed with exit code 0.
+
+4. Full front-end Node test command:
+
+   `node --test tests/*.test.cjs`
+
+   Result: passed, 9 tests, 0 failures, duration 339.5676 ms.
+
+### Re-review Fix Commit
+
+- Re-review fix commit SHA: recorded after commit creation.

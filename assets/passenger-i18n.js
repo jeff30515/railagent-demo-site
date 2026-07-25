@@ -3,10 +3,11 @@
   const SUPPORTED_LANGUAGES = ['zh-TW', 'nan', 'hak', 'en', 'ja', 'ko', 'vi', 'id', 'th'];
   const LANGUAGE_ALIASES = {
     zh: 'zh-TW',
-    tw: 'zh-TW',
+    tw: 'nan',
     'zh-tw': 'zh-TW',
     'zh-hant-tw': 'zh-TW',
     'nan-tw': 'nan',
+    'hak-tw': 'hak',
     'en-us': 'en',
     'ja-jp': 'ja',
     'ko-kr': 'ko',

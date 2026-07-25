@@ -44,9 +44,10 @@ test('passenger i18n normalizes existing app language values and chip codes', ()
   const i18n = loadPassengerI18n();
   const cases = [
     ['zh', 'zh-TW'],
-    ['tw', 'zh-TW'],
+    ['tw', 'nan'],
     ['zh-Hant-TW', 'zh-TW'],
     ['nan-TW', 'nan'],
+    ['hak-TW', 'hak'],
     ['en-US', 'en'],
     ['ja-JP', 'ja'],
     ['ko-KR', 'ko'],
