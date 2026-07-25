@@ -28,3 +28,15 @@
 
 - Initial `npm test -- ...` through PowerShell failed because script execution is disabled for `npm.ps1`; reran with `npm.cmd`.
 - Existing untracked `local-api/data/transport-*` files were present before this task and were not modified.
+
+## Fix Round 1
+
+- Reproduced the current failure with `npm.cmd test -- src/transportKnowledge/refresh.test.ts`: the refresh test still expected `transport-raw/taipei-metro/taipei-metro-od-stations.json` while the corrected downloader emits `transport-raw/taipei-metro/taipei-metro-od-stations.csv` with `format: "csv"`.
+- Updated only `local-api/src/transportKnowledge/refresh.test.ts` to expect the corrected manifest raw path and format.
+- Changed the Taipei fixture to a CSV manifest body and retained the behavior assertion that refresh writes derived accessibility documents, now asserted against the official HTML accessibility content rather than old Taipei station JSON.
+
+## Fix Round 1 Verification
+
+- Targeted tests: `npm.cmd test -- src/transportKnowledge/downloader.test.ts src/transportKnowledge/refresh.test.ts` -> passed, 3 tests.
+- Typecheck: `npm.cmd run typecheck` -> passed.
+- Full suite: `npm.cmd test` -> passed, 15 files and 76 tests.

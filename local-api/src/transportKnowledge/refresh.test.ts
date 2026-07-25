@@ -20,13 +20,9 @@ describe('transport knowledge refresh', () => {
       const url = input.toString();
 
       if (url.includes('data.taipei')) {
-        return Response.json({
-          results: [
-            {
-              StationName: 'Taipei Main Station',
-              StationAddress: 'No. 1',
-            },
-          ],
+        return new Response('period,url\n2026-06,https://example.test/monthly-od.csv\n', {
+          status: 200,
+          headers: { 'content-type': 'text/csv; charset=utf-8' },
         });
       }
 
@@ -47,8 +43,9 @@ describe('transport knowledge refresh', () => {
       expect.objectContaining({
         id: 'taipei-metro-od-stations',
         downloadedAt,
+        format: 'csv',
         status: 'downloaded',
-        relativePath: 'transport-raw/taipei-metro/taipei-metro-od-stations.json',
+        relativePath: 'transport-raw/taipei-metro/taipei-metro-od-stations.csv',
       }),
     );
 
@@ -56,7 +53,7 @@ describe('transport knowledge refresh', () => {
       join(root, 'transport-knowledge', 'accessibility-documents.jsonl'),
       'utf8',
     );
-    expect(accessibilityDocuments).toContain('Taipei Main Station');
+    expect(accessibilityDocuments).toContain('official station accessibility');
   });
 });
 
