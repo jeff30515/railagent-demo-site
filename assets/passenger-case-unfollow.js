@@ -1,5 +1,32 @@
 (function () {
   const hiddenTaskIds = new Set();
+  const TRACKED_CASES_KEY = 'railagent-tracked-lost-found-cases';
+
+  function trackedRecords(list) {
+    try {
+      const records = JSON.parse(list.dataset.signature || '[]');
+      return Array.isArray(records) ? records : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function recordIdForArticle(list, article) {
+    const index = Array.from(list.querySelectorAll('article.mp-list-item')).indexOf(article);
+    return trackedRecords(list)[index]?.id || '';
+  }
+
+  function removeTrackedCase(recordId) {
+    if (!recordId) return;
+    try {
+      const records = JSON.parse(window.localStorage.getItem(TRACKED_CASES_KEY) || '[]');
+      if (!Array.isArray(records)) return;
+      const remaining = records.filter((entry) => entry.id !== recordId);
+      window.localStorage.setItem(TRACKED_CASES_KEY, JSON.stringify(remaining));
+    } catch {
+      // Keep the visible cancellation state even if browser storage is unavailable.
+    }
+  }
 
   function caseId(article) {
     const meta = article.querySelector('.mp-meta');
@@ -31,7 +58,9 @@
     Array.from(list.querySelectorAll('article.mp-list-item')).forEach((article) => {
       const eventId = caseId(article);
       if (!eventId) return;
-      if (hiddenTaskIds.has(eventId)) {
+      const recordId = recordIdForArticle(list, article);
+      const taskId = recordId || eventId;
+      if (hiddenTaskIds.has(taskId)) {
         article.remove();
         return;
       }
@@ -45,7 +74,8 @@
       button.addEventListener('click', (event) => {
         event.preventDefault();
         event.stopPropagation();
-        hiddenTaskIds.add(eventId);
+        hiddenTaskIds.add(taskId);
+        removeTrackedCase(recordId);
         article.remove();
         renderStatus(section, eventId);
       });
