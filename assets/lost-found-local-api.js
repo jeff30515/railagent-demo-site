@@ -193,6 +193,18 @@
         }
       }
     });
+    const legacyTransferTags = [
+      String.fromCharCode(0x7e41, 0x9ad4, 0x4e2d, 0x6587),
+      String.fromCharCode(0x8f2a, 0x6905),
+      String.fromCharCode(0x907f, 0x958b, 0x6a13, 0x68af),
+      String.fromCharCode(0x8f49, 0x4e58, 0x9ad8, 0x9435)
+    ];
+    [...document.querySelectorAll('.mp-tags')].forEach((tagList) => {
+      const labels = [...tagList.querySelectorAll('.mp-tag')].map((tag) => tag.textContent.trim());
+      if (labels.length === legacyTransferTags.length && legacyTransferTags.every((label) => labels.includes(label))) {
+        tagList.closest('.mp-card')?.setAttribute('data-railagent-local-hidden', 'true');
+      }
+    });
     if (document.getElementById('railagent-friendly-transfer-tools')) return;
 
     const tools = document.createElement('section');

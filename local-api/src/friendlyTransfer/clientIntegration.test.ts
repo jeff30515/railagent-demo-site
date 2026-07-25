@@ -19,9 +19,9 @@ describe('friendly transfer client integration', () => {
   it('removes the legacy transfer preference tag strip', async () => {
     const clientScript = await readFile(clientScriptPath, 'utf8');
 
-    expect(clientScript).toContain("panel.querySelectorAll('.mp-tags')");
-    expect(clientScript).toContain("tagList.setAttribute('data-railagent-local-hidden', 'true')");
-    expect(clientScript).toContain("wrapper.setAttribute('data-railagent-local-hidden', 'true')");
+    expect(clientScript).toContain("document.querySelectorAll('.mp-tags')");
+    expect(clientScript).toContain("tagList.closest('.mp-card')?.setAttribute('data-railagent-local-hidden', 'true')");
+    expect(clientScript).toContain('String.fromCharCode(0x7e41, 0x9ad4, 0x4e2d, 0x6587)');
   });
 
   it('pauses talkback until voice recognition finishes', async () => {
