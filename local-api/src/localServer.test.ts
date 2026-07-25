@@ -1,13 +1,33 @@
 import type { Server } from 'node:http';
-import { afterEach, describe, expect, it } from 'vitest';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createLocalLostFoundServer } from './localServer.js';
 
 const servers: Server[] = [];
+const chat = vi.hoisted(() => vi.fn<(_: string) => Promise<string>>());
+const temporaryRoots: string[] = [];
+
+vi.mock('./lostFound/ollamaClient.js', () => ({
+  createOllamaClient: () => ({
+    chat,
+    embed: vi.fn(),
+    rerank: vi.fn()
+  })
+}));
+
+beforeEach(() => {
+  chat.mockResolvedValue('請依現場公告確認後再搭乘。');
+});
 
 afterEach(async () => {
   await Promise.all(servers.splice(0).map((server) => new Promise<void>((resolve, reject) => {
     server.close((error) => error ? reject(error) : resolve());
   })));
+  await Promise.all(temporaryRoots.splice(0).map((root) => rm(root, { recursive: true, force: true })));
+  delete process.env.TRANSPORT_DATA_ROOT;
+  chat.mockReset();
 });
 
 describe('local friendly-transfer API', () => {
@@ -36,6 +56,81 @@ describe('local friendly-transfer API', () => {
     expect(response.status).toBe(400);
     expect(response.body).toEqual({ error: 'Origin and destination are required.' });
   });
+
+  it('adds matching local source context to passenger chat responses', async () => {
+    await useTransportKnowledge({
+      title: '臺北車站無障礙電梯',
+      text: '臺北車站無障礙電梯位於東三門旁，旅客可洽站務人員協助。',
+      sourceUrl: 'https://example.test/taipei-accessibility',
+      downloadedAt: '2026-07-25T08:00:00.000Z'
+    });
+
+    const response = await request('/api/passenger-chat', { message: '臺北車站無障礙電梯在哪裡？' });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      answer: '請依現場公告確認後再搭乘。',
+      model: 'gemma4:e4b',
+      knowledgeMode: 'local-sources',
+      sources: [{
+        title: '臺北車站無障礙電梯',
+        url: 'https://example.test/taipei-accessibility',
+        downloadedAt: '2026-07-25T08:00:00.000Z'
+      }]
+    });
+    expect(chat).toHaveBeenCalledTimes(1);
+    expect(chat.mock.calls[0]?.[0]).toContain('臺北車站無障礙電梯位於東三門旁');
+    expect(chat.mock.calls[0]?.[0]).toContain('https://example.test/taipei-accessibility');
+  });
+
+  it('marks passenger chat as model knowledge when no local document matches', async () => {
+    await useTransportKnowledge({
+      title: '臺北車站無障礙電梯',
+      text: '臺北車站無障礙電梯位於東三門旁，旅客可洽站務人員協助。',
+      sourceUrl: 'https://example.test/taipei-accessibility',
+      downloadedAt: '2026-07-25T08:00:00.000Z'
+    });
+
+    const response = await request('/api/passenger-chat', { message: '高雄遺失雨傘怎麼辦？' });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      answer: '請依現場公告確認後再搭乘。',
+      knowledgeMode: 'model-knowledge',
+      sources: []
+    });
+    expect(chat).toHaveBeenCalledTimes(1);
+    expect(chat.mock.calls[0]?.[0]).toContain('可以使用一般鐵道旅運知識回答');
+    expect(chat.mock.calls[0]?.[0]).toContain('未使用本機下載資料');
+  });
+
+  it('adds matching local source context to friendly route responses', async () => {
+    await useTransportKnowledge({
+      title: '臺北往松山轉乘',
+      text: '臺北車站前往松山車站可搭乘臺鐵區間車，月台與班次請向站務人員確認。',
+      sourceUrl: 'https://example.test/taipei-songshan-transfer',
+      downloadedAt: '2026-07-25T09:00:00.000Z'
+    });
+
+    const response = await request('/api/friendly-transfer/route', {
+      origin: '臺北車站',
+      destination: '松山車站'
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      answer: '請依現場公告確認後再搭乘。',
+      model: 'gemma4:e4b',
+      knowledgeMode: 'local-sources',
+      sources: [{
+        title: '臺北往松山轉乘',
+        url: 'https://example.test/taipei-songshan-transfer',
+        downloadedAt: '2026-07-25T09:00:00.000Z'
+      }]
+    });
+    expect(chat).toHaveBeenCalledTimes(1);
+    expect(chat.mock.calls[0]?.[0]).toContain('臺北車站前往松山車站可搭乘臺鐵區間車');
+  });
 });
 
 async function request(path: string, body: unknown): Promise<{ status: number; body: Record<string, unknown> }> {
@@ -51,4 +146,16 @@ async function request(path: string, body: unknown): Promise<{ status: number; b
   });
 
   return { status: response.status, body: await response.json() as Record<string, unknown> };
+}
+
+async function useTransportKnowledge(document: {
+  title: string;
+  text: string;
+  sourceUrl: string;
+  downloadedAt: string;
+}) {
+  const root = await mkdtemp(join(tmpdir(), 'local-server-transport-knowledge-'));
+  temporaryRoots.push(root);
+  process.env.TRANSPORT_DATA_ROOT = root;
+  await writeFile(join(root, 'documents.jsonl'), `${JSON.stringify(document)}\n`, 'utf8');
 }

@@ -7,6 +7,10 @@ import { loadLostItemStore } from './lostFound/repository.js';
 import { createLostFoundSearchService } from './lostFound/searchService.js';
 import { InvalidLostFoundRequest, normalizeLostFoundRequest } from './lostFound/validation.js';
 import { createFriendlyTransferService } from './friendlyTransfer/service.js';
+import {
+  retrieveTransportKnowledge,
+  type TransportKnowledgeResult
+} from './transportKnowledge/retriever.js';
 
 loadLocalSettings();
 
@@ -97,9 +101,20 @@ export function createLocalLostFoundServer() {
           respond(response, 400, { error: 'Origin and destination are required.' }, cors);
           return;
         }
+        const knowledge = await retrieveTransportKnowledge(`${origin} ${destination}`, transportKnowledgeRoot());
+        const prompt = buildTransportKnowledgePrompt({
+          userRequest: [
+            '請以繁體中文提供簡短、友善的轉乘建議。',
+            `旅客目前在：${origin}。`,
+            `旅客欲前往：${destination}。`
+          ].join(''),
+          knowledge
+        });
         respond(response, 200, {
-          answer: await friendlyTransfer.route(origin, destination),
-          model: process.env.OLLAMA_CHAT_MODEL ?? 'gemma4:e4b'
+          answer: await createOllamaClient().chat(prompt),
+          model: process.env.OLLAMA_CHAT_MODEL ?? 'gemma4:e4b',
+          knowledgeMode: knowledge.knowledgeMode,
+          sources: knowledge.sources
         }, cors);
         return;
       }
@@ -117,7 +132,17 @@ export function createLocalLostFoundServer() {
           respond(response, 400, { error: `Message must be ${MAX_CHAT_MESSAGE_LENGTH} characters or fewer.` }, cors);
           return;
         }
-        respond(response, 200, { answer: await createOllamaClient().chat(message), model: process.env.OLLAMA_CHAT_MODEL ?? 'gemma4:e4b' }, cors);
+        const knowledge = await retrieveTransportKnowledge(message, transportKnowledgeRoot());
+        const prompt = buildTransportKnowledgePrompt({
+          userRequest: message,
+          knowledge
+        });
+        respond(response, 200, {
+          answer: await createOllamaClient().chat(prompt),
+          model: process.env.OLLAMA_CHAT_MODEL ?? 'gemma4:e4b',
+          knowledgeMode: knowledge.knowledgeMode,
+          sources: knowledge.sources
+        }, cors);
         return;
       }
 
@@ -141,6 +166,41 @@ export function createLocalLostFoundServer() {
       }, cors);
     }
   });
+}
+
+function transportKnowledgeRoot(): string {
+  return process.env.TRANSPORT_DATA_ROOT ?? path.resolve(process.cwd(), 'data', 'transport-knowledge');
+}
+
+function buildTransportKnowledgePrompt({
+  userRequest,
+  knowledge
+}: {
+  userRequest: string;
+  knowledge: TransportKnowledgeResult;
+}): string {
+  const sourceContext = knowledge.knowledgeMode === 'local-sources'
+    ? [
+        '本機下載資料如下。回答可使用這些內容，並且不得把未出現在來源中的內容說成本機官方資料：',
+        ...knowledge.documents.map((document, index) => [
+          `來源 ${index + 1}: ${document.title}`,
+          `URL: ${document.sourceUrl}`,
+          `下載時間: ${document.downloadedAt}`,
+          `內容: ${document.text}`
+        ].join('\n'))
+      ].join('\n\n')
+    : [
+        '未使用本機下載資料：本機資料沒有找到足夠相關的來源。',
+        '可以使用一般鐵道旅運知識回答，但必須明確告知未使用本機下載資料，且不可將一般知識表述為本機官方來源。'
+      ].join('\n');
+
+  return [
+    '你是 RailAgent，請以繁體中文、簡潔且直接地回答旅客的鐵道服務問題。',
+    '若涉及時刻、票價、營運、安全或無障礙資訊，必須提醒旅客以官方公告、現場站務人員或即時資訊為準。',
+    '不可編造即時班表、現場狀態或官方規定。',
+    sourceContext,
+    `旅客問題：${userRequest}`
+  ].join('\n\n');
 }
 
 function textField(body: unknown, field: string): string {
