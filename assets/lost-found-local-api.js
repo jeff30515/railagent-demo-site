@@ -1,8 +1,10 @@
 (() => {
   'use strict';
 
-  const apiBaseUrl = new URLSearchParams(window.location.search).get('apiBaseUrl');
-  if (!apiBaseUrl) return;
+  // Keep the same passenger UI available in every language even when the
+  // optional local API URL has not been supplied.  API-backed actions then
+  // show their existing connection error instead of disappearing from the UI.
+  const apiBaseUrl = new URLSearchParams(window.location.search).get('apiBaseUrl') || window.location.origin || 'http://127.0.0.1';
 
   let lostFoundEndpoint;
   let chatEndpoint;
@@ -17,7 +19,7 @@
     return;
   }
 
-  const copy = {
+  const baseCopy = {
     askRailAgent: '\u554f RailAgent',
     chatSubtitle: '\u672c\u6a5f AI \u5c0d\u8a71\u5354\u52a9',
     close: '\u95dc\u9589',
@@ -67,6 +69,32 @@
     ,voiceRecognized: '\u5df2\u8fa8\u8b58\uff1a'
     ,stationThinking: '\u6b63\u5728\u78ba\u8a8d\u8eca\u7ad9\u8207\u7ad9\u52d9\u96fb\u8a71\u3002'
   };
+
+  const localizedCopy = {
+    en: {
+      askRailAgent: 'Ask RailAgent', chatSubtitle: 'Local AI chat support', close: 'Close', chatPlaceholder: 'Type your question…', send: 'Send', thinking: 'RailAgent is thinking…',
+      transferHelp: 'Transfer assistance', transferRoute: 'Transfer route suggestion', transferRouteLead: 'Enter where you are and where you want to go for a local-AI reference.',
+      routeOrigin: 'Current location', routeDestination: 'Destination', routePlaceholderOrigin: 'Example: Taipei Main Station', routePlaceholderDestination: 'Example: Nangang Station', routeSubmit: 'Get transfer suggestion',
+      callTitle: 'Call station staff for assistance', callLead: 'Tell us or type the station where you are now.', stationPlaceholder: 'Example: I am at Taipei Main Station', startVoice: 'Start voice input', findStation: 'Confirm station', calling: 'Call station staff',
+    },
+    ja: { askRailAgent: 'RailAgent に質問', chatSubtitle: 'ローカル AI 対話支援', close: '閉じる', chatPlaceholder: '質問を入力…', send: '送信', thinking: 'RailAgent が考えています…', transferHelp: '乗換支援', transferRoute: '乗換ルートの提案', transferRouteLead: '現在地と目的地を入力すると、ローカル AI が参考情報を提示します。', routeOrigin: '現在地', routeDestination: '目的地', routeSubmit: '乗換提案を取得', callTitle: '駅係員に支援を依頼', callLead: '現在いる駅を入力または話してください。', startVoice: '音声入力を開始', findStation: '駅を確認', calling: '駅係員に電話' },
+    ko: { askRailAgent: 'RailAgent에게 문의', chatSubtitle: '로컬 AI 대화 지원', close: '닫기', chatPlaceholder: '질문을 입력하세요…', send: '보내기', thinking: 'RailAgent가 생각 중입니다…', transferHelp: '환승 지원', transferRoute: '환승 경로 제안', transferRouteLead: '현재 위치와 목적지를 입력하면 로컬 AI가 참고 정보를 제공합니다.', routeOrigin: '현재 위치', routeDestination: '목적지', routeSubmit: '환승 제안 받기', callTitle: '역무원 지원 요청', callLead: '현재 있는 역을 입력하거나 말해 주세요.', startVoice: '음성 입력 시작', findStation: '역 확인', calling: '역무원에게 전화' },
+    vi: { askRailAgent: 'Hỏi RailAgent', chatSubtitle: 'Hỗ trợ trò chuyện AI cục bộ', close: 'Đóng', chatPlaceholder: 'Nhập câu hỏi của bạn…', send: 'Gửi', thinking: 'RailAgent đang xử lý…', transferHelp: 'Hỗ trợ chuyển tuyến', transferRoute: 'Gợi ý tuyến chuyển', routeOrigin: 'Vị trí hiện tại', routeDestination: 'Điểm đến', routeSubmit: 'Lấy gợi ý chuyển tuyến', callTitle: 'Gọi nhân viên nhà ga hỗ trợ', callLead: 'Nhập hoặc nói tên ga bạn đang ở.', startVoice: 'Bắt đầu nhập bằng giọng nói', findStation: 'Xác nhận ga', calling: 'Gọi nhân viên nhà ga' },
+    id: { askRailAgent: 'Tanya RailAgent', chatSubtitle: 'Bantuan chat AI lokal', close: 'Tutup', chatPlaceholder: 'Masukkan pertanyaan Anda…', send: 'Kirim', thinking: 'RailAgent sedang memproses…', transferHelp: 'Bantuan transit', transferRoute: 'Saran rute transit', routeOrigin: 'Lokasi saat ini', routeDestination: 'Tujuan', routeSubmit: 'Dapatkan saran transit', callTitle: 'Hubungi petugas stasiun', callLead: 'Ketik atau ucapkan stasiun Anda saat ini.', startVoice: 'Mulai masukan suara', findStation: 'Konfirmasi stasiun', calling: 'Hubungi petugas stasiun' },
+    th: { askRailAgent: 'ถาม RailAgent', chatSubtitle: 'ผู้ช่วยสนทนา AI ในเครื่อง', close: 'ปิด', chatPlaceholder: 'พิมพ์คำถามของคุณ…', send: 'ส่ง', thinking: 'RailAgent กำลังประมวลผล…', transferHelp: 'ช่วยเหลือการต่อรถ', transferRoute: 'แนะนำเส้นทางต่อรถ', routeOrigin: 'ตำแหน่งปัจจุบัน', routeDestination: 'ปลายทาง', routeSubmit: 'รับคำแนะนำการต่อรถ', callTitle: 'ติดต่อเจ้าหน้าที่สถานี', callLead: 'พิมพ์หรือพูดชื่อสถานีที่คุณอยู่', startVoice: 'เริ่มป้อนด้วยเสียง', findStation: 'ยืนยันสถานี', calling: 'โทรหาเจ้าหน้าที่สถานี' },
+  };
+
+  function activeLanguage() {
+    const language = (document.documentElement.lang || '').toLowerCase();
+    if (language.startsWith('zh')) return 'zh-TW';
+    return language.split('-')[0];
+  }
+
+  function getCopy() {
+    return { ...baseCopy, ...(localizedCopy[activeLanguage()] || {}) };
+  }
+
+  let copy = getCopy();
 
   const searchLabels = [
     '\u641c\u5c0b\u53ef\u80fd\u76f8\u7b26\u7269\u54c1',
@@ -166,21 +194,28 @@
       [...document.querySelectorAll('button')].find((button) =>
         isVisible(button) && button.textContent.trim().includes('\u670d\u52d9\u8a2d\u65bd\u56de\u5831')
       );
-    if (!facilityButton) return;
+    const homeServiceList = document.querySelector('.mp-service-list');
+    if (!facilityButton && !homeServiceList) return;
 
-    [...document.querySelectorAll('button')].forEach((button) => {
-      const text = button.textContent.trim();
-      if (text === '\u5feb\u901f\u6c42\u52a9' || text === '\u66f4\u591a\u670d\u52d9') {
+    // These two legacy actions are only present on the old three-card home.
+    // Use the React speech cue rather than a translated visible label so every
+    // language gets the same four-card home layout.
+    document
+      .querySelectorAll('[data-railagent-speech-cue="quick-help"], [data-railagent-speech-cue="more-services"]')
+      .forEach((button) => {
         button.dataset.railagentLocalHidden = 'true';
-      }
-    });
+      });
 
     if (document.getElementById('railagent-local-chat-launcher')) return;
     const launcher = document.createElement('button');
     launcher.id = 'railagent-local-chat-launcher';
     launcher.type = 'button';
     launcher.innerHTML = `<span><strong>${copy.askRailAgent}</strong><small>${copy.chatSubtitle}</small></span>`;
-    facilityButton.insertAdjacentElement('afterend', launcher);
+    if (homeServiceList) {
+      homeServiceList.appendChild(launcher);
+    } else {
+      facilityButton.insertAdjacentElement('afterend', launcher);
+    }
   }
 
   function installFriendlyTransferTools() {
@@ -482,6 +517,7 @@
   }
 
   function syncLocalModeUi() {
+    copy = getCopy();
     installStyles();
     markDemoContent();
     installChatLauncher();
