@@ -33,3 +33,16 @@
 **Notes / risks:**
 - The derivation is intentionally conservative and metadata-driven. Unknown sources are skipped rather than guessed.
 - HTML extraction is lightweight and dependency-free; it strips tags/scripts/styles but does not attempt full browser-grade text rendering.
+
+### Fix Round 1
+
+**Finding addressed:** Timetable documents appended a mojibake notice instead of the required exact text.
+
+**Changes:**
+- Replaced the timetable notice constant with the exact required runtime string: `資料快照，實際班次請以官方即時資訊為準。`.
+- Updated the timetable test to assert exact final-line equality for that suffix instead of matching the old mojibake regex.
+
+**Verification:**
+- `npm.cmd test -- src/transportKnowledge/deriveKnowledge.test.ts` -> passed, 4 tests.
+- `npm.cmd run typecheck` -> passed.
+- `npm.cmd test` -> passed, 14 test files and 76 tests.

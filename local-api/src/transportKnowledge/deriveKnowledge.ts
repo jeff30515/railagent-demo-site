@@ -3,9 +3,8 @@ import type { CatalogEntry, KnowledgeDocument, SnapshotFile } from './contracts.
 type KnowledgeTopic = KnowledgeDocument['topic'];
 
 const timetableNotice =
-  '\u{9788}\u{F2EA}\u{3F}\u{6579}\u{600E}\u{F171}\u{5697}\u{F5FA}\u{7955}\u{3F}' +
-  '\u{EB8F}\u{E3F9}\u{7508}\u{221F}\u{3F}\u{969E}\u{4E99}\u{3F}\u{3F}\u{5B75}' +
-  '\u{F665}\u{3F}\u{EFDB}\u{3F}\u{95AE}\u{F4C2}\u{EFAD}\u{769E}\u{E87A}\u{80}\u{EF75}';
+  '\u{8CC7}\u{6599}\u{5FEB}\u{7167}\u{FF0C}\u{5BE6}\u{969B}\u{73ED}\u{6B21}' +
+  '\u{8ACB}\u{4EE5}\u{5B98}\u{65B9}\u{5373}\u{6642}\u{8CC7}\u{8A0A}\u{70BA}\u{6E96}\u{3002}';
 
 export function deriveKnowledge(
   files: readonly SnapshotFile[],

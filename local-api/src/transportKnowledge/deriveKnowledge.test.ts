@@ -112,7 +112,7 @@ describe('transport knowledge derivation', () => {
 
     expect(documents.timetable[0]?.text).toContain('時刻表快照');
     expect(documents.timetable[0]?.text).toContain('每日');
-    expect(documents.timetable[0]?.text).toMatch(/鞈\?敹怎嚗祕\?甈∟\?隞亙\?\?孵\?\?閮皞$/);
+    expect(documents.timetable[0]?.text.split('\n').at(-1)).toBe('資料快照，實際班次請以官方即時資訊為準。');
   });
 
   it('preserves only allowlisted official page text and skips blocked failed or unparseable sources', () => {
