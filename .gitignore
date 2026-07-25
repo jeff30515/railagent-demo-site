@@ -6,3 +6,4 @@ local-api/*.log
 local-api/data/*.json
 local-api/data/*.xml
 local-api/data/*.log
+.worktrees/
