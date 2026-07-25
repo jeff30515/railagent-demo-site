@@ -1,5 +1,4 @@
 (function () {
-  const hiddenTaskIds = new Set();
   const TRACKED_CASES_KEY = 'railagent-tracked-lost-found-cases';
 
   function trackedRecords(list) {
@@ -59,11 +58,6 @@
       const eventId = caseId(article);
       if (!eventId) return;
       const recordId = recordIdForArticle(list, article);
-      const taskId = recordId || eventId;
-      if (hiddenTaskIds.has(taskId)) {
-        article.remove();
-        return;
-      }
       if (article.querySelector('[data-passenger-unfollow]')) return;
 
       const button = document.createElement('button');
@@ -74,7 +68,6 @@
       button.addEventListener('click', (event) => {
         event.preventDefault();
         event.stopPropagation();
-        hiddenTaskIds.add(taskId);
         removeTrackedCase(recordId);
         article.remove();
         renderStatus(section, eventId);
