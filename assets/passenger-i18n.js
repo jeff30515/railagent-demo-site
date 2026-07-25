@@ -15,6 +15,18 @@
     'id-id': 'id',
     'th-th': 'th',
   };
+  const DOCUMENT_LANG = {
+    'zh-TW': 'zh-Hant-TW',
+    nan: 'nan-TW',
+    hak: 'hak-TW',
+    en: 'en-US',
+    ja: 'ja-JP',
+    ko: 'ko-KR',
+    vi: 'vi-VN',
+    id: 'id-ID',
+    th: 'th-TH',
+  };
+  const LOCALIZED_ATTRIBUTES = ['aria-label', 'placeholder', 'title'];
 
   const COPY_ENTRIES = {
     'zh-TW': [
@@ -774,6 +786,13 @@
     lookup[COPY[DEFAULT_LANGUAGE][key]] = key;
     return lookup;
   }, {});
+  const LANGUAGE_LABELS = SUPPORTED_LANGUAGES.reduce((lookup, language) => {
+    SUPPORTED_LANGUAGES.forEach((labelLanguage) => {
+      lookup[COPY[labelLanguage]['language.' + language]] = language;
+    });
+    return lookup;
+  }, {});
+  let observing = false;
 
   function normalizeLanguage(language) {
     if (SUPPORTED_LANGUAGES.includes(language)) return language;
@@ -794,6 +813,8 @@
         ''
       );
     }
+    const label = String(root.textContent || '').trim();
+    if (LANGUAGE_LABELS[label]) return LANGUAGE_LABELS[label];
     return root.lang || '';
   }
 
@@ -822,12 +843,125 @@
     return key ? translate(key, language === undefined ? getLanguage() : language) : text || '';
   }
 
-  function apply() {
-    return false;
+  function getDocument(root) {
+    return (root && root.ownerDocument) || window.document || null;
+  }
+
+  function localizeValue(value, language) {
+    const translated = translateText(value, language);
+    return translated !== value ? translated : value;
+  }
+
+  function localizeTextNode(node, language) {
+    const nextValue = localizeValue(node.nodeValue, language);
+    if (nextValue === node.nodeValue) return false;
+    node.nodeValue = nextValue;
+    return true;
+  }
+
+  function localizeAttributes(node, language) {
+    if (!node || typeof node.getAttribute !== 'function' || typeof node.setAttribute !== 'function') return false;
+    return LOCALIZED_ATTRIBUTES.reduce((changed, attributeName) => {
+      const currentValue = node.getAttribute(attributeName);
+      if (!currentValue) return changed;
+      const nextValue = localizeValue(currentValue, language);
+      if (nextValue === currentValue) return changed;
+      node.setAttribute(attributeName, nextValue);
+      return true;
+    }, false);
+  }
+
+  function visitNode(node, language) {
+    if (!node) return false;
+    if (node.nodeType === 3) return localizeTextNode(node, language);
+
+    let changed = node.nodeType === 1 ? localizeAttributes(node, language) : false;
+    const children = node.childNodes || [];
+    for (let index = 0; index < children.length; index += 1) {
+      changed = visitNode(children[index], language) || changed;
+    }
+    return changed;
+  }
+
+  function setDocumentLanguage(documentRef, language) {
+    if (!documentRef || !documentRef.documentElement) return;
+    documentRef.documentElement.lang = DOCUMENT_LANG[normalizeLanguage(language)];
+  }
+
+  function apply(root, language) {
+    const documentRef = getDocument(root);
+    const targetRoot = root || (documentRef && (documentRef.body || documentRef.documentElement));
+    if (!targetRoot) return false;
+
+    const normalizedLanguage = language === undefined ? getLanguage(targetRoot) : normalizeLanguage(language);
+    const changed = visitNode(targetRoot, normalizedLanguage);
+    setDocumentLanguage(documentRef, normalizedLanguage);
+    return changed;
   }
 
   function observe() {
-    return false;
+    const documentRef = window.document;
+    if (!documentRef) return false;
+
+    const root = documentRef.body || documentRef.documentElement;
+    if (!root) return false;
+    if (observing) return true;
+    if (
+      typeof documentRef.addEventListener !== 'function' &&
+      typeof window.MutationObserver !== 'function'
+    ) {
+      return false;
+    }
+
+    let applying = false;
+    let scheduled = false;
+    let pendingLanguage;
+    const scheduleApply = (language) => {
+      pendingLanguage = language;
+      if (applying || scheduled) return;
+      scheduled = true;
+      const run = () => {
+        const languageToApply = pendingLanguage;
+        pendingLanguage = undefined;
+        scheduled = false;
+        applying = true;
+        apply(root, languageToApply);
+        applying = false;
+      };
+      if (typeof window.setTimeout === 'function') window.setTimeout(run, 0);
+      else run();
+    };
+
+    scheduleApply();
+
+    if (typeof documentRef.addEventListener === 'function') {
+      documentRef.addEventListener('click', (event) => {
+        const target = event && event.target;
+        const chip =
+          target &&
+          (typeof target.closest === 'function'
+            ? target.closest('.mp-lang-chip')
+            : target.className && String(target.className).includes('mp-lang-chip')
+              ? target
+              : null);
+        if (chip) scheduleApply(readLanguageFrom(chip));
+      });
+    }
+
+    observing = true;
+    if (typeof window.MutationObserver !== 'function') return true;
+
+    const observer = new window.MutationObserver(() => {
+      if (!applying) scheduleApply();
+    });
+    observer.observe(root, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+      attributes: true,
+      attributeFilter: LOCALIZED_ATTRIBUTES,
+    });
+    return true;
   }
 
   window.PassengerI18n = {
@@ -840,4 +974,5 @@
     apply,
     observe,
   };
+  observe();
 })();

@@ -74,6 +74,44 @@ test('passenger i18n uses current page language when language argument is omitte
   assert.equal(i18n.translateText('會員登入'), 'Member Sign In');
 });
 
+test('passenger i18n applies known Traditional Chinese text without changing stable attributes', () => {
+  const buttonText = { nodeType: 3, nodeValue: '會員登入' };
+  const unknownText = { nodeType: 3, nodeValue: '乘客自訂備註' };
+  const button = {
+    nodeType: 1,
+    childNodes: [buttonText],
+    attributes: [{ name: 'data-action', value: 'login' }],
+    getAttribute(name) {
+      return name === 'data-action' ? 'login' : null;
+    },
+    setAttribute(name, value) {
+      const attribute = this.attributes.find((entry) => entry.name === name);
+      if (attribute) attribute.value = value;
+      else this.attributes.push({ name, value });
+    },
+  };
+  const note = {
+    nodeType: 1,
+    childNodes: [unknownText],
+    attributes: [],
+    getAttribute() {
+      return null;
+    },
+    setAttribute(name, value) {
+      this.attributes.push({ name, value });
+    },
+  };
+  const root = { nodeType: 1, childNodes: [button, note] };
+  const document = { documentElement: { lang: 'zh-Hant' } };
+  const i18n = loadPassengerI18n({ document });
+
+  assert.equal(i18n.apply(root, 'th'), true);
+  assert.equal(buttonText.nodeValue, 'เข้าสู่ระบบสมาชิก');
+  assert.equal(button.getAttribute('data-action'), 'login');
+  assert.equal(unknownText.nodeValue, '乘客自訂備註');
+  assert.equal(document.documentElement.lang, 'th-TH');
+});
+
 test('passenger i18n falls back to the active language chip when the root has no language', () => {
   const activeChip = {
     dataset: { language: 'ja-JP' },
