@@ -25,6 +25,7 @@
     'member.joinDemoStatus': '\u6b64\u70ba\u52a0\u5165\u6703\u54e1\u793a\u7bc4\uff0c\u5c1a\u672a\u5132\u5b58\u500b\u4eba\u8cc7\u6599\u3002',
     'member.returnToGate': '\u8fd4\u56de\u8eab\u5206\u9078\u64c7',
     'member.functions': '\u6703\u54e1\u529f\u80fd',
+    'member.accountTitle': '\u5e33\u6236',
   };
 
   function t(key) {
@@ -249,19 +250,42 @@
   function findReturnButton(section) {
     return (
       section.querySelector('.passenger-member-auth__return') ||
+      Array.from(section.querySelectorAll('button')).find((button) => hasClass(button, 'mp-primary')) ||
       Array.from(section.querySelectorAll('button')).find((button) =>
         getText(button).includes('\u8fd4\u56de\u8eab\u5206\u9078\u64c7') || getText(button).includes(t('member.returnToGate')),
       )
     );
   }
 
+  function hasClass(node, className) {
+    return (node.className || '').split(/\s+/).includes(className);
+  }
+
+  function hasLegacyAccountCard(section) {
+    return Array.from(section.querySelectorAll('.mp-card')).some((card) => hasClass(card, 'mp-stack'));
+  }
+
+  function hasLocalizedAccountLabel(section) {
+    const label = section.getAttribute('aria-label') || '';
+    const accountTitle = t('member.accountTitle');
+    return Boolean(
+      label &&
+        (label.includes(accountTitle) ||
+          label.includes('\u5e33\u6236') ||
+          label.includes('\u6211\u7684') ||
+          label.includes('Account') ||
+          label.includes('\u30a2\u30ab\u30a6\u30f3\u30c8') ||
+          label.includes('\uacc4\uc815')),
+    );
+  }
+
   function isLegacyAccountSection(section) {
     const text = getText(section);
-    const label = section.getAttribute('aria-label') || '';
     return (
       !section.querySelector('[data-member-auth]') &&
-      text.includes('\u8fd4\u56de\u8eab\u5206\u9078\u64c7') &&
-      (label.includes('\u5e33\u6236') || label.includes('\u6211\u7684') || text.includes('\u5e33\u6236'))
+      hasLegacyAccountCard(section) &&
+      findReturnButton(section) &&
+      (hasLocalizedAccountLabel(section) || text.includes('\u5e33\u6236'))
     );
   }
 

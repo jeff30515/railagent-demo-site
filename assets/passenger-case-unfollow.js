@@ -62,11 +62,14 @@
 
   function enhancePassengerCases(root) {
     const scope = root || document;
-    const section = scope.querySelector('section[aria-label="public own case list"]');
+    const trackedList = scope.querySelector('#railagent-tracked-lost-found-cases');
+    const section =
+      scope.querySelector('section[aria-label="public own case list"]') ||
+      (trackedList && trackedList.closest && trackedList.closest('section'));
     if (!section) return false;
 
     const list =
-      section.querySelector('#railagent-tracked-lost-found-cases') ||
+      trackedList ||
       Array.from(section.querySelectorAll('.mp-list')).find((candidate) => candidate.querySelector('article.mp-list-item'));
     if (!list) return false;
 

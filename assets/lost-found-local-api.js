@@ -151,10 +151,21 @@
     });
   }
 
+  function servicePage(name) {
+    return document.querySelector(`[data-service-page="${name}"]`);
+  }
+
+  function isVisible(element) {
+    return Boolean(element && element.offsetParent !== null);
+  }
+
   function installChatLauncher() {
-    const facilityButton = [...document.querySelectorAll('button')].find((button) =>
-      button.offsetParent !== null && button.textContent.trim().includes('\u670d\u52d9\u8a2d\u65bd\u56de\u5831')
-    );
+    const facilityPage = servicePage('facility-report');
+    const facilityButton =
+      facilityPage?.querySelector('button.mp-primary') ||
+      [...document.querySelectorAll('button')].find((button) =>
+        isVisible(button) && button.textContent.trim().includes('\u670d\u52d9\u8a2d\u65bd\u56de\u5831')
+      );
     if (!facilityButton) return;
 
     [...document.querySelectorAll('button')].forEach((button) => {
@@ -173,10 +184,11 @@
   }
 
   function installFriendlyTransferTools() {
-    const heading = [...document.querySelectorAll('h2')].find((element) =>
-      element.offsetParent !== null && element.textContent.trim() === '\u53cb\u5584\u8f49\u4e58\u5354\u52a9'
-    );
-    const panel = heading?.closest('section');
+    const panel =
+      servicePage('friendly-transfer') ||
+      [...document.querySelectorAll('h2')]
+        .find((element) => isVisible(element) && element.textContent.trim() === '\u53cb\u5584\u8f49\u4e58\u5354\u52a9')
+        ?.closest('section');
     if (!panel) return;
 
     [...panel.querySelectorAll('button')].forEach((button) => {
@@ -234,6 +246,7 @@
     announceTransfer(copy.transferPageGuide, 'transfer-page');
 
     const form = tools.querySelector('#railagent-transfer-route-form');
+    if (!form) return;
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
       const origin = form.querySelector('#railagent-route-origin').value.trim();
@@ -478,18 +491,26 @@
     renderTrackedCases();
     syncPublicFeedbackCopy();
     const hasFriendlyTransfer = [...document.querySelectorAll('h2')].some((element) =>
-      element.offsetParent !== null && element.textContent.trim() === '\u53cb\u5584\u8f49\u4e58\u5354\u52a9'
+      isVisible(element) && element.textContent.trim() === '\u53cb\u5584\u8f49\u4e58\u5354\u52a9'
     );
-    if (!hasFriendlyTransfer) clearFriendlyTransferUi();
+    const hasFriendlyTransferPage = Boolean(servicePage('friendly-transfer'));
+    if (!hasFriendlyTransfer && !hasFriendlyTransferPage) clearFriendlyTransferUi();
   }
 
   function clearStaleLostFoundResult() {
     const hasVisibleLostFoundSearch = [...document.querySelectorAll('button')].some((button) =>
-      button.offsetParent !== null && searchLabels.includes(button.textContent.trim())
+      isLostFoundSearchButton(button)
     );
     if (!hasVisibleLostFoundSearch) {
       document.getElementById('railagent-local-lost-found-result')?.remove();
     }
+  }
+
+  function isLostFoundSearchButton(button) {
+    if (!button || !isVisible(button)) return false;
+    if (searchLabels.includes(button.textContent.trim())) return true;
+    const panel = button.closest('[data-service-page="lost-item"]');
+    return Boolean(panel && button.matches('button.mp-primary') && panel.querySelectorAll('input').length >= 7);
   }
 
   function addChatMessage(messages, kind, text) {
@@ -589,14 +610,14 @@
       syncLocalModeUi();
       return;
     }
-    if (!searchLabels.includes(buttonText)) return;
+    if (!isLostFoundSearchButton(button)) return;
     event.preventDefault();
     event.stopImmediatePropagation();
     void search(button);
   }, true);
 
   async function search(button) {
-    const panel = button.closest('section');
+    const panel = button.closest('[data-service-page="lost-item"]') || button.closest('section');
     const inputs = [...(panel?.querySelectorAll('input') ?? [])].filter((input) => input.offsetParent !== null);
     if (inputs.length < 7) {
       render(button, null, copy.missingInput);
