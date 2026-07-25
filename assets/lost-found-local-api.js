@@ -6,9 +6,13 @@
 
   let lostFoundEndpoint;
   let chatEndpoint;
+  let stationEndpoint;
+  let routeEndpoint;
   try {
     lostFoundEndpoint = new URL('/api/lost-found/match', apiBaseUrl).toString();
     chatEndpoint = new URL('/api/passenger-chat', apiBaseUrl).toString();
+    stationEndpoint = new URL('/api/friendly-transfer/station', apiBaseUrl).toString();
+    routeEndpoint = new URL('/api/friendly-transfer/route', apiBaseUrl).toString();
   } catch {
     return;
   }
@@ -33,6 +37,24 @@
     unknown: '\u672a\u77e5',
     unknownItem: '\u672a\u77e5\u7269\u54c1',
     contact: '\u806f\u7d61\u65b9\u5f0f'
+    ,transferHelp: '\u8f49\u4e58\u5354\u52a9'
+    ,transferRoute: '\u8f49\u4e58\u8def\u7dda\u5efa\u8b70'
+    ,transferRouteLead: '\u8f38\u5165\u73fe\u5728\u5730\u9ede\u8207\u76ee\u7684\u5730\uff0c\u7531\u672c\u6a5f AI \u63d0\u4f9b\u53c3\u8003\u3002'
+    ,callTitle: '\u547c\u53eb\u7ad9\u52d9\u4eba\u54e1\u5354\u52a9'
+    ,callLead: '\u8acb\u8aaa\u51fa\u6216\u8f38\u5165\u60a8\u76ee\u524d\u6240\u5728\u7684\u8eca\u7ad9\u3002'
+    ,stationPlaceholder: '\u4f8b\u5982\uff1a\u6211\u5728\u53f0\u5317\u8eca\u7ad9'
+    ,startVoice: '\u958b\u59cb\u8a9e\u97f3\u8f38\u5165'
+    ,findStation: '\u78ba\u8a8d\u8eca\u7ad9'
+    ,calling: '\u64a5\u6253\u7ad9\u52d9\u4eba\u54e1\u96fb\u8a71'
+    ,stationError: '\u7121\u6cd5\u8fa8\u8b58\u8eca\u7ad9\uff0c\u8acb\u91cd\u65b0\u8aaa\u51fa\u6216\u8f38\u5165\u7ad9\u540d\u3002'
+    ,voiceUnavailable: '\u6b64\u700f\u89bd\u5668\u7121\u6cd5\u4f7f\u7528\u8a9e\u97f3\u8f38\u5165\uff0c\u8acb\u76f4\u63a5\u8f38\u5165\u7ad9\u540d\u3002'
+    ,routeOrigin: '\u73fe\u5728\u5730\u9ede'
+    ,routeDestination: '\u8981\u524d\u5f80\u7684\u5730\u9ede'
+    ,routePlaceholderOrigin: '\u4f8b\u5982\uff1a\u81fa\u5317\u8eca\u7ad9'
+    ,routePlaceholderDestination: '\u4f8b\u5982\uff1a\u5357\u6e2f\u8eca\u7ad9'
+    ,routeSubmit: '\u53d6\u5f97\u8f49\u4e58\u5efa\u8b70'
+    ,routeThinking: '\u6b63\u5728\u5411\u672c\u6a5f AI \u8a62\u554f\u8f49\u4e58\u5efa\u8b70\u2026'
+    ,routeError: '\u672c\u6a5f AI \u76ee\u524d\u7121\u6cd5\u63d0\u4f9b\u8f49\u4e58\u5efa\u8b70\uff0c\u8acb\u7a0d\u5f8c\u518d\u8a66\u3002'
   };
 
   const searchLabels = [
@@ -77,6 +99,27 @@
       .railagent-chat-form textarea { border: 1px solid #cbd5e1; border-radius: 12px; font: inherit; min-height: 44px; padding: 10px; resize: none; width: 100%; }
       .railagent-chat-form button { background: #127d82; border: 0; border-radius: 12px; color: white; cursor: pointer; font-weight: 700; padding: 0 15px; }
       .railagent-chat-form button:disabled { opacity: .6; }
+      #railagent-friendly-transfer-tools { display: grid; gap: 14px; margin-top: 16px; }
+      .railagent-transfer-help { align-items: center; background: #127d82; border: 0; border-radius: 18px; box-shadow: 0 10px 22px rgba(18, 125, 130, .22); color: #fff; cursor: pointer; display: flex; font: inherit; font-size: 18px; font-weight: 800; justify-content: center; min-height: 76px; padding: 18px; width: 100%; }
+      .railagent-transfer-route { background: #fff; border-radius: 18px; box-shadow: 0 8px 20px rgba(15, 55, 82, .08); padding: 18px; }
+      .railagent-transfer-route h3 { color: #123052; font-size: 17px; margin: 0; }
+      .railagent-transfer-route p { color: #64748b; font-size: 13px; line-height: 1.5; margin: 6px 0 14px; }
+      .railagent-transfer-field { display: grid; gap: 6px; margin-top: 12px; }
+      .railagent-transfer-field label { color: #123052; font-size: 14px; font-weight: 700; }
+      .railagent-transfer-field input { border: 1px solid #cbd5e1; border-radius: 12px; font: inherit; min-height: 46px; padding: 0 12px; }
+      .railagent-transfer-route button, .railagent-transfer-dialog button { background: #127d82; border: 0; border-radius: 12px; color: #fff; cursor: pointer; font: inherit; font-weight: 700; min-height: 46px; padding: 10px 14px; }
+      .railagent-transfer-route button { margin-top: 14px; width: 100%; }
+      .railagent-transfer-answer { background: #eef9f8; border-radius: 12px; color: #18334c; line-height: 1.6; margin-top: 14px; padding: 12px; white-space: pre-wrap; }
+      #railagent-transfer-dialog[hidden] { display: none; }
+      #railagent-transfer-dialog { align-items: center; background: rgba(8, 20, 31, .48); display: flex; inset: 0; justify-content: center; padding: 20px; position: fixed; z-index: 10001; }
+      .railagent-transfer-dialog { background: #f8f6f0; border-radius: 22px; box-shadow: 0 24px 64px rgba(0, 0, 0, .28); max-width: 420px; padding: 22px; width: 100%; }
+      .railagent-transfer-dialog h2 { color: #123052; font-size: 20px; margin: 0; }
+      .railagent-transfer-dialog p { color: #52677b; line-height: 1.55; }
+      .railagent-transfer-dialog input { border: 1px solid #cbd5e1; border-radius: 12px; box-sizing: border-box; font: inherit; min-height: 48px; padding: 0 12px; width: 100%; }
+      .railagent-transfer-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+      .railagent-transfer-actions .railagent-transfer-secondary { background: #fff; border: 1px solid #127d82; color: #127d82; }
+      .railagent-transfer-call { background: #127d82; border-radius: 12px; color: #fff; display: block; font-weight: 700; margin-top: 14px; padding: 13px; text-align: center; text-decoration: none; }
+      .railagent-transfer-close { background: transparent !important; color: #52677b !important; float: right; min-height: auto !important; padding: 4px !important; }
     `;
     document.head.appendChild(style);
   }
@@ -116,11 +159,174 @@
     facilityButton.insertAdjacentElement('afterend', launcher);
   }
 
+  function installFriendlyTransferTools() {
+    const heading = [...document.querySelectorAll('h2')].find((element) =>
+      element.offsetParent !== null && element.textContent.trim() === '\u53cb\u5584\u8f49\u4e58\u5354\u52a9'
+    );
+    const panel = heading?.closest('section');
+    if (!panel) return;
+
+    [...panel.querySelectorAll('button')].forEach((button) => {
+      if (button.textContent.trim() === '\u5efa\u7acb\u5354\u52a9') button.dataset.railagentLocalHidden = 'true';
+    });
+    [...panel.querySelectorAll('p')].forEach((paragraph) => {
+      if ((paragraph.textContent || '').includes('Demo')) paragraph.dataset.railagentLocalHidden = 'true';
+    });
+    if (document.getElementById('railagent-friendly-transfer-tools')) return;
+
+    const tools = document.createElement('section');
+    tools.id = 'railagent-friendly-transfer-tools';
+    tools.setAttribute('aria-label', copy.transferHelp);
+    tools.innerHTML = `
+      <button type="button" class="railagent-transfer-help" id="railagent-transfer-help-button">${copy.transferHelp}</button>
+      <form class="railagent-transfer-route" id="railagent-transfer-route-form">
+        <h3>${copy.transferRoute}</h3>
+        <p>${copy.transferRouteLead}</p>
+        <div class="railagent-transfer-field"><label for="railagent-route-origin">${copy.routeOrigin}</label><input id="railagent-route-origin" maxlength="200" placeholder="${copy.routePlaceholderOrigin}" required></div>
+        <div class="railagent-transfer-field"><label for="railagent-route-destination">${copy.routeDestination}</label><input id="railagent-route-destination" maxlength="200" placeholder="${copy.routePlaceholderDestination}" required></div>
+        <button type="submit">${copy.routeSubmit}</button>
+        <div class="railagent-transfer-answer" aria-live="polite" hidden></div>
+      </form>`;
+    panel.appendChild(tools);
+
+    const form = tools.querySelector('#railagent-transfer-route-form');
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const origin = form.querySelector('#railagent-route-origin').value.trim();
+      const destination = form.querySelector('#railagent-route-destination').value.trim();
+      const submit = form.querySelector('button[type="submit"]');
+      const answer = form.querySelector('.railagent-transfer-answer');
+      if (!origin || !destination || submit.disabled) return;
+      submit.disabled = true;
+      answer.hidden = false;
+      answer.textContent = copy.routeThinking;
+      try {
+        const response = await fetch(routeEndpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ origin, destination })
+        });
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(body.error || `HTTP ${response.status}`);
+        answer.textContent = body.answer || copy.routeError;
+      } catch (error) {
+        answer.textContent = `${copy.routeError}\n${error.message}`;
+      } finally {
+        submit.disabled = false;
+      }
+    });
+  }
+
+  function openFriendlyTransferDialog() {
+    let overlay = document.getElementById('railagent-transfer-dialog');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'railagent-transfer-dialog';
+      overlay.hidden = true;
+      overlay.innerHTML = `
+        <section class="railagent-transfer-dialog" role="dialog" aria-modal="true" aria-labelledby="railagent-transfer-title">
+          <button type="button" class="railagent-transfer-close" aria-label="${copy.close}">${copy.close}</button>
+          <h2 id="railagent-transfer-title">${copy.callTitle}</h2>
+          <p>${copy.callLead}</p>
+          <form id="railagent-transfer-station-form">
+            <label class="railagent-transfer-field" for="railagent-transfer-station"><span>${copy.callLead}</span><input id="railagent-transfer-station" maxlength="200" placeholder="${copy.stationPlaceholder}" required></label>
+            <div class="railagent-transfer-actions">
+              <button type="button" class="railagent-transfer-secondary" id="railagent-transfer-voice">${copy.startVoice}</button>
+              <button type="submit">${copy.findStation}</button>
+            </div>
+          </form>
+          <div id="railagent-transfer-status" aria-live="polite"></div>
+          <div id="railagent-transfer-call-result"></div>
+        </section>`;
+      document.body.appendChild(overlay);
+      const close = overlay.querySelector('.railagent-transfer-close');
+      const form = overlay.querySelector('#railagent-transfer-station-form');
+      const input = overlay.querySelector('#railagent-transfer-station');
+      const voice = overlay.querySelector('#railagent-transfer-voice');
+      const status = overlay.querySelector('#railagent-transfer-status');
+      const callResult = overlay.querySelector('#railagent-transfer-call-result');
+      close.addEventListener('click', () => { overlay.hidden = true; });
+      overlay.addEventListener('click', (event) => {
+        if (event.target === overlay) overlay.hidden = true;
+      });
+      if (!speechRecognitionConstructor()) {
+        voice.hidden = true;
+        status.textContent = copy.voiceUnavailable;
+      }
+      voice.addEventListener('click', () => startSpeechRecognition(input, status));
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const spokenStation = input.value.trim();
+        if (!spokenStation) return;
+        status.textContent = copy.thinking;
+        callResult.replaceChildren();
+        try {
+          const response = await fetch(stationEndpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ spokenStation })
+          });
+          const body = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(body.error || `HTTP ${response.status}`);
+          status.textContent = body.confirmation || `${body.station} ${body.phone}`;
+          speak(body.confirmation || status.textContent);
+          const call = document.createElement('a');
+          call.className = 'railagent-transfer-call';
+          call.href = `tel:${String(body.phone || '').replace(/[^+\\d]/g, '')}`;
+          call.textContent = `${copy.calling} ${body.phone || ''}`;
+          callResult.appendChild(call);
+        } catch (error) {
+          status.textContent = `${copy.stationError}\n${error.message}`;
+        }
+      });
+    }
+    overlay.hidden = false;
+    overlay.querySelector('#railagent-transfer-station')?.focus();
+    speak(copy.callLead);
+  }
+
+  function speechRecognitionConstructor() {
+    return window.SpeechRecognition || window.webkitSpeechRecognition;
+  }
+
+  function startSpeechRecognition(input, status) {
+    const Recognition = speechRecognitionConstructor();
+    if (!Recognition) {
+      status.textContent = copy.voiceUnavailable;
+      return;
+    }
+    const recognition = new Recognition();
+    recognition.lang = 'zh-TW';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognition.onresult = (event) => {
+      input.value = event.results[0][0].transcript;
+      status.textContent = input.value;
+    };
+    recognition.onerror = () => { status.textContent = copy.voiceUnavailable; };
+    recognition.start();
+  }
+
+  function speak(message) {
+    if (!window.speechSynthesis || !message) return;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(new SpeechSynthesisUtterance(message));
+  }
+
+  function clearFriendlyTransferUi() {
+    document.getElementById('railagent-transfer-dialog')?.remove();
+  }
+
   function syncLocalModeUi() {
     installStyles();
     markDemoContent();
     installChatLauncher();
+    installFriendlyTransferTools();
     clearStaleLostFoundResult();
+    const hasFriendlyTransfer = [...document.querySelectorAll('h2')].some((element) =>
+      element.offsetParent !== null && element.textContent.trim() === '\u53cb\u5584\u8f49\u4e58\u5354\u52a9'
+    );
+    if (!hasFriendlyTransfer) clearFriendlyTransferUi();
   }
 
   function clearStaleLostFoundResult() {
@@ -206,6 +412,13 @@
     const buttonText = button.textContent.trim();
     if (buttonText === '\u2190 \u8fd4\u56de' || buttonText === '\u9996\u9801') {
       document.getElementById('railagent-local-lost-found-result')?.remove();
+      clearFriendlyTransferUi();
+    }
+    if (button.id === 'railagent-transfer-help-button') {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      openFriendlyTransferDialog();
+      return;
     }
     if (button.id === 'railagent-local-chat-launcher') {
       event.preventDefault();
