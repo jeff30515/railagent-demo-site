@@ -169,7 +169,16 @@ test('replaces passenger account summary with login fields and keeps return acti
   assert.doesNotMatch(visibleText, /可見事件/);
   assert.doesNotMatch(visibleText, /重設友善轉乘示範/);
 
-  findByText(section, 'button', '加入會員').dispatchEvent({ type: 'click' });
+  const joinEvent = {
+    type: 'click',
+    propagationStopped: false,
+    preventDefault() {},
+    stopPropagation() {
+      this.propagationStopped = true;
+    },
+  };
+  findByText(section, 'button', '加入會員').dispatchEvent(joinEvent);
+  assert.equal(joinEvent.propagationStopped, true);
   const joinText = textOf(section);
   assert.match(joinText, /證號/);
   assert.match(joinText, /再次確認密碼/);
