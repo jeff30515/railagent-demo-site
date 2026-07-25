@@ -104,4 +104,40 @@ describe('transport knowledge downloader', () => {
     expect(tdxEntries.every((entry) => entry.relativePath === undefined)).toBe(true);
     expect(fetchCalls.every((url) => !url.includes('tdx.transportdata.tw'))).toBe(true);
   });
+
+  it('does not expose TDX credentials when token fetch throws credential-bearing text', async () => {
+    const downloadedAt = '2026-07-25T16:00:00.000Z';
+    const sentinelClientId = 'sentinel-client-id-9bb89a';
+    const sentinelClientSecret = 'sentinel-client-secret-0d784c';
+    const fetch = async (input: string | URL | Request) => {
+      const url = input.toString();
+
+      if (url.includes('/auth/realms/TDXConnect/')) {
+        throw new Error(`token request failed for ${sentinelClientId} using ${sentinelClientSecret}`);
+      }
+
+      return new Response('public source', {
+        status: 200,
+        headers: { 'content-type': 'text/plain' },
+      });
+    };
+
+    const result = await downloadSources({
+      fetch,
+      now: () => new Date(downloadedAt),
+      tdxClientId: sentinelClientId,
+      tdxClientSecret: sentinelClientSecret,
+    });
+
+    const serializedResult = JSON.stringify(result);
+    expect(serializedResult).not.toContain(sentinelClientId);
+    expect(serializedResult).not.toContain(sentinelClientSecret);
+    expect(result.catalog.entries.filter((entry) => entry.id.startsWith('tdx-'))).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'tdx-tra-stations', status: 'failed', error: 'TDX OAuth request failed' }),
+        expect.objectContaining({ id: 'tdx-thsr-stations', status: 'failed', error: 'TDX OAuth request failed' }),
+        expect.objectContaining({ id: 'tdx-trtc-stations', status: 'failed', error: 'TDX OAuth request failed' }),
+      ]),
+    );
+  });
 });

@@ -18,6 +18,7 @@ interface SourceDefinition {
 }
 
 const tdxTokenUrl = 'https://tdx.transportdata.tw/auth/realms/TDXConnect/protocol/openid-connect/token';
+const tdxTokenRequestFailed = 'TDX OAuth request failed';
 
 const publicSources: SourceDefinition[] = [
   {
@@ -160,8 +161,8 @@ async function requestTdxToken(
     }
 
     return { ok: true, token: body.access_token };
-  } catch (error) {
-    return { ok: false, error: errorMessage(error) };
+  } catch {
+    return { ok: false, error: tdxTokenRequestFailed };
   }
 }
 
