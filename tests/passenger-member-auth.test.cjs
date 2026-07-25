@@ -77,6 +77,9 @@ function createDocument() {
     querySelector(selector) {
       return documentElement.querySelector(selector);
     },
+    querySelectorAll(selector) {
+      return documentElement.querySelectorAll(selector);
+    },
   };
 }
 
@@ -94,6 +97,7 @@ function findAll(root, selector) {
 }
 
 function matchesSelector(node, selector) {
+  if (selector === 'section') return node.tagName === 'SECTION';
   if (selector === 'button') return node.tagName === 'BUTTON';
   if (selector.startsWith('#')) return node.id === selector.slice(1);
   if (selector.startsWith('.')) return node.className.split(/\s+/).includes(selector.slice(1));
@@ -175,4 +179,32 @@ test('replaces passenger account summary with login fields and keeps return acti
 
   findByText(section, 'button', '返回身分選擇').dispatchEvent({ type: 'click' });
   assert.equal(exited, true);
+});
+
+test('replaces the old account page even when its aria label differs from the title', () => {
+  const document = createDocument();
+  const section = document.createElement('section');
+  section.setAttribute('aria-label', '我的');
+  const header = document.createElement('div');
+  header.className = 'mp-hero-block';
+  header.textContent = '帳戶示範重設與返回入口';
+  const summary = document.createElement('article');
+  summary.className = 'mp-card mp-stack';
+  summary.textContent = '民眾示範帳號新北捷運 / 民眾服務可見事件 1';
+  const reset = document.createElement('button');
+  reset.className = 'mp-secondary';
+  reset.textContent = '重設友善轉乘示範';
+  const exit = document.createElement('button');
+  exit.className = 'mp-primary';
+  exit.textContent = '返回身分選擇';
+  section.append(header, summary, reset, exit);
+  document.documentElement.append(section);
+
+  loadEnhancer(document).enhancePassengerMemberAuth(document);
+
+  const visibleText = textOf(section);
+  assert.match(visibleText, /會員登入/);
+  assert.match(visibleText, /帳號/);
+  assert.doesNotMatch(visibleText, /民眾示範帳號/);
+  assert.doesNotMatch(visibleText, /重設友善轉乘示範/);
 });

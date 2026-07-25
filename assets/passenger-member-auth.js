@@ -204,19 +204,46 @@
     section.replaceChildren(header, tabs, panel, exitButton);
   }
 
+  function getText(node) {
+    if (!node) return '';
+    if (node.textContent) return node.textContent;
+    return Array.from(node.children || []).map(getText).join('');
+  }
+
+  function findReturnButton(section) {
+    return Array.from(section.querySelectorAll('button')).find((button) =>
+      getText(button).includes('\u8fd4\u56de\u8eab\u5206\u9078\u64c7'),
+    );
+  }
+
+  function isLegacyAccountSection(section) {
+    const text = getText(section);
+    const label = section.getAttribute('aria-label') || '';
+    return (
+      !section.querySelector('[data-member-auth]') &&
+      text.includes('\u8fd4\u56de\u8eab\u5206\u9078\u64c7') &&
+      (label.includes('\u5e33\u6236') || label.includes('\u6211\u7684') || text.includes('\u5e33\u6236'))
+    );
+  }
+
+  function findLegacyAccountSection(scope) {
+    const exactSection =
+      scope.querySelector('section[aria-label="\u5e33\u6236"]') ||
+      scope.querySelector('[aria-label="\u5e33\u6236"]');
+
+    if (exactSection && isLegacyAccountSection(exactSection)) return exactSection;
+    return Array.from(scope.querySelectorAll('section')).find(isLegacyAccountSection) || null;
+  }
+
   function enhancePassengerMemberAuth(root) {
     injectStyles();
 
     const scope = root || document;
-    const section =
-      scope.querySelector('section[aria-label="\u5e33\u6236"]') ||
-      scope.querySelector('[aria-label="\u5e33\u6236"]');
+    const section = findLegacyAccountSection(scope);
 
-    if (!section || section.querySelector('[data-member-auth]')) return false;
+    if (!section) return false;
 
-    const exitButton = Array.from(section.querySelectorAll('button')).find((button) =>
-      button.textContent.includes('\u8fd4\u56de\u8eab\u5206\u9078\u64c7'),
-    );
+    const exitButton = findReturnButton(section);
 
     if (!exitButton) return false;
 
