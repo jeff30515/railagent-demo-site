@@ -151,13 +151,14 @@
     return form;
   }
 
-  function buildTab(label, active, onClick) {
+  function buildTab(label, tabName, active, onClick) {
     const tab = createElement('button', {
       type: 'button',
       className: active ? 'mp-chip passenger-member-auth__tab is-active' : 'mp-chip passenger-member-auth__tab',
       textContent: label,
       attributes: {
         role: 'tab',
+        'data-member-auth-tab': tabName,
         'aria-pressed': active ? 'true' : 'false',
         'aria-selected': active ? 'true' : 'false',
       },
@@ -190,10 +191,10 @@
       attributes: { role: 'tablist', 'aria-label': '\u6703\u54e1\u529f\u80fd' },
     });
     tabs.append(
-      buildTab('\u6703\u54e1\u767b\u5165', activeTab === 'login', function () {
+      buildTab('\u6703\u54e1\u767b\u5165', 'login', activeTab === 'login', function () {
         render(section, exitButton, 'login');
       }),
-      buildTab('\u52a0\u5165\u6703\u54e1', activeTab === 'join', function () {
+      buildTab('\u52a0\u5165\u6703\u54e1', 'join', activeTab === 'join', function () {
         render(section, exitButton, 'join');
       }),
     );
@@ -258,7 +259,28 @@
     return true;
   }
 
+  function installTabEventBridge() {
+    if (!document.addEventListener) return;
+
+    const activateTab = function (event) {
+      const tab = event.target && event.target.closest && event.target.closest('.passenger-member-auth__tab');
+      const tabName = tab && tab.getAttribute('data-member-auth-tab');
+      const section = tab && tab.closest('section');
+      const exitButton = section && findReturnButton(section);
+
+      if (!tabName || !section || !exitButton) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      render(section, exitButton, tabName);
+    };
+
+    document.addEventListener('pointerdown', activateTab, true);
+    document.addEventListener('click', activateTab, true);
+  }
+
   window.PassengerMemberAuth = { enhancePassengerMemberAuth };
+  installTabEventBridge();
 
   const observer = new MutationObserver(function () {
     enhancePassengerMemberAuth(document);

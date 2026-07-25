@@ -69,10 +69,20 @@ class Element {
   querySelectorAll(selector) {
     return findAll(this, selector);
   }
+
+  closest(selector) {
+    let node = this;
+    while (node) {
+      if (matchesSelector(node, selector)) return node;
+      node = node.parentNode;
+    }
+    return null;
+  }
 }
 
 function createDocument() {
   const documentElement = new Element('html');
+  const eventListeners = {};
   return {
     documentElement,
     createElement(tagName) {
@@ -83,6 +93,13 @@ function createDocument() {
     },
     querySelectorAll(selector) {
       return documentElement.querySelectorAll(selector);
+    },
+    addEventListener(type, handler) {
+      eventListeners[type] = handler;
+    },
+    dispatchEvent(event) {
+      const handler = eventListeners[event.type];
+      if (handler) handler.call(this, event);
     },
   };
 }
@@ -177,7 +194,8 @@ test('replaces passenger account summary with login fields and keeps return acti
       this.propagationStopped = true;
     },
   };
-  findByText(section, 'button', '加入會員').dispatchEvent(joinEvent);
+  joinEvent.target = findByText(section, 'button', '加入會員');
+  document.dispatchEvent(joinEvent);
   assert.equal(joinEvent.propagationStopped, true);
   const joinText = textOf(section);
   assert.match(joinText, /證號/);
