@@ -13,6 +13,21 @@
 
   const searchLabels = ['搜尋可能相符物品', '搜尋可能符合的物品', '搜尋可能符合个物品', 'Search for possible matches'];
 
+  // The compiled demo retains sample-only copy and a seeded case. Hide those
+  // elements when this page is explicitly connected to the local API.
+  const cleanDemoContent = () => {
+    document.querySelectorAll('article[aria-label="既有協尋案件"]').forEach((element) => element.remove());
+    document.querySelectorAll('p').forEach((element) => {
+      const text = element.textContent || '';
+      if (text.includes('示範資料依照') || text.includes('Demo records follow')) element.remove();
+    });
+  };
+
+  document.addEventListener('DOMContentLoaded', () => {
+    cleanDemoContent();
+    new MutationObserver(cleanDemoContent).observe(document.body, { childList: true, subtree: true });
+  });
+
   document.addEventListener('click', (event) => {
     const button = event.target.closest('button');
     if (!button || !searchLabels.includes(button.textContent.trim())) return;
