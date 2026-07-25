@@ -120,6 +120,16 @@
     installStyles();
     markDemoContent();
     installChatLauncher();
+    clearStaleLostFoundResult();
+  }
+
+  function clearStaleLostFoundResult() {
+    const hasVisibleLostFoundSearch = [...document.querySelectorAll('button')].some((button) =>
+      button.offsetParent !== null && searchLabels.includes(button.textContent.trim())
+    );
+    if (!hasVisibleLostFoundSearch) {
+      document.getElementById('railagent-local-lost-found-result')?.remove();
+    }
   }
 
   function addChatMessage(messages, kind, text) {
