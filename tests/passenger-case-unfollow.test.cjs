@@ -9,6 +9,7 @@ test('passenger case unfollow enhancer removes only the selected tracked case', 
   assert.match(script, /取消追蹤/);
   assert.match(script, /已取消追蹤/);
   assert.match(script, /hiddenTaskIds/);
+  assert.match(script, /railagent-tracked-lost-found-cases/);
   assert.match(script, /article\.remove\(\)/);
   assert.match(script, /public own case list/);
 });

@@ -23,7 +23,9 @@
     const section = scope.querySelector('section[aria-label="public own case list"]');
     if (!section) return false;
 
-    const list = section.querySelector('.mp-list');
+    const list =
+      section.querySelector('#railagent-tracked-lost-found-cases') ||
+      Array.from(section.querySelectorAll('.mp-list')).find((candidate) => candidate.querySelector('article.mp-list-item'));
     if (!list) return false;
 
     Array.from(list.querySelectorAll('article.mp-list-item')).forEach((article) => {
