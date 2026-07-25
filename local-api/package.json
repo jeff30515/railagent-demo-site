@@ -9,6 +9,7 @@
     "start:host": "npm run build && node dist/src/localServer.js",
     "start:functions": "func start --port 7071",
     "build": "tsc -p tsconfig.json",
+    "refresh:transport-knowledge": "npm run build && node dist/src/transportKnowledge/refresh.js",
     "test": "vitest",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
