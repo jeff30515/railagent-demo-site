@@ -231,4 +231,3 @@ Start a local static server, select each of the nine languages, then verify that
 git add tests/passenger-i18n.test.cjs
 git commit -m "Guard multilingual passenger feature parity"
 ```
-
