@@ -12,8 +12,6 @@ interface RefreshTransportKnowledgeOptions {
   root: string;
   fetch: FetchLike;
   now: () => Date;
-  tdxClientId?: string;
-  tdxClientSecret?: string;
 }
 
 export async function refreshTransportKnowledge(options: RefreshTransportKnowledgeOptions): Promise<void> {
@@ -40,8 +38,6 @@ async function main(): Promise<void> {
       : resolve(process.cwd(), 'data'),
     fetch: globalThis.fetch,
     now: () => new Date(),
-    tdxClientId: process.env.TDX_CLIENT_ID || undefined,
-    tdxClientSecret: process.env.TDX_CLIENT_SECRET || undefined,
   });
 }
 

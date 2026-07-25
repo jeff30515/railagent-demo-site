@@ -13,7 +13,7 @@ describe('transport knowledge refresh', () => {
     await Promise.all(tempRoots.splice(0).map((root) => rm(root, { recursive: true, force: true })));
   });
 
-  it('downloads sources and writes the catalog plus derived station documents', async () => {
+  it('downloads sources and writes the catalog plus derived accessibility documents', async () => {
     const root = await createTempRoot();
     const downloadedAt = '2026-07-25T17:00:00.000Z';
     const fetch = async (input: string | URL | Request) => {
@@ -30,24 +30,6 @@ describe('transport knowledge refresh', () => {
         });
       }
 
-      if (url.includes('/auth/realms/TDXConnect/')) {
-        return Response.json({ access_token: 'test-token' });
-      }
-
-      if (url.includes('/Rail/TRA/Station')) {
-        return Response.json([
-          {
-            StationID: '1000',
-            StationName: { Zh_tw: '?箏?' },
-            StationAddress: 'No. 1',
-          },
-        ]);
-      }
-
-      if (url.includes('tdx.transportdata.tw')) {
-        return Response.json([]);
-      }
-
       return new Response('<html><body>official station accessibility</body></html>', {
         status: 200,
         headers: { 'content-type': 'text/html; charset=utf-8' },
@@ -58,8 +40,6 @@ describe('transport knowledge refresh', () => {
       root,
       fetch,
       now: () => new Date(downloadedAt),
-      tdxClientId: 'client-id',
-      tdxClientSecret: 'client-secret',
     });
 
     const catalog = JSON.parse(await readFile(join(root, 'transport-catalog.json'), 'utf8')) as TransportCatalog;
@@ -72,11 +52,11 @@ describe('transport knowledge refresh', () => {
       }),
     );
 
-    const stationDocuments = await readFile(
-      join(root, 'transport-knowledge', 'station-documents.jsonl'),
+    const accessibilityDocuments = await readFile(
+      join(root, 'transport-knowledge', 'accessibility-documents.jsonl'),
       'utf8',
     );
-    expect(stationDocuments).toContain('?箏?');
+    expect(accessibilityDocuments).toContain('Taipei Main Station');
   });
 });
 
