@@ -463,7 +463,7 @@
     container.replaceChildren(...records.map((record) => {
       const card = document.createElement('article');
       card.className = 'mp-list-item';
-      card.innerHTML = `<div class="mp-meta"><span class="mp-status">${copy.tracking}</span><span>${escapeHtml(record.stationName)}</span></div><h3>${escapeHtml(record.title)}</h3><p class="mp-footnote">${copy.pickupDate}\uff1a${escapeHtml(record.pickupDate)}</p>`;
+      card.innerHTML = `<div class="mp-meta"><span class="mp-status">${copy.tracking}</span><span>${escapeHtml(record.stationName)}</span></div><h3>${escapeHtml(record.title)}</h3><p class="mp-footnote">${copy.pickupDate}\uff1a${escapeHtml(record.pickupDate)}</p><p class="mp-meta">${copy.contact}\uff1a${escapeHtml(record.contactPhone || copy.unknown)}</p>`;
       return card;
     }));
   }
@@ -649,6 +649,7 @@
       title: item.propertyName || copy.unknownItem,
       stationName: location,
       pickupDate: formatDate(item.pickupDate),
+      contactPhone: item.keepStationTel || copy.unknown,
       status: copy.tracking,
     };
     const tracked = readTrackedCases().some((entry) => entry.id === record.id);
