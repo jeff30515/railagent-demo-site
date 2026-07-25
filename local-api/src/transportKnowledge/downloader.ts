@@ -18,15 +18,17 @@ interface SourceDefinition {
 const publicSources: SourceDefinition[] = [
   {
     id: 'taipei-metro-od-stations',
-    title: 'Taipei Open Data metro station facilities',
-    sourceUrl: 'https://data.taipei/api/v1/dataset/metro-station-facilities?scope=resourceAquire',
+    title: 'Taipei Open Data metro monthly OD manifest',
+    sourceUrl:
+      'https://data.taipei/api/frontstage/tpeod/dataset/resource.download?rid=eb481f58-1238-4cff-8caa-fa7bb20cb4f4',
     provider: 'taipei-metro',
-    format: 'json',
+    format: 'csv',
   },
   {
     id: 'tra-official-accessibility',
     title: 'TRA official station accessibility services',
-    sourceUrl: 'https://www.railway.gov.tw/tra-tip-web/tip/tip00H/tipH41/view',
+    sourceUrl:
+      'https://www.railway.gov.tw/tra-tip-web/tip/tip00C/tipC21/view?subCode=8ae4cac38c017e9f018c243d8ce93354',
     provider: 'tra',
     format: 'html',
   },

@@ -11,9 +11,9 @@ describe('transport knowledge downloader', () => {
       fetchCalls.push(url);
 
       if (url.includes('data.taipei')) {
-        return new Response('{"stations":[{"name":"Taipei Main Station"}]}', {
+        return new Response('period,url\n2026-06,https://example.test/monthly-od.csv\n', {
           status: 200,
-          headers: { 'content-type': 'application/json' },
+          headers: { 'content-type': 'text/csv; charset=utf-8' },
         });
       }
 
@@ -34,7 +34,8 @@ describe('transport knowledge downloader', () => {
 
     const failedTraEntry = result.catalog.entries.find((entry) => entry.id === 'tra-official-accessibility');
     expect(failedTraEntry).toMatchObject({
-      sourceUrl: 'https://www.railway.gov.tw/tra-tip-web/tip/tip00H/tipH41/view',
+      sourceUrl:
+        'https://www.railway.gov.tw/tra-tip-web/tip/tip00C/tipC21/view?subCode=8ae4cac38c017e9f018c243d8ce93354',
       downloadedAt,
       format: 'html',
       status: 'failed',
@@ -44,14 +45,16 @@ describe('transport knowledge downloader', () => {
 
     const downloadedTaipeiEntry = result.catalog.entries.find((entry) => entry.id === 'taipei-metro-od-stations');
     expect(downloadedTaipeiEntry).toMatchObject({
+      sourceUrl:
+        'https://data.taipei/api/frontstage/tpeod/dataset/resource.download?rid=eb481f58-1238-4cff-8caa-fa7bb20cb4f4',
       downloadedAt,
-      format: 'json',
+      format: 'csv',
       status: 'downloaded',
-      relativePath: 'transport-raw/taipei-metro/taipei-metro-od-stations.json',
+      relativePath: 'transport-raw/taipei-metro/taipei-metro-od-stations.csv',
     });
     expect(result.files).toContainEqual({
-      relativePath: 'transport-raw/taipei-metro/taipei-metro-od-stations.json',
-      contents: '{"stations":[{"name":"Taipei Main Station"}]}',
+      relativePath: 'transport-raw/taipei-metro/taipei-metro-od-stations.csv',
+      contents: 'period,url\n2026-06,https://example.test/monthly-od.csv\n',
     });
     expect(result.files.length).toBeGreaterThan(1);
     expect(fetchCalls.some((url) => url.includes('railway.gov.tw'))).toBe(true);
