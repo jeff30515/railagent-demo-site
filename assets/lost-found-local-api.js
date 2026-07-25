@@ -178,6 +178,9 @@
     [...panel.querySelectorAll('p')].forEach((paragraph) => {
       if ((paragraph.textContent || '').includes('Demo')) paragraph.dataset.railagentLocalHidden = 'true';
     });
+    [...panel.querySelectorAll('.mp-card')].forEach((card) => {
+      if (card.querySelector('.mp-tags')) card.dataset.railagentLocalHidden = 'true';
+    });
     [...panel.querySelectorAll('button')].forEach((button) => {
       if (['\u7e41\u9ad4\u4e2d\u6587', '\u8f2a\u6905', '\u907f\u958b\u6a13\u68af', '\u8f49\u4e58\u9ad8\u9435'].includes(button.textContent.trim())) {
         button.parentElement?.setAttribute('data-railagent-local-hidden', 'true');

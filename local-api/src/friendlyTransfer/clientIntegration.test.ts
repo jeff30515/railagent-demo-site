@@ -19,6 +19,8 @@ describe('friendly transfer client integration', () => {
   it('removes the legacy transfer preference tag strip', async () => {
     const clientScript = await readFile(clientScriptPath, 'utf8');
 
+    expect(clientScript).toContain("panel.querySelectorAll('.mp-card')");
+    expect(clientScript).toContain("if (card.querySelector('.mp-tags')) card.dataset.railagentLocalHidden = 'true'");
     expect(clientScript).toContain("document.querySelectorAll('.mp-tags')");
     expect(clientScript).toContain("tagList.closest('.mp-card')?.setAttribute('data-railagent-local-hidden', 'true')");
     expect(clientScript).toContain('String.fromCharCode(0x7e41, 0x9ad4, 0x4e2d, 0x6587)');
