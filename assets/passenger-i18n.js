@@ -1,6 +1,19 @@
 (function () {
   const DEFAULT_LANGUAGE = 'zh-TW';
   const SUPPORTED_LANGUAGES = ['zh-TW', 'nan', 'hak', 'en', 'ja', 'ko', 'vi', 'id', 'th'];
+  const LANGUAGE_ALIASES = {
+    zh: 'zh-TW',
+    tw: 'zh-TW',
+    'zh-tw': 'zh-TW',
+    'zh-hant-tw': 'zh-TW',
+    'nan-tw': 'nan',
+    'en-us': 'en',
+    'ja-jp': 'ja',
+    'ko-kr': 'ko',
+    'vi-vn': 'vi',
+    'id-id': 'id',
+    'th-th': 'th',
+  };
 
   const COPY_ENTRIES = {
     'zh-TW': [
@@ -762,7 +775,9 @@
   }, {});
 
   function normalizeLanguage(language) {
-    return SUPPORTED_LANGUAGES.includes(language) ? language : DEFAULT_LANGUAGE;
+    if (SUPPORTED_LANGUAGES.includes(language)) return language;
+    const normalized = String(language || '').trim().toLowerCase();
+    return LANGUAGE_ALIASES[normalized] || DEFAULT_LANGUAGE;
   }
 
   function readLanguageFrom(root) {
@@ -770,18 +785,32 @@
     if (root.dataset && root.dataset.passengerLanguage) return root.dataset.passengerLanguage;
     if (root.dataset && root.dataset.language) return root.dataset.language;
     if (typeof root.getAttribute === 'function') {
-      return root.getAttribute('data-passenger-language') || root.getAttribute('lang') || '';
+      return (
+        root.getAttribute('data-passenger-language') ||
+        root.getAttribute('data-language') ||
+        root.getAttribute('data-lang') ||
+        root.getAttribute('lang') ||
+        ''
+      );
     }
     return root.lang || '';
   }
 
   function getLanguage(root) {
     const activeRoot = root || (window.document && window.document.documentElement);
-    return normalizeLanguage(readLanguageFrom(activeRoot));
+    const rootLanguage = readLanguageFrom(activeRoot);
+    if (rootLanguage) return normalizeLanguage(rootLanguage);
+
+    const queryRoot = root && typeof root.querySelector === 'function' ? root : window.document;
+    const activeChip =
+      queryRoot &&
+      typeof queryRoot.querySelector === 'function' &&
+      queryRoot.querySelector('.mp-lang-chip.active, .mp-lang-chip.is-active, .mp-lang-chip[aria-pressed="true"]');
+    return normalizeLanguage(readLanguageFrom(activeChip));
   }
 
   function translate(key, language) {
-    const normalizedLanguage = normalizeLanguage(language);
+    const normalizedLanguage = language === undefined ? getLanguage() : normalizeLanguage(language);
     const translated = COPY[normalizedLanguage] && COPY[normalizedLanguage][key];
     const fallback = COPY[DEFAULT_LANGUAGE][key];
     return translated || fallback || key || '';
@@ -789,7 +818,7 @@
 
   function translateText(text, language) {
     const key = ZH_TEXT_TO_KEY[text];
-    return key ? translate(key, language) : text || '';
+    return key ? translate(key, language === undefined ? getLanguage() : language) : text || '';
   }
 
   function apply() {

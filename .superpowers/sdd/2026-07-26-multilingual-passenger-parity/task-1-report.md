@@ -35,3 +35,40 @@
 ## Concerns
 
 - `nan`, `hak`, `ja`, `ko`, `vi`, `id`, and `th` copy is bundled and complete for the required keys, but it has not been reviewed by native-language reviewers.
+
+## Review Fix - Existing App Language Normalization
+
+### Files Changed
+
+- `assets/passenger-i18n.js` - Normalized existing app language values and region chip codes (`zh`, `tw`, `zh-Hant-TW`, `nan-TW`, `en-US`, `ja-JP`, `ko-KR`, `vi-VN`, `id-ID`, `th-TH`), made omitted-language `translate()` and `translateText()` use `getLanguage()`, and added active `.mp-lang-chip` fallback when the root has no language.
+- `tests/passenger-i18n.test.cjs` - Added regression tests for all requested alias codes, omitted language arguments, and active language chip fallback.
+
+### TDD Evidence
+
+1. Red test command:
+
+   `node --test tests/passenger-i18n.test.cjs`
+
+   Result: failed as expected, 1 passed and 3 failed. Failures showed `nan-TW`, omitted `en-US`, and active `ja-JP` chip all incorrectly resolved to `zh-TW`.
+
+2. Green targeted test command:
+
+   `node --test tests/passenger-i18n.test.cjs`
+
+   Result: passed, 4 tests, 0 failures, duration 91.5683 ms.
+
+3. Full front-end Node test command:
+
+   `node --test tests/*.test.cjs`
+
+   Result: passed, 9 tests, 0 failures, duration 77.0335 ms.
+
+4. Syntax check:
+
+   `node --check assets/passenger-i18n.js`
+
+   Result: passed with exit code 0.
+
+### Fix Commit
+
+- Fix commit SHA: recorded after commit creation.

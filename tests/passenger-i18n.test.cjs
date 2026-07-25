@@ -39,3 +39,57 @@ test('passenger i18n publishes complete non-empty copy for every supported langu
     assert.deepEqual(Array.from(Object.keys(i18n.COPY[language]).sort()), requiredKeys);
   }
 });
+
+test('passenger i18n normalizes existing app language values and chip codes', () => {
+  const i18n = loadPassengerI18n();
+  const cases = [
+    ['zh', 'zh-TW'],
+    ['tw', 'zh-TW'],
+    ['zh-Hant-TW', 'zh-TW'],
+    ['nan-TW', 'nan'],
+    ['en-US', 'en'],
+    ['ja-JP', 'ja'],
+    ['ko-KR', 'ko'],
+    ['vi-VN', 'vi'],
+    ['id-ID', 'id'],
+    ['th-TH', 'th'],
+  ];
+
+  for (const [appValue, expectedLanguage] of cases) {
+    assert.equal(i18n.getLanguage({ lang: appValue }), expectedLanguage);
+    assert.equal(
+      i18n.translate('member.login', appValue),
+      i18n.translate('member.login', expectedLanguage),
+    );
+  }
+});
+
+test('passenger i18n uses current page language when language argument is omitted', () => {
+  const document = { documentElement: { lang: 'en-US' } };
+  const i18n = loadPassengerI18n({ document });
+
+  assert.equal(i18n.getLanguage(), 'en');
+  assert.equal(i18n.translate('member.login'), 'Member Sign In');
+  assert.equal(i18n.translateText('會員登入'), 'Member Sign In');
+});
+
+test('passenger i18n falls back to the active language chip when the root has no language', () => {
+  const activeChip = {
+    dataset: { language: 'ja-JP' },
+    getAttribute(name) {
+      return name === 'data-lang' ? 'ja-JP' : null;
+    },
+  };
+  const document = {
+    documentElement: { lang: '' },
+    querySelector(selector) {
+      return selector === '.mp-lang-chip.active, .mp-lang-chip.is-active, .mp-lang-chip[aria-pressed="true"]'
+        ? activeChip
+        : null;
+    },
+  };
+  const i18n = loadPassengerI18n({ document });
+
+  assert.equal(i18n.getLanguage(), 'ja');
+  assert.equal(i18n.translate('member.login'), i18n.translate('member.login', 'ja'));
+});
