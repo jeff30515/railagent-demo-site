@@ -369,6 +369,7 @@
   let lastSpeechKey = '';
   let lastSpeechAt = 0;
   let activeAudio = null;
+  let talkbackPaused = false;
 
   function stopActiveAudio() {
     if (!activeAudio) return;
@@ -377,8 +378,18 @@
     activeAudio = null;
   }
 
+  function setTalkbackPaused(paused) {
+    talkbackPaused = paused;
+    document.documentElement.toggleAttribute('data-railagent-talkback-paused', paused);
+    if (!paused) return;
+    if (synthesis) synthesis.cancel();
+    stopActiveAudio();
+    document.documentElement.removeAttribute('data-railagent-audio');
+  }
+
   function speak(payload, force) {
     if (!payload || !payload.text) return;
+    if (talkbackPaused) return;
 
     document.documentElement.setAttribute('data-railagent-last-speech-cue', payload.cue);
     const now = Date.now();
@@ -550,6 +561,9 @@
       cue: event.detail?.cue || 'friendly-transfer'
     }, true);
   });
+
+  window.addEventListener('railagent:pause-talkback', () => setTalkbackPaused(true));
+  window.addEventListener('railagent:resume-talkback', () => setTalkbackPaused(false));
 
   new MutationObserver(scheduleEnhancement).observe(document.documentElement, {
     childList: true,

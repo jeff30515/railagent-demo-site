@@ -187,6 +187,10 @@
       const labels = [...tagList.querySelectorAll('.mp-tag')].map((tag) => tag.textContent.trim());
       if (labels.length === 4 && labels.includes('繁體中文') && labels.includes('輪椅') && labels.includes('避開樓梯') && labels.includes('轉乘高鐵')) {
         tagList.setAttribute('data-railagent-local-hidden', 'true');
+        const wrapper = tagList.parentElement;
+        if (wrapper && [...wrapper.children].length === 1) {
+          wrapper.setAttribute('data-railagent-local-hidden', 'true');
+        }
       }
     });
     if (document.getElementById('railagent-friendly-transfer-tools')) return;
@@ -266,9 +270,12 @@
       const voice = overlay.querySelector('#railagent-transfer-voice');
       const status = overlay.querySelector('#railagent-transfer-status');
       const callResult = overlay.querySelector('#railagent-transfer-call-result');
-      close.addEventListener('click', () => { overlay.hidden = true; });
+      close.addEventListener('click', () => { stopSpeechRecognition(); overlay.hidden = true; });
       overlay.addEventListener('click', (event) => {
-        if (event.target === overlay) overlay.hidden = true;
+        if (event.target === overlay) {
+          stopSpeechRecognition();
+          overlay.hidden = true;
+        }
       });
       if (!speechRecognitionConstructor()) {
         voice.hidden = true;
@@ -314,27 +321,60 @@
     return window.SpeechRecognition || window.webkitSpeechRecognition;
   }
 
+  let activeSpeechRecognition = null;
+
   function startSpeechRecognition(input, status) {
     const Recognition = speechRecognitionConstructor();
     if (!Recognition) {
       status.textContent = copy.voiceUnavailable;
       return;
     }
+    stopSpeechRecognition();
+    pauseTalkback();
     const recognition = new Recognition();
+    activeSpeechRecognition = recognition;
+    let announcement = null;
     recognition.lang = 'zh-TW';
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
     recognition.onresult = (event) => {
       input.value = event.results[0][0].transcript;
       status.textContent = `${copy.voiceRecognized}${input.value}`;
-      announceTransfer(`${copy.voiceRecognized}${input.value}\u3002\u8acb\u9078\u64c7${copy.findStation}\u3002`, 'voice-recognized');
+      announcement = { text: `${copy.voiceRecognized}${input.value}\u3002\u8acb\u9078\u64c7${copy.findStation}\u3002`, cue: 'voice-recognized' };
     };
     recognition.onerror = () => {
       status.textContent = copy.voiceUnavailable;
-      announceTransfer(copy.voiceUnavailable, 'voice-error');
+      announcement = { text: copy.voiceUnavailable, cue: 'voice-error' };
     };
-    announceTransfer(copy.voicePrompt, 'voice-prompt');
-    recognition.start();
+    recognition.onend = () => {
+      if (activeSpeechRecognition === recognition) activeSpeechRecognition = null;
+      resumeTalkback();
+      if (announcement) announceTransfer(announcement.text, announcement.cue);
+    };
+    status.textContent = copy.voicePrompt;
+    try {
+      recognition.start();
+    } catch (error) {
+      status.textContent = copy.voiceUnavailable;
+      announcement = { text: copy.voiceUnavailable, cue: 'voice-error' };
+      if (activeSpeechRecognition === recognition) activeSpeechRecognition = null;
+      resumeTalkback();
+      announceTransfer(announcement.text, announcement.cue);
+    }
+  }
+
+  function stopSpeechRecognition() {
+    if (!activeSpeechRecognition) return;
+    activeSpeechRecognition.abort();
+    activeSpeechRecognition = null;
+  }
+
+  function pauseTalkback() {
+    window.dispatchEvent(new CustomEvent('railagent:pause-talkback'));
+  }
+
+  function resumeTalkback() {
+    window.dispatchEvent(new CustomEvent('railagent:resume-talkback'));
   }
 
   function announceTransfer(text, cue) {

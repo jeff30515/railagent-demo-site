@@ -21,5 +21,17 @@ describe('friendly transfer client integration', () => {
 
     expect(clientScript).toContain("panel.querySelectorAll('.mp-tags')");
     expect(clientScript).toContain("tagList.setAttribute('data-railagent-local-hidden', 'true')");
+    expect(clientScript).toContain("wrapper.setAttribute('data-railagent-local-hidden', 'true')");
+  });
+
+  it('pauses talkback until voice recognition finishes', async () => {
+    const clientScript = await readFile(clientScriptPath, 'utf8');
+    const a11yScript = await readFile(new URL('../../../assets/railagent-a11y.js', import.meta.url), 'utf8');
+
+    expect(clientScript).toContain("new CustomEvent('railagent:pause-talkback')");
+    expect(clientScript).toContain("new CustomEvent('railagent:resume-talkback')");
+    expect(clientScript).toContain('recognition.onend');
+    expect(a11yScript).toContain("window.addEventListener('railagent:pause-talkback'");
+    expect(a11yScript).toContain('if (talkbackPaused) return;');
   });
 });
