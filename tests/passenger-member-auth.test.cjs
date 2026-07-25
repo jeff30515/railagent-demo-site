@@ -25,6 +25,12 @@ class Element {
     this.required = false;
     this.value = '';
     this.parentNode = null;
+    if (this.tagName === 'SELECT') {
+      Object.defineProperty(this, 'type', {
+        enumerable: true,
+        get: () => 'select-one',
+      });
+    }
   }
 
   append(...nodes) {

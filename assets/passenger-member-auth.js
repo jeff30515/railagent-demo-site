@@ -23,6 +23,7 @@
       id: 'passenger-member-auth-style',
       textContent:
         '.mobile-product .passenger-member-auth__tabs{margin:.25rem 0 .75rem}' +
+        '.mobile-product .passenger-member-auth__tab{text-decoration:none}' +
         '.mobile-product .passenger-member-auth__form{gap:.85rem}' +
         '.mobile-product .passenger-member-auth__field{display:grid;gap:.35rem;font-weight:800;color:var(--mp-navy)}' +
         '.mobile-product .passenger-member-auth__field input,.mobile-product .passenger-member-auth__field select{width:100%;min-height:48px;border:1px solid rgba(30,58,95,.12);border-radius:14px;background:#fff;color:var(--mp-ink);font:inherit;padding:0 .9rem;box-shadow:inset 0 1px rgba(255,255,255,.85),0 4px 14px rgba(21,42,69,.06)}' +
@@ -43,12 +44,13 @@
       htmlFor: id,
     });
     const caption = createElement('span', { textContent: labelText });
-    const input = createElement(options && options.select ? 'select' : 'input', {
+    const controlOptions = {
       id,
       name: id,
       required: Boolean(options && options.required),
-      type: (options && options.type) || 'text',
-    });
+    };
+    if (!(options && options.select)) controlOptions.type = (options && options.type) || 'text';
+    const input = createElement(options && options.select ? 'select' : 'input', controlOptions);
 
     if (options && options.placeholder) input.setAttribute('placeholder', options.placeholder);
     if (options && options.autocomplete) input.setAttribute('autocomplete', options.autocomplete);
