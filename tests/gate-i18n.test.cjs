@@ -4,6 +4,8 @@ const path = require('node:path');
 const test = require('node:test');
 const vm = require('node:vm');
 
+const gateCss = fs.readFileSync(path.join(__dirname, '..', 'assets', 'gate-i18n.css'), 'utf8');
+
 class Element {
   constructor(tagName) {
     this.tagName = tagName.toUpperCase();
@@ -305,6 +307,14 @@ test('gate i18n publishes complete copy and fixed short labels for every support
     assert.notEqual(copy.title, '');
     assert.notEqual(copy.tagline, '');
   }
+});
+
+test('gate language chips use centered two-row flex wrapping instead of a three-column grid', () => {
+  assert.match(gateCss, /\.mp-lang-row\.mp-lang-row-fixed\s*\{[^}]*display:\s*flex;/s);
+  assert.match(gateCss, /\.mp-lang-row\.mp-lang-row-fixed\s*\{[^}]*flex-wrap:\s*wrap;/s);
+  assert.match(gateCss, /\.mp-lang-row\.mp-lang-row-fixed\s*\{[^}]*justify-content:\s*center;/s);
+  assert.match(gateCss, /\.mp-lang-row\.mp-lang-row-fixed\s*\{[^}]*max-height:\s*calc\(\(2 \* var\(--mp-lang-chip-height\)\) \+ 0\.4rem\);/s);
+  assert.doesNotMatch(gateCss, /grid-template-columns:\s*repeat\(3/);
 });
 
 test('gate i18n localizes non-image gate text and keeps image role cards intact', () => {

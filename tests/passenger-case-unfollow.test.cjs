@@ -73,6 +73,15 @@ class Element {
   querySelectorAll(selector) {
     return findAll(this, selector);
   }
+
+  closest(selector) {
+    let node = this;
+    while (node) {
+      if (matchesSelector(node, selector)) return node;
+      node = node.parentNode;
+    }
+    return null;
+  }
 }
 
 function createDocument() {
@@ -109,6 +118,7 @@ function hasClass(node, className) {
 }
 
 function matchesSelector(node, selector) {
+  if (selector === 'section') return node.tagName === 'SECTION';
   if (selector === 'section[aria-label="public own case list"]') {
     return node.tagName === 'SECTION' && node.attributes['aria-label'] === 'public own case list';
   }
@@ -229,4 +239,24 @@ test('renders Japanese unfollow status and removes only the selected tracked rec
   assert.equal(list.querySelectorAll('article.mp-list-item').length, 1);
   assert.equal(textOf(section.querySelector('[data-passenger-unfollow-status]')), '追跡を解除しました SE-REMOVE');
   assert.equal(passengerI18n.applyCalls.at(-1), section);
+});
+
+test('adds unfollow controls when the case section label is localized', () => {
+  const document = createDocument();
+  const section = document.createElement('section');
+  section.setAttribute('aria-label', 'My Cases');
+  const list = document.createElement('div');
+  list.id = 'railagent-tracked-lost-found-cases';
+  list.className = 'mp-list';
+  list.dataset.signature = JSON.stringify([{ id: 'tracked-localized' }]);
+  appendTrackedArticle(list, 'SE-LOCALIZED', 'localized case');
+  section.append(list);
+  document.documentElement.append(section);
+  const localStorage = createLocalStorage({
+    [TRACKED_CASES_KEY]: JSON.stringify([{ id: 'tracked-localized' }]),
+  });
+
+  loadEnhancer(document, localStorage, createPassengerI18n()).enhancePassengerCases(document);
+
+  assert.ok(section.querySelector('[data-passenger-unfollow]'));
 });

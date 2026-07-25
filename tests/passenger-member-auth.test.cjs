@@ -177,6 +177,60 @@ function createPassengerI18n(language) {
       'member.returnToGate': 'Back to Role Selection',
       'member.functions': 'Member Functions',
     },
+    ja: {
+      'member.login': 'メンバーサインイン',
+      'member.loginLead': '会員アカウントとパスワードを入力してください。',
+      'member.account': 'アカウント',
+      'member.password': 'パスワード',
+      'member.remember': 'アカウントを記憶',
+      'member.forgotPassword': 'パスワードを忘れた場合',
+      'member.loginHint': '8-12文字で英字と数字を含めてください。',
+      'member.loginDemoStatus': 'このメンバーサインインデモは実認証に接続されていません。',
+      'member.forgotPasswordDemoStatus': 'オンラインリセットはまだ提供していません。',
+      'member.join': '会員登録',
+      'member.joinLead': '基本情報を入力して会員アカウントを作成してください。',
+      'member.id': 'ID番号',
+      'member.passwordConfirm': 'パスワード確認',
+      'member.name': '名前',
+      'member.gender': '性別',
+      'member.genderMale': '男性',
+      'member.genderFemale': '女性',
+      'member.birthday': '生年月日',
+      'member.email': 'E-mail',
+      'member.mobile': '携帯電話',
+      'member.residence': '住所',
+      'member.joinDemoStatus': 'この会員登録デモは個人情報を保存しません。',
+      'member.returnToGate': '役割選択へ戻る',
+      'member.functions': '会員機能',
+      'member.accountTitle': 'アカウント',
+    },
+    ko: {
+      'member.login': '회원 로그인',
+      'member.loginLead': '회원 계정과 비밀번호를 입력하세요.',
+      'member.account': '계정',
+      'member.password': '비밀번호',
+      'member.remember': '계정 기억',
+      'member.forgotPassword': '비밀번호 찾기',
+      'member.loginHint': '8-12자, 영문과 숫자를 포함하세요.',
+      'member.loginDemoStatus': '이 회원 로그인 데모는 실제 인증에 연결되어 있지 않습니다.',
+      'member.forgotPasswordDemoStatus': '온라인 재설정은 아직 제공하지 않습니다.',
+      'member.join': '회원 가입',
+      'member.joinLead': '기본 정보를 입력하여 회원 계정을 만드세요.',
+      'member.id': 'ID 번호',
+      'member.passwordConfirm': '비밀번호 확인',
+      'member.name': '이름',
+      'member.gender': '성별',
+      'member.genderMale': '남성',
+      'member.genderFemale': '여성',
+      'member.birthday': '생일',
+      'member.email': 'E-mail',
+      'member.mobile': '휴대폰',
+      'member.residence': '거주지',
+      'member.joinDemoStatus': '이 회원 가입 데모는 개인 정보를 저장하지 않습니다.',
+      'member.returnToGate': '역할 선택으로 돌아가기',
+      'member.functions': '회원 기능',
+      'member.accountTitle': '계정',
+    },
   };
 
   return {
@@ -190,6 +244,41 @@ function createPassengerI18n(language) {
     },
   };
 }
+
+test('enhances localized account pages without Traditional Chinese labels', () => {
+  const fixtures = [
+    { language: 'en', accountTitle: 'Account', returnLabel: 'Back to Role Selection', expected: 'Member Sign In' },
+    { language: 'ja', accountTitle: 'アカウント', returnLabel: '役割選択へ戻る', expected: 'メンバーサインイン' },
+    { language: 'ko', accountTitle: '계정', returnLabel: '역할 선택으로 돌아가기', expected: '회원 로그인' },
+  ];
+
+  fixtures.forEach(({ language, accountTitle, returnLabel, expected }) => {
+    const document = createDocument();
+    const section = document.createElement('section');
+    section.className = 'mp-stack';
+    section.setAttribute('aria-label', accountTitle);
+    const header = document.createElement('div');
+    header.className = 'mp-hero-block';
+    header.textContent = accountTitle;
+    const summary = document.createElement('article');
+    summary.className = 'mp-card mp-stack';
+    summary.textContent = `${accountTitle} visible cases 2`;
+    const reset = document.createElement('button');
+    reset.className = 'mp-secondary';
+    reset.textContent = 'Reset demo';
+    const exit = document.createElement('button');
+    exit.className = 'mp-primary';
+    exit.textContent = returnLabel;
+    section.append(header, summary, reset, exit);
+    document.documentElement.append(section);
+
+    loadEnhancer(document, createPassengerI18n(language)).PassengerMemberAuth.enhancePassengerMemberAuth(document);
+
+    assert.match(textOf(section), new RegExp(expected));
+    assert.ok(section.querySelector('#member-login-account'));
+    assert.equal(section.querySelector('[data-member-auth]') !== null, true);
+  });
+});
 
 function loadEnhancer(document, passengerI18n) {
   const script = fs.readFileSync(path.join(__dirname, '..', 'assets', 'passenger-member-auth.js'), 'utf8');
