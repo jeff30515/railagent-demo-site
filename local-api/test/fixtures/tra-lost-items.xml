@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document>
+  <row>
+    <pickupDate>2023-07-17 22:17:32</pickupDate>
+    <propertyName>umbrella</propertyName>
+    <propertyAmt>1.0</propertyAmt>
+    <pickupLocation>Taipei Station</pickupLocation>
+    <keepStationTel>02-23713558</keepStationTel>
+    <keepStationAddr>No. 3 Beiping W. Rd.</keepStationAddr>
+    <propertyFeature>black folding umbrella</propertyFeature>
+  </row>
+  <row>
+    <pickupDate>2023-07-16 12:00:00</pickupDate>
+    <propertyName>wallet</propertyName>
+    <propertyAmt>1.0</propertyAmt>
+    <pickupLocation>train-number: 123</pickupLocation>
+  </row>
+  <row>
+    <pickupDate>2023-07-15 08:30:00</pickupDate>
+    <propertyName>backpack</propertyName>
+    <propertyAmt>1.0</propertyAmt>
+    <pickupLocation>Platform 4 locker</pickupLocation>
+  </row>
+</document>

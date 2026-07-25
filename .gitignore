@@ -1,0 +1,8 @@
+local-api/node_modules/
+local-api/dist/
+local-api/local.settings.json
+local-api/tools/
+local-api/*.log
+local-api/data/*.json
+local-api/data/*.xml
+local-api/data/*.log

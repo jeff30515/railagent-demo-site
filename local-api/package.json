@@ -1,0 +1,24 @@
+{
+  "name": "api",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/src/functions/*.js",
+  "scripts": {
+    "start": "func start",
+    "start:host": "npm run build && node dist/src/localServer.js",
+    "start:functions": "func start --port 7071",
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@azure/data-tables": "^13.3.2",
+    "@azure/functions": "^4.7.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.2.0"
+  }
+}
