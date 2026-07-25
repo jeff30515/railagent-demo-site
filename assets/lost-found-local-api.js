@@ -183,6 +183,12 @@
         button.parentElement?.setAttribute('data-railagent-local-hidden', 'true');
       }
     });
+    [...panel.querySelectorAll('.mp-tags')].forEach((tagList) => {
+      const labels = [...tagList.querySelectorAll('.mp-tag')].map((tag) => tag.textContent.trim());
+      if (labels.length === 4 && labels.includes('繁體中文') && labels.includes('輪椅') && labels.includes('避開樓梯') && labels.includes('轉乘高鐵')) {
+        tagList.setAttribute('data-railagent-local-hidden', 'true');
+      }
+    });
     if (document.getElementById('railagent-friendly-transfer-tools')) return;
 
     const tools = document.createElement('section');

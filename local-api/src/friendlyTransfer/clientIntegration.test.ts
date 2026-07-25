@@ -15,4 +15,11 @@ describe('friendly transfer client integration', () => {
 
     expect(clientScript).toContain('data-railagent-transfer-control');
   });
+
+  it('removes the legacy transfer preference tag strip', async () => {
+    const clientScript = await readFile(clientScriptPath, 'utf8');
+
+    expect(clientScript).toContain("panel.querySelectorAll('.mp-tags')");
+    expect(clientScript).toContain("tagList.setAttribute('data-railagent-local-hidden', 'true')");
+  });
 });
