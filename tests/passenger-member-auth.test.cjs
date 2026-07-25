@@ -120,6 +120,7 @@ function findAll(root, selector) {
 function matchesSelector(node, selector) {
   if (selector === 'section') return node.tagName === 'SECTION';
   if (selector === 'button') return node.tagName === 'BUTTON';
+  if (selector === 'a') return node.tagName === 'A';
   if (selector.startsWith('#')) return node.id === selector.slice(1);
   if (selector.startsWith('.')) return node.className.split(/\s+/).includes(selector.slice(1));
   if (selector === '[data-member-auth]') return node.attributes['data-member-auth'] !== undefined;
@@ -143,15 +144,26 @@ function findByText(root, selector, expectedText) {
 
 function loadEnhancer(document) {
   const script = fs.readFileSync(path.join(__dirname, '..', 'assets', 'passenger-member-auth.js'), 'utf8');
+  const windowEvents = {};
+  const windowObject = {
+    location: { hash: '' },
+    addEventListener(type, handler) {
+      windowEvents[type] = handler;
+    },
+    dispatchEvent(event) {
+      const handler = windowEvents[event.type];
+      if (handler) handler.call(this, event);
+    },
+  };
   const context = {
     document,
     MutationObserver: class {
       observe() {}
     },
-    window: {},
+    window: windowObject,
   };
   vm.runInNewContext(script, context);
-  return context.window.PassengerMemberAuth;
+  return context.window;
 }
 
 test('replaces passenger account summary with login fields and keeps return action', () => {
@@ -174,7 +186,8 @@ test('replaces passenger account summary with login fields and keeps return acti
   section.append(summary, reset, exit);
   document.documentElement.append(section);
 
-  loadEnhancer(document).enhancePassengerMemberAuth(document);
+  const memberAuth = loadEnhancer(document);
+  memberAuth.PassengerMemberAuth.enhancePassengerMemberAuth(document);
 
   const visibleText = textOf(section);
   assert.match(visibleText, /會員登入/);
@@ -186,17 +199,9 @@ test('replaces passenger account summary with login fields and keeps return acti
   assert.doesNotMatch(visibleText, /可見事件/);
   assert.doesNotMatch(visibleText, /重設友善轉乘示範/);
 
-  const joinEvent = {
-    type: 'focusin',
-    propagationStopped: false,
-    preventDefault() {},
-    stopPropagation() {
-      this.propagationStopped = true;
-    },
-  };
-  joinEvent.target = findByText(section, 'button', '加入會員');
-  document.dispatchEvent(joinEvent);
-  assert.equal(joinEvent.propagationStopped, true);
+  assert.equal(findByText(section, 'a', '加入會員').getAttribute('href'), '#member-join');
+  memberAuth.location.hash = '#member-join';
+  memberAuth.dispatchEvent({ type: 'hashchange' });
   const joinText = textOf(section);
   assert.match(joinText, /證號/);
   assert.match(joinText, /再次確認密碼/);
@@ -231,7 +236,7 @@ test('replaces the old account page even when its aria label differs from the ti
   section.append(header, summary, reset, exit);
   document.documentElement.append(section);
 
-  loadEnhancer(document).enhancePassengerMemberAuth(document);
+  loadEnhancer(document).PassengerMemberAuth.enhancePassengerMemberAuth(document);
 
   const visibleText = textOf(section);
   assert.match(visibleText, /會員登入/);

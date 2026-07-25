@@ -151,25 +151,18 @@
     return form;
   }
 
-  function buildTab(label, tabName, active, onClick) {
-    const tab = createElement('button', {
-      type: 'button',
+  function buildTab(label, tabName, active) {
+    const tab = createElement('a', {
       className: active ? 'mp-chip passenger-member-auth__tab is-active' : 'mp-chip passenger-member-auth__tab',
       textContent: label,
       attributes: {
+        href: '#member-' + tabName,
         role: 'tab',
         'data-member-auth-tab': tabName,
         'aria-pressed': active ? 'true' : 'false',
         'aria-selected': active ? 'true' : 'false',
       },
     });
-    const activate = function (event) {
-      event.preventDefault();
-      event.stopPropagation();
-      onClick();
-    };
-    tab.addEventListener('pointerdown', activate);
-    tab.addEventListener('click', activate);
     return tab;
   }
 
@@ -191,12 +184,8 @@
       attributes: { role: 'tablist', 'aria-label': '\u6703\u54e1\u529f\u80fd' },
     });
     tabs.append(
-      buildTab('\u6703\u54e1\u767b\u5165', 'login', activeTab === 'login', function () {
-        render(section, exitButton, 'login');
-      }),
-      buildTab('\u52a0\u5165\u6703\u54e1', 'join', activeTab === 'join', function () {
-        render(section, exitButton, 'join');
-      }),
+      buildTab('\u6703\u54e1\u767b\u5165', 'login', activeTab === 'login'),
+      buildTab('\u52a0\u5165\u6703\u54e1', 'join', activeTab === 'join'),
     );
 
     const panel = createElement('div', {
@@ -255,33 +244,26 @@
 
     if (!exitButton) return false;
 
-    render(section, exitButton, 'login');
+    render(section, exitButton, activeMemberTab());
     return true;
   }
 
-  function installTabEventBridge() {
-    if (!document.addEventListener) return;
+  function activeMemberTab() {
+    return window.location && window.location.hash === '#member-join' ? 'join' : 'login';
+  }
 
-    const activateTab = function (event) {
-      const tab = event.target && event.target.closest && event.target.closest('.passenger-member-auth__tab');
-      const tabName = tab && tab.getAttribute('data-member-auth-tab');
-      const section = tab && tab.closest('section');
-      const exitButton = section && findReturnButton(section);
-
-      if (!tabName || !section || !exitButton) return;
-
-      event.preventDefault();
-      event.stopPropagation();
-      render(section, exitButton, tabName);
-    };
-
-    document.addEventListener('pointerdown', activateTab, true);
-    document.addEventListener('click', activateTab, true);
-    document.addEventListener('focusin', activateTab, true);
+  function renderMemberTabFromHash() {
+    const section =
+      findLegacyAccountSection(document) ||
+      Array.from(document.querySelectorAll('section')).find(
+        (candidate) => candidate.getAttribute('aria-label') === '\u6703\u54e1\u767b\u5165',
+      );
+    const exitButton = section && findReturnButton(section);
+    if (section && exitButton) render(section, exitButton, activeMemberTab());
   }
 
   window.PassengerMemberAuth = { enhancePassengerMemberAuth };
-  installTabEventBridge();
+  window.addEventListener('hashchange', renderMemberTabFromHash);
 
   const observer = new MutationObserver(function () {
     enhancePassengerMemberAuth(document);
