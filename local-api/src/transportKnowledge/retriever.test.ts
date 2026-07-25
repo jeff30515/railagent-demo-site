@@ -59,6 +59,28 @@ describe('retrieveTransportKnowledge', () => {
     });
   });
 
+  it('does not treat generic CJK station character overlap as a local source match', async () => {
+    const root = await createKnowledgeRoot({
+      'accessibility-documents.jsonl': [
+        JSON.stringify({
+          id: 'taipei-main-accessibility',
+          title: 'Taipei Main Station accessibility',
+          text: 'Taipei Main Station \u81fa\u5317\u8eca\u7ad9 has elevators \u96fb\u68af, accessible restrooms \u7121\u969c\u7919\u5ec1\u6240, and barrier-free transfer routes.',
+          sourceUrl: 'https://example.test/taipei-accessibility',
+          downloadedAt: '2026-07-25T01:02:03.000Z'
+        })
+      ].join('\n')
+    });
+
+    const result = await retrieveTransportKnowledge('\u9ad8\u96c4\u8eca\u7ad9\u907a\u5931\u7269\u600e\u9ebc\u8fa6', root);
+
+    expect(result).toEqual({
+      knowledgeMode: 'model-knowledge',
+      documents: [],
+      sources: []
+    });
+  });
+
   it('ignores malformed JSONL lines without dropping valid documents', async () => {
     const root = await createKnowledgeRoot({
       'accessibility-documents.jsonl': [

@@ -29,6 +29,7 @@ interface RankedDocument {
 }
 
 const MAX_DOCUMENTS = 5;
+const MIN_TOKEN_OVERLAP = 2;
 
 export async function retrieveTransportKnowledge(
   question: string,
@@ -40,7 +41,7 @@ export async function retrieveTransportKnowledge(
   const documents = await loadDocuments(root);
   const ranked = documents
     .map((document) => ({ document, score: scoreDocument(document, queryTokens) }))
-    .filter((entry) => entry.score > 0)
+    .filter((entry) => entry.score >= MIN_TOKEN_OVERLAP)
     .sort((a, b) => b.score - a.score)
     .slice(0, MAX_DOCUMENTS);
 
@@ -115,8 +116,20 @@ function scoreDocument(document: TransportKnowledgeDocument, queryTokens: Set<st
 
 function tokenize(value: string): Set<string> {
   const normalized = value.toLocaleLowerCase().normalize('NFKC');
-  const tokens = normalized.match(/[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]|[\p{Letter}\p{Number}]{2,}/gu) ?? [];
+  const tokens = [
+    ...cjkBigrams(normalized),
+    ...(normalized.match(/[\p{Letter}\p{Number}]{2,}/gu) ?? [])
+  ];
   return new Set(tokens);
+}
+
+function cjkBigrams(value: string): string[] {
+  const segments = value.match(/[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]+/gu) ?? [];
+  return segments.flatMap((segment) => {
+    const chars = Array.from(segment);
+    if (chars.length < 2) return [];
+    return chars.slice(0, -1).map((char, index) => `${char}${chars[index + 1]}`);
+  });
 }
 
 function stringField(value: unknown): string | undefined {
