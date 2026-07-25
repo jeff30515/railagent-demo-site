@@ -43,8 +43,7 @@
   const COPY = {
     'zh-TW': {
       mainAria: 'RailAgent App 入口',
-      title: '選擇你的身分',
-      tagline: '依照你的語言與無障礙需求接上站務服務。',
+      title: '旅途中的服務夥伴',
       languageKicker: '語言',
       langAria: '語言友善 · 選擇介面語言',
       accessAria: '無障礙模式',
@@ -61,8 +60,7 @@
     },
     nan: {
       mainAria: 'RailAgent App 入口',
-      title: '揀你的身分',
-      tagline: '照你的語言佮無障礙需要，接予站務服務。',
+      title: '旅途中的服務夥伴',
       languageKicker: '語言',
       langAria: '語言友善 · 揀介面語言',
       accessAria: '無障礙模式',
@@ -79,8 +77,7 @@
     },
     hak: {
       mainAria: 'RailAgent App 入口',
-      title: '選擇你的身分',
-      tagline: '照你的語言摎無障礙需要，接著站務服務。',
+      title: '旅途中的服務夥伴',
       languageKicker: '語言',
       langAria: '語言友善 · 選擇介面語言',
       accessAria: '無障礙模式',
@@ -97,8 +94,7 @@
     },
     en: {
       mainAria: 'RailAgent app entry',
-      title: 'Choose your role',
-      tagline: 'Station help that follows your language and accessibility needs.',
+      title: 'Your travel service partner',
       languageKicker: 'Language',
       langAria: 'Language friendly · choose interface language',
       accessAria: 'Accessibility mode',
@@ -115,8 +111,7 @@
     },
     ja: {
       mainAria: 'RailAgent アプリ入口',
-      title: '役割を選択',
-      tagline: '言語とアクセシビリティに合わせて駅係員へつなぎます。',
+      title: '旅のサービスパートナー',
       languageKicker: '言語',
       langAria: '言語対応 · 表示言語を選択',
       accessAria: 'アクセシビリティモード',
@@ -133,8 +128,7 @@
     },
     ko: {
       mainAria: 'RailAgent 앱 입구',
-      title: '역할 선택',
-      tagline: '언어와 접근성 요구에 맞춰 역무원 서비스로 연결합니다.',
+      title: '여행 서비스 파트너',
       languageKicker: '언어',
       langAria: '언어 지원 · 인터페이스 언어 선택',
       accessAria: '접근성 모드',
@@ -151,8 +145,7 @@
     },
     vi: {
       mainAria: 'Lối vào ứng dụng RailAgent',
-      title: 'Chọn vai trò',
-      tagline: 'Kết nối hỗ trợ nhà ga theo ngôn ngữ và nhu cầu tiếp cận của bạn.',
+      title: 'Đồng hành dịch vụ trên hành trình',
       languageKicker: 'Ngôn ngữ',
       langAria: 'Hỗ trợ ngôn ngữ · chọn ngôn ngữ giao diện',
       accessAria: 'Chế độ tiếp cận',
@@ -169,8 +162,7 @@
     },
     id: {
       mainAria: 'Pintu masuk aplikasi RailAgent',
-      title: 'Pilih peran',
-      tagline: 'Bantuan stasiun mengikuti bahasa dan kebutuhan aksesibilitas Anda.',
+      title: 'Mitra layanan perjalanan Anda',
       languageKicker: 'Bahasa',
       langAria: 'Ramah bahasa · pilih bahasa antarmuka',
       accessAria: 'Mode aksesibilitas',
@@ -187,8 +179,7 @@
     },
     th: {
       mainAria: 'ทางเข้าแอป RailAgent',
-      title: 'เลือกบทบาทของคุณ',
-      tagline: 'เชื่อมต่อความช่วยเหลือในสถานีตามภาษาและความต้องการการเข้าถึงของคุณ',
+      title: 'คู่หูบริการตลอดการเดินทาง',
       languageKicker: 'ภาษา',
       langAria: 'เป็นมิตรด้านภาษา · เลือกภาษาหน้าจอ',
       accessAria: 'โหมดการเข้าถึง',
@@ -286,16 +277,11 @@
     return true;
   }
 
-  function ensureTagline(hero, copy) {
-    if (!hero || typeof hero.querySelector !== 'function') return false;
-    let tagline = hero.querySelector('[data-gate-i18n-tagline]');
-    if (!tagline && hero.ownerDocument && typeof hero.ownerDocument.createElement === 'function') {
-      tagline = hero.ownerDocument.createElement('p');
-      tagline.className = 'mp-gate-tagline';
-      tagline.setAttribute('data-gate-i18n-tagline', '');
-      hero.append(tagline);
-    }
-    return text(tagline, copy.tagline);
+  function removeInjectedTagline(hero) {
+    const tagline = hero && hero.querySelector && hero.querySelector('[data-gate-i18n-tagline]');
+    if (!tagline || typeof tagline.remove !== 'function') return false;
+    tagline.remove();
+    return true;
   }
 
   function localizeLanguageChips(gate, language) {
@@ -353,7 +339,7 @@
     changed = attr(gate, 'aria-label', copy.mainAria) || changed;
     const hero = gate.querySelector('.mp-gate-hero');
     changed = text(hero && hero.querySelector && hero.querySelector('h1'), copy.title) || changed;
-    changed = ensureTagline(hero, copy) || changed;
+    changed = removeInjectedTagline(hero) || changed;
     changed = text(gate.querySelector('.mp-lang-kicker'), copy.languageKicker) || changed;
     changed = attr(gate.querySelector('.mp-lang-bar'), 'aria-label', copy.langAria) || changed;
     changed = localizeLanguageChips(gate, normalizedLanguage) || changed;
