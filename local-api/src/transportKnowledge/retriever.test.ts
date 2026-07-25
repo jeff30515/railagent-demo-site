@@ -37,6 +37,25 @@ describe('retrieveTransportKnowledge', () => {
     ]);
   });
 
+  it('matches 台北 queries against 臺北 local knowledge documents', async () => {
+    const root = await createKnowledgeRoot({
+      'accessibility-documents.jsonl': [
+        JSON.stringify({
+          id: 'taipei-accessibility-service',
+          title: '臺北服務',
+          text: '服務說明',
+          sourceUrl: 'https://example.test/taipei-service',
+          downloadedAt: '2026-07-25T01:02:03.000Z'
+        })
+      ].join('\n')
+    });
+
+    const result = await retrieveTransportKnowledge('台北車站有哪些無障礙服務', root);
+
+    expect(result.knowledgeMode).toBe('local-sources');
+    expect(result.documents).toHaveLength(1);
+  });
+
   it('falls back to model knowledge when no local document matches', async () => {
     const root = await createKnowledgeRoot({
       'accessibility-documents.jsonl': [

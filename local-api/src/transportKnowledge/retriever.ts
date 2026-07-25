@@ -115,7 +115,7 @@ function scoreDocument(document: TransportKnowledgeDocument, queryTokens: Set<st
 }
 
 function tokenize(value: string): Set<string> {
-  const normalized = value.toLocaleLowerCase().normalize('NFKC');
+  const normalized = value.toLocaleLowerCase().normalize('NFKC').replaceAll('台', '臺');
   const tokens = [
     ...cjkBigrams(normalized),
     ...(normalized.match(/[\p{Letter}\p{Number}]{2,}/gu) ?? [])
