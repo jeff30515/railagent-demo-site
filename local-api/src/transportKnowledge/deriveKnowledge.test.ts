@@ -181,6 +181,7 @@ describe('transport knowledge derivation', () => {
     );
 
     expect(documents.accessibility).toHaveLength(1);
+    expect(documents.accessibility[0]?.title).toBe('TRA official station accessibility services');
     expect(documents.accessibility[0]?.text).toContain('無障礙服務');
     expect(JSON.stringify(documents)).not.toContain('unrelated campaign text');
     expect(documents.station).toEqual([]);

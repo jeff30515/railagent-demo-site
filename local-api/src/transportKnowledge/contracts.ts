@@ -17,6 +17,7 @@ export interface TransportCatalog {
 export interface KnowledgeDocument {
   id: string;
   topic: 'station' | 'transfer' | 'accessibility' | 'timetable';
+  title: string;
   text: string;
   sourceUrl: string;
   downloadedAt: string;

@@ -38,6 +38,7 @@ export function deriveKnowledge(
       documents[topic].push({
         id: `${topic}:${entry.id}:${index + 1}`,
         topic,
+        title: entry.title,
         text,
         sourceUrl: entry.sourceUrl,
         downloadedAt: entry.downloadedAt,
