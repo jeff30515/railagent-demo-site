@@ -203,13 +203,17 @@
   document.addEventListener('click', (event) => {
     const button = event.target.closest('button');
     if (!button) return;
+    const buttonText = button.textContent.trim();
+    if (buttonText === '\u2190 \u8fd4\u56de' || buttonText === '\u9996\u9801') {
+      document.getElementById('railagent-local-lost-found-result')?.remove();
+    }
     if (button.id === 'railagent-local-chat-launcher') {
       event.preventDefault();
       event.stopImmediatePropagation();
       openChat();
       return;
     }
-    if (!searchLabels.includes(button.textContent.trim())) return;
+    if (!searchLabels.includes(buttonText)) return;
     event.preventDefault();
     event.stopImmediatePropagation();
     void search(button);
