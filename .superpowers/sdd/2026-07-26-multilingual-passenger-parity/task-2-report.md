@@ -33,7 +33,7 @@
 
 ## Commit
 
-- `f038b4c` - `Localize passenger member and case actions`
+- `a7472d0` - `Localize passenger member and case actions`
 
 ## Concerns
 
