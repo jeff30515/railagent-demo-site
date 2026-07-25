@@ -162,11 +162,13 @@
         'aria-selected': active ? 'true' : 'false',
       },
     });
-    tab.addEventListener('click', function (event) {
+    const activate = function (event) {
       event.preventDefault();
       event.stopPropagation();
       onClick();
-    });
+    };
+    tab.addEventListener('pointerdown', activate);
+    tab.addEventListener('click', activate);
     return tab;
   }
 
