@@ -5,9 +5,10 @@
   justify-content: center;
   align-items: center;
   gap: 0.4rem;
-  width: min(100%, 18rem);
-  max-height: calc((2 * var(--mp-lang-chip-height)) + 0.4rem);
-  overflow: hidden;
+  /* Five short chips fit on the first row and four on the second at the
+     phone layout width.  Do not clip overflow here: doing so hid Thai when
+     a browser wrapped the ninth chip onto a third row. */
+  width: min(100%, 19rem);
 }
 
 .mobile-product .mp-lang-row.mp-lang-row-fixed .mp-lang-chip {
@@ -15,7 +16,7 @@
   min-width: 3.2rem;
   min-height: var(--mp-lang-chip-height);
   justify-content: center;
-  padding: 0.3rem 0.55rem;
+  padding: 0.3rem 0.5rem;
   white-space: nowrap;
 }
 

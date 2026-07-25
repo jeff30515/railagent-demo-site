@@ -37,6 +37,16 @@ assert.match(
   /copy\.contact.*record\.contactPhone/,
   'Tracked case cards should show the preserved contact telephone.',
 );
+assert.match(
+  enhancer,
+  /data-railagent-speech-cue="quick-help"/,
+  'The old home-only quick-help action must be removed by its stable cue, not Chinese copy.',
+);
+assert.match(
+  enhancer,
+  /\.mp-service-list/,
+  'Every localized passenger home needs the RailAgent chat card in its stable service-list container.',
+);
 assert.ok(
   enhancer.includes(String.raw`\u9ed1\u8272\u80cc\u5305\u907a\u5931\u7269\uff0c\u9700\u8981\u7ad9\u52d9\u5148\u6bd4\u5c0d\u5019\u9078\u62fe\u7372\u7269\u3002`),
   'The legacy backpack case should be explicitly removed.',
