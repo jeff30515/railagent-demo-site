@@ -1,5 +1,20 @@
 (function () {
   const TRACKED_CASES_KEY = 'railagent-tracked-lost-found-cases';
+  const FALLBACK_COPY = {
+    'case.unfollow': '取消追蹤',
+    'case.unfollowStatus': '已取消追蹤 ',
+  };
+
+  function t(key) {
+    const i18n = window.PassengerI18n;
+    if (i18n && typeof i18n.translate === 'function') return i18n.translate(key);
+    return FALLBACK_COPY[key] || key;
+  }
+
+  function applyI18n(section) {
+    const i18n = window.PassengerI18n;
+    if (i18n && typeof i18n.apply === 'function') i18n.apply(section);
+  }
 
   function trackedRecords(list) {
     try {
@@ -41,7 +56,8 @@
       status.setAttribute('data-passenger-unfollow-status', '');
       section.append(status);
     }
-    status.textContent = '已取消追蹤 ' + eventId;
+    status.textContent = t('case.unfollowStatus') + eventId;
+    applyI18n(section);
   }
 
   function enhancePassengerCases(root) {
@@ -63,7 +79,7 @@
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'mp-secondary';
-      button.textContent = '取消追蹤';
+      button.textContent = t('case.unfollow');
       button.setAttribute('data-passenger-unfollow', '');
       button.addEventListener('click', (event) => {
         event.preventDefault();
@@ -75,6 +91,7 @@
       article.append(button);
     });
 
+    applyI18n(section);
     return true;
   }
 
