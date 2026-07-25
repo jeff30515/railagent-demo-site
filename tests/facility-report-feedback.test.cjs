@@ -22,8 +22,8 @@ assert.ok(
   'Facility reports should explain why a blank submission cannot be sent.',
 );
 assert.ok(
-  enhancement.includes(String.raw`\u611f\u8b1d\u60a8\u7684\u56de\u5831\uff0c\u6211\u5011\u5df2\u901a\u77e5\u76f8\u95dc\u4eba\u54e1\u8655\u7406\u3002`),
-  'Facility reports should acknowledge a successful submission.',
+  enhancement.includes(String.raw`\u611f\u8b1d\u60a8\u7684\u56de\u994b!`),
+  'Facility reports should use the requested acknowledgement.',
 );
 assert.ok(
   enhancement.includes("page.querySelector('#facility-issue')"),

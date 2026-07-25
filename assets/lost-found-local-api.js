@@ -36,7 +36,12 @@
     pickupDate: '\u62fe\u7372\u65e5\u671f',
     unknown: '\u672a\u77e5',
     unknownItem: '\u672a\u77e5\u7269\u54c1',
-    contact: '\u806f\u7d61\u65b9\u5f0f'
+    contact: '\u806f\u7d61\u65b9\u5f0f',
+    trackItem: '\u8ffd\u8e64\u6b64\u7269\u4ef6',
+    tracked: '\u5df2\u8ffd\u8e64',
+    tracking: '\u8ffd\u8e64\u4e2d',
+    feedback: '\u670d\u52d9\u56de\u994b',
+    thankYou: '\u611f\u8b1d\u60a8\u7684\u56de\u994b!'
     ,transferHelp: '\u8f49\u4e58\u5354\u52a9'
     ,transferRoute: '\u8f49\u4e58\u8def\u7dda\u5efa\u8b70'
     ,transferRouteLead: '\u8f38\u5165\u73fe\u5728\u5730\u9ede\u8207\u76ee\u7684\u5730\uff0c\u7531\u672c\u6a5f AI \u63d0\u4f9b\u53c3\u8003\u3002'
@@ -76,6 +81,8 @@
     style.id = 'railagent-local-api-style';
     style.textContent = `
       [data-railagent-local-hidden="true"] { display: none !important; }
+      .railagent-track-lost-found { background: #127d82; border: 0; border-radius: 12px; color: #fff; cursor: pointer; font: inherit; font-weight: 700; margin-top: 12px; min-height: 42px; padding: 9px 14px; }
+      .railagent-track-lost-found:disabled { cursor: default; opacity: .72; }
       #railagent-local-chat-launcher {
         align-items: center; background: #ffffff; border: 0; border-radius: 22px;
         box-shadow: 0 9px 24px rgba(15, 55, 82, .12); color: #123052;
@@ -402,12 +409,74 @@
     document.getElementById('railagent-transfer-dialog')?.remove();
   }
 
+  const TRACKED_CASES_KEY = 'railagent-tracked-lost-found-cases';
+  const LEGACY_BACKPACK_SUMMARY = '\u9ed1\u8272\u80cc\u5305\u907a\u5931\u7269\uff0c\u9700\u8981\u7ad9\u52d9\u5148\u6bd4\u5c0d\u5019\u9078\u62fe\u7372\u7269\u3002';
+  const LEGACY_FEEDBACK_NOTE = '\u7d50\u6848\u5f8c\u56de\u994b\u6703\u5beb\u5165\u672c\u6a5f\u4e8b\u4ef6\u76ee\u9304\uff0c\u4f9b\u6b77\u53f2\u54c1\u8cea\u5206\u6790\u3002';
+
+  function readTrackedCases() {
+    try {
+      const records = JSON.parse(window.localStorage.getItem(TRACKED_CASES_KEY) || '[]');
+      return Array.isArray(records) ? records : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function saveTrackedCase(record) {
+    const records = readTrackedCases();
+    if (records.some((entry) => entry.id === record.id)) return false;
+    window.localStorage.setItem(TRACKED_CASES_KEY, JSON.stringify([...records, record]));
+    return true;
+  }
+
+  function removeLegacyBackpackCase() {
+    [...document.querySelectorAll('article')].forEach((article) => {
+      if ((article.textContent || '').includes(LEGACY_BACKPACK_SUMMARY)) article.remove();
+    });
+  }
+
+  function syncPublicFeedbackCopy() {
+    const feedback = document.querySelector('article[aria-label="\u670d\u52d9\u56de\u994b"]');
+    if (!feedback) return;
+    const heading = feedback.querySelector('h3');
+    if (heading && heading.textContent !== copy.feedback) heading.textContent = copy.feedback;
+    [...feedback.querySelectorAll('p')].forEach((paragraph) => {
+      if ((paragraph.textContent || '').includes(LEGACY_FEEDBACK_NOTE)) paragraph.remove();
+      if ((paragraph.textContent || '').startsWith('\u5df2\u8a18\u9304\u56de\u994b\u65bc')) paragraph.textContent = copy.thankYou;
+    });
+  }
+
+  function renderTrackedCases() {
+    const page = document.querySelector('[aria-label="public own case list"]');
+    if (!page) return;
+    const records = readTrackedCases();
+    const signature = JSON.stringify(records);
+    let container = document.getElementById('railagent-tracked-lost-found-cases');
+    if (container?.dataset.signature === signature) return;
+    if (!container) {
+      container = document.createElement('section');
+      container.id = 'railagent-tracked-lost-found-cases';
+      container.className = 'mp-list';
+      page.querySelector('.mp-list')?.insertAdjacentElement('afterend', container);
+    }
+    container.dataset.signature = signature;
+    container.replaceChildren(...records.map((record) => {
+      const card = document.createElement('article');
+      card.className = 'mp-list-item';
+      card.innerHTML = `<div class="mp-meta"><span class="mp-status">${copy.tracking}</span><span>${escapeHtml(record.stationName)}</span></div><h3>${escapeHtml(record.title)}</h3><p class="mp-footnote">${copy.pickupDate}\uff1a${escapeHtml(record.pickupDate)}</p>`;
+      return card;
+    }));
+  }
+
   function syncLocalModeUi() {
     installStyles();
     markDemoContent();
     installChatLauncher();
     installFriendlyTransferTools();
     clearStaleLostFoundResult();
+    removeLegacyBackpackCase();
+    renderTrackedCases();
+    syncPublicFeedbackCopy();
     const hasFriendlyTransfer = [...document.querySelectorAll('h2')].some((element) =>
       element.offsetParent !== null && element.textContent.trim() === '\u53cb\u5584\u8f49\u4e58\u5354\u52a9'
     );
@@ -511,6 +580,15 @@
       openChat();
       return;
     }
+    if (button.matches('.railagent-track-lost-found')) {
+      event.preventDefault();
+      const record = JSON.parse(decodeURIComponent(button.dataset.railagentTrackedCase || ''));
+      saveTrackedCase(record);
+      button.textContent = copy.tracked;
+      button.disabled = true;
+      syncLocalModeUi();
+      return;
+    }
     if (!searchLabels.includes(buttonText)) return;
     event.preventDefault();
     event.stopImmediatePropagation();
@@ -559,8 +637,23 @@
     }
     const candidates = Array.isArray(response.candidates) ? response.candidates : [];
     const metadata = `${copy.snapshot} ${formatDate(response.sourceMaxPickupDate)} · ${copy.mode}：${escapeHtml(response.aiMode || 'unknown')}`;
-    const cards = candidates.length ? candidates.map(candidateCard).join('') : `<article class="mp-card"><p>${copy.noMatch}</p></article>`;
+    const cards = candidates.length ? candidates.map(trackedCandidateCard).join('') : `<article class="mp-card"><p>${copy.noMatch}</p></article>`;
     result.innerHTML = `<h3 class="mp-section-title">${copy.searchTitle}（${candidates.length}）</h3><p class="mp-footnote">${metadata}</p>${cards}`;
+  }
+
+  function trackedCandidateCard(candidate) {
+    const item = candidate.item || {};
+    const location = item.stationName || item.pickupLocation || copy.unknown;
+    const record = {
+      id: item.itemId || [item.propertyName || copy.unknownItem, location, item.pickupDate || ''].join('|'),
+      title: item.propertyName || copy.unknownItem,
+      stationName: location,
+      pickupDate: formatDate(item.pickupDate),
+      status: copy.tracking,
+    };
+    const tracked = readTrackedCases().some((entry) => entry.id === record.id);
+    const data = escapeHtml(encodeURIComponent(JSON.stringify(record)));
+    return `<article class="mp-list-item"><div class="mp-meta"><span class="mp-status">${escapeHtml(String(candidate.similarity ?? 0))}% ${copy.similar}</span><span>${escapeHtml(location)}</span></div><h3>${escapeHtml(record.title)}</h3><p class="mp-footnote">${copy.pickupDate}\uff1a${escapeHtml(record.pickupDate)}</p><p class="mp-footnote">${escapeHtml(candidate.reason || '')}</p><p class="mp-meta">${copy.contact}\uff1a${escapeHtml(item.keepStationTel || copy.unknown)}</p><button type="button" class="railagent-track-lost-found" data-railagent-tracked-case="${data}" ${tracked ? 'disabled' : ''}>${tracked ? copy.tracked : copy.trackItem}</button></article>`;
   }
 
   function candidateCard(candidate) {

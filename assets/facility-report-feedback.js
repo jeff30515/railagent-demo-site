@@ -1,7 +1,7 @@
 (function () {
   const ISSUE_LABEL = '\u8acb\u63cf\u8ff0\u73fe\u5834\u554f\u984c';
   const REQUIRED_MESSAGE = '\u8acb\u8f38\u5165\u73fe\u5834\u554f\u984c\u5f8c\u518d\u9001\u51fa\u3002';
-  const THANK_YOU_MESSAGE = '\u611f\u8b1d\u60a8\u7684\u56de\u5831\uff0c\u6211\u5011\u5df2\u901a\u77e5\u76f8\u95dc\u4eba\u54e1\u8655\u7406\u3002';
+  const THANK_YOU_MESSAGE = '\u611f\u8b1d\u60a8\u7684\u56de\u994b!';
 
   function createElement(name, options) {
     const element = document.createElement(name);
