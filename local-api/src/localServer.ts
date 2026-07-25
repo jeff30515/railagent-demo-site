@@ -6,6 +6,7 @@ import { createOllamaClient } from './lostFound/ollamaClient.js';
 import { loadLostItemStore } from './lostFound/repository.js';
 import { createLostFoundSearchService } from './lostFound/searchService.js';
 import { InvalidLostFoundRequest, normalizeLostFoundRequest } from './lostFound/validation.js';
+import { createFriendlyTransferService } from './friendlyTransfer/service.js';
 
 loadLocalSettings();
 
@@ -13,8 +14,10 @@ const service = createLostFoundSearchService({
   loadStore: loadLostItemStore,
   ollama: createOllamaClient()
 });
+const friendlyTransfer = createFriendlyTransferService({ chat: (message) => createOllamaClient().chat(message) });
 const MAX_REQUEST_BYTES = 16 * 1024;
 const MAX_CHAT_MESSAGE_LENGTH = 2000;
+const MAX_FRIENDLY_TRANSFER_INPUT_LENGTH = 200;
 
 class RequestBodyTooLarge extends Error {}
 
@@ -35,7 +38,12 @@ function loadLocalSettings() {
 export function createLocalLostFoundServer() {
   return createServer(async (request, response) => {
     const route = request.url?.split('?')[0];
-    if (route !== '/api/lost-found/match' && route !== '/api/passenger-chat') {
+    if (
+      route !== '/api/lost-found/match' &&
+      route !== '/api/passenger-chat' &&
+      route !== '/api/friendly-transfer/station' &&
+      route !== '/api/friendly-transfer/route'
+    ) {
       respond(response, 404, { error: 'Not found.' });
       return;
     }
@@ -63,6 +71,39 @@ export function createLocalLostFoundServer() {
     }
 
     try {
+      if (route === '/api/friendly-transfer/station') {
+        const spokenStation = textField(await readJson(request), 'spokenStation');
+        if (!spokenStation) {
+          respond(response, 400, { error: 'Station is required.' }, cors);
+          return;
+        }
+        try {
+          respond(response, 200, friendlyTransfer.findStation(spokenStation), cors);
+        } catch (error) {
+          if (error instanceof Error && error.message === 'Station could not be resolved.') {
+            respond(response, 404, { error: error.message }, cors);
+            return;
+          }
+          throw error;
+        }
+        return;
+      }
+
+      if (route === '/api/friendly-transfer/route') {
+        const body = await readJson(request);
+        const origin = textField(body, 'origin');
+        const destination = textField(body, 'destination');
+        if (!origin || !destination) {
+          respond(response, 400, { error: 'Origin and destination are required.' }, cors);
+          return;
+        }
+        respond(response, 200, {
+          answer: await friendlyTransfer.route(origin, destination),
+          model: process.env.OLLAMA_CHAT_MODEL ?? 'gemma4:e4b'
+        }, cors);
+        return;
+      }
+
       if (route === '/api/passenger-chat') {
         const body = await readJson(request);
         const message = typeof (body as { message?: unknown }).message === 'string'
@@ -94,12 +135,19 @@ export function createLocalLostFoundServer() {
       }
 
       respond(response, 503, {
-        error: route === '/api/passenger-chat'
+        error: route === '/api/passenger-chat' || route === '/api/friendly-transfer/route'
           ? 'Local Ollama chat is unavailable.'
           : 'TRA lost-item snapshot is unavailable.'
       }, cors);
     }
   });
+}
+
+function textField(body: unknown, field: string): string {
+  if (!body || typeof body !== 'object') return '';
+  const value = (body as Record<string, unknown>)[field];
+  if (typeof value !== 'string') return '';
+  return value.trim().slice(0, MAX_FRIENDLY_TRANSFER_INPUT_LENGTH);
 }
 
 function corsHeaders(origin: string | undefined): Record<string, string> {
