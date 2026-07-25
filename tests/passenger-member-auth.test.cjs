@@ -148,7 +148,50 @@ function findByText(root, selector, expectedText) {
   return root.querySelectorAll(selector).find((node) => textOf(node).includes(expectedText));
 }
 
-function loadEnhancer(document) {
+function createPassengerI18n(language) {
+  const copy = {
+    en: {
+      'member.login': 'Member Sign In',
+      'member.loginLead': 'Enter your member account and password.',
+      'member.account': 'Account',
+      'member.password': 'Password',
+      'member.remember': 'Remember Account',
+      'member.forgotPassword': 'Forgot Password',
+      'member.loginHint':
+        'Members should change passwords every three months. Use 8-12 characters with at least one letter and one number.',
+      'member.loginDemoStatus': 'This member sign-in demo is not connected to real authentication.',
+      'member.forgotPasswordDemoStatus': 'This forgot-password demo does not provide online reset yet.',
+      'member.join': 'Join as Member',
+      'member.joinLead': 'Fill in the basic details to create a member account.',
+      'member.id': 'ID Number',
+      'member.passwordConfirm': 'Confirm Password Again',
+      'member.name': 'Name',
+      'member.gender': 'Gender',
+      'member.genderMale': 'Male',
+      'member.genderFemale': 'Female',
+      'member.birthday': 'Birthday',
+      'member.email': 'E-mail',
+      'member.mobile': 'Mobile',
+      'member.residence': 'Residence',
+      'member.joinDemoStatus': 'This member registration demo has not saved personal data.',
+      'member.returnToGate': 'Back to Role Selection',
+      'member.functions': 'Member Functions',
+    },
+  };
+
+  return {
+    applyCalls: [],
+    translate(key) {
+      return copy[language][key] || key;
+    },
+    apply(section) {
+      this.applyCalls.push(section);
+      return true;
+    },
+  };
+}
+
+function loadEnhancer(document, passengerI18n) {
   const script = fs.readFileSync(path.join(__dirname, '..', 'assets', 'passenger-member-auth.js'), 'utf8');
   const windowEvents = {};
   const windowObject = {
@@ -166,11 +209,46 @@ function loadEnhancer(document) {
     MutationObserver: class {
       observe() {}
     },
-    window: windowObject,
+    window: {
+      ...windowObject,
+      PassengerI18n: passengerI18n,
+    },
   };
   vm.runInNewContext(script, context);
   return context.window;
 }
+
+test('renders member login form with English i18n while retaining login account id', () => {
+  const document = createDocument();
+  const section = document.createElement('section');
+  section.setAttribute('aria-label', '\u5e33\u6236');
+  const summary = document.createElement('article');
+  summary.className = 'mp-card mp-stack';
+  summary.textContent = '\u53ef\u898b\u4e8b\u4ef6 3';
+  const reset = document.createElement('button');
+  reset.className = 'mp-secondary';
+  reset.textContent = '\u91cd\u8a2d\u53cb\u5584\u8f49\u4e58\u793a\u7bc4';
+  const exit = document.createElement('button');
+  exit.className = 'mp-primary';
+  exit.textContent = '\u8fd4\u56de\u8eab\u5206\u9078\u64c7';
+  section.append(summary, reset, exit);
+  document.documentElement.append(section);
+  const passengerI18n = createPassengerI18n('en');
+
+  loadEnhancer(document, passengerI18n).PassengerMemberAuth.enhancePassengerMemberAuth(document);
+
+  const visibleText = textOf(section);
+  assert.match(visibleText, /Member Sign In/);
+  assert.match(visibleText, /Enter your member account and password\./);
+  assert.match(visibleText, /Account/);
+  assert.match(visibleText, /Password/);
+  assert.match(visibleText, /Remember Account/);
+  assert.match(visibleText, /Forgot Password/);
+  assert.match(visibleText, /Back to Role Selection/);
+  assert.ok(section.querySelector('#member-login-account'));
+  assert.equal(section.querySelector('#member-login-account').name, 'member-login-account');
+  assert.equal(passengerI18n.applyCalls[0], section);
+});
 
 test('replaces passenger account summary with login fields and keeps return action', () => {
   const document = createDocument();
