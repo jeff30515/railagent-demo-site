@@ -294,7 +294,6 @@ test('gate i18n publishes complete copy and fixed short labels for every support
   for (const language of expectedLanguages) {
     const copy = gateI18n.COPY[language];
     assert.equal(typeof copy.title, 'string');
-    assert.equal(typeof copy.tagline, 'string');
     assert.equal(typeof copy.languageKicker, 'string');
     assert.equal(typeof copy.langAria, 'string');
     assert.equal(typeof copy.accessAria, 'string');
@@ -305,7 +304,6 @@ test('gate i18n publishes complete copy and fixed short labels for every support
     assert.equal(typeof copy.footerProduct, 'string');
     assert.equal(typeof copy.version, 'string');
     assert.notEqual(copy.title, '');
-    assert.notEqual(copy.tagline, '');
   }
 });
 
@@ -326,8 +324,8 @@ test('gate i18n localizes non-image gate text and keeps image role cards intact'
   assert.equal(typeof gateI18n.apply(fixture.document.body, 'en'), 'boolean');
 
   assert.equal(fixture.main.getAttribute('aria-label'), 'RailAgent app entry');
-  assert.equal(fixture.document.querySelector('.mp-gate-hero h1').textContent, 'Choose your role');
-  assert.equal(fixture.document.querySelector('[data-gate-i18n-tagline]').textContent, 'Station help that follows your language and accessibility needs.');
+  assert.equal(fixture.document.querySelector('.mp-gate-hero h1').textContent, 'Your travel service partner');
+  assert.equal(fixture.document.querySelector('[data-gate-i18n-tagline]'), null);
   assert.equal(fixture.document.querySelector('.mp-lang-kicker').textContent, 'Language');
   assert.equal(fixture.document.querySelector('.mp-lang-bar').getAttribute('aria-label'), 'Language friendly · choose interface language');
   assert.deepEqual(
@@ -372,15 +370,15 @@ test('gate i18n localizes non-image gate text and keeps image role cards intact'
 
 test('gate i18n detects every active chip language and reapplies after redraws', () => {
   const expectedTitles = {
-    'zh-TW': '選擇你的身分',
-    nan: '揀你的身分',
-    hak: '選擇你的身分',
-    en: 'Choose your role',
-    ja: '役割を選択',
-    ko: '역할 선택',
-    vi: 'Chọn vai trò',
-    id: 'Pilih peran',
-    th: 'เลือกบทบาทของคุณ',
+    'zh-TW': '旅途中的服務夥伴',
+    nan: '旅途中的服務夥伴',
+    hak: '旅途中的服務夥伴',
+    en: 'Your travel service partner',
+    ja: '旅のサービスパートナー',
+    ko: '여행 서비스 파트너',
+    vi: 'Đồng hành dịch vụ trên hành trình',
+    id: 'Mitra layanan perjalanan Anda',
+    th: 'คู่หูบริการตลอดการเดินทาง',
   };
 
   for (const [language, title] of Object.entries(expectedTitles)) {
@@ -420,5 +418,5 @@ test('gate i18n detects every active chip language and reapplies after redraws',
   const heading = fixture.document.querySelector('.mp-gate-hero h1');
   heading.textContent = '旅途中的服務夥伴';
   observers[0].callback([{ type: 'childList' }]);
-  assert.equal(heading.textContent, '役割を選択');
+  assert.equal(heading.textContent, '旅のサービスパートナー');
 });
