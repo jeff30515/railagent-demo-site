@@ -269,6 +269,17 @@
     };
   }
 
+  function transferControlFor(element) {
+    if (!element || !element.closest) return null;
+    const control = element.closest('[data-railagent-transfer-control]');
+    if (!control) return null;
+    return {
+      element: control,
+      text: control.getAttribute('data-railagent-speech-text') || textOf(control),
+      cue: `friendly-transfer:${control.getAttribute('data-railagent-transfer-control') || 'control'}`
+    };
+  }
+
   function speechFor(element) {
     const chip = languageChipFor(element);
     if (chip) {
@@ -299,6 +310,17 @@
         lang: language.lang,
         languageCode: language.code,
         cue: lostItemField.cue
+      };
+    }
+
+    const transferControl = transferControlFor(element);
+    if (transferControl) {
+      const language = activeLanguage();
+      return {
+        text: transferControl.text,
+        lang: language.lang,
+        languageCode: language.code,
+        cue: transferControl.cue
       };
     }
 
@@ -516,6 +538,18 @@
     announceEvent(event);
     window.setTimeout(scheduleEnhancement, 0);
   }, true);
+
+  window.addEventListener('railagent:announce', (event) => {
+    const text = event.detail?.text;
+    if (!text) return;
+    const language = activeLanguage();
+    speak({
+      text,
+      lang: language.lang,
+      languageCode: language.code,
+      cue: event.detail?.cue || 'friendly-transfer'
+    }, true);
+  });
 
   new MutationObserver(scheduleEnhancement).observe(document.documentElement, {
     childList: true,

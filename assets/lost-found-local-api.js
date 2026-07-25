@@ -55,6 +55,12 @@
     ,routeSubmit: '\u53d6\u5f97\u8f49\u4e58\u5efa\u8b70'
     ,routeThinking: '\u6b63\u5728\u5411\u672c\u6a5f AI \u8a62\u554f\u8f49\u4e58\u5efa\u8b70\u2026'
     ,routeError: '\u672c\u6a5f AI \u76ee\u524d\u7121\u6cd5\u63d0\u4f9b\u8f49\u4e58\u5efa\u8b70\uff0c\u8acb\u7a0d\u5f8c\u518d\u8a66\u3002'
+    ,transferPageGuide: '\u53cb\u5584\u8f49\u4e58\u5354\u52a9\u3002\u5982\u9700\u7ad9\u52d9\u4eba\u54e1\u5354\u52a9\uff0c\u8acb\u9078\u64c7\u8f49\u4e58\u5354\u52a9\u3002\u5982\u8981\u67e5\u8a62\u8def\u7dda\uff0c\u8acb\u5148\u8f38\u5165\u73fe\u5728\u5730\u9ede\uff0c\u518d\u8f38\u5165\u8981\u524d\u5f80\u7684\u5730\u9ede\u3002'
+    ,routeOriginGuide: '\u73fe\u5728\u5730\u9ede\u3002\u8acb\u8f38\u5165\u60a8\u73fe\u5728\u6240\u5728\u7684\u8eca\u7ad9\u6216\u5730\u9ede\u3002'
+    ,routeDestinationGuide: '\u8981\u524d\u5f80\u7684\u5730\u9ede\u3002\u8acb\u8f38\u5165\u60a8\u7684\u76ee\u7684\u5730\u3002'
+    ,voicePrompt: '\u8acb\u8aaa\u51fa\u60a8\u76ee\u524d\u6240\u5728\u7684\u8eca\u7ad9\u3002'
+    ,voiceRecognized: '\u5df2\u8fa8\u8b58\uff1a'
+    ,stationThinking: '\u6b63\u5728\u78ba\u8a8d\u8eca\u7ad9\u8207\u7ad9\u52d9\u96fb\u8a71\u3002'
   };
 
   const searchLabels = [
@@ -172,22 +178,28 @@
     [...panel.querySelectorAll('p')].forEach((paragraph) => {
       if ((paragraph.textContent || '').includes('Demo')) paragraph.dataset.railagentLocalHidden = 'true';
     });
+    [...panel.querySelectorAll('button')].forEach((button) => {
+      if (['\u7e41\u9ad4\u4e2d\u6587', '\u8f2a\u6905', '\u907f\u958b\u6a13\u68af', '\u8f49\u4e58\u9ad8\u9435'].includes(button.textContent.trim())) {
+        button.parentElement?.setAttribute('data-railagent-local-hidden', 'true');
+      }
+    });
     if (document.getElementById('railagent-friendly-transfer-tools')) return;
 
     const tools = document.createElement('section');
     tools.id = 'railagent-friendly-transfer-tools';
     tools.setAttribute('aria-label', copy.transferHelp);
     tools.innerHTML = `
-      <button type="button" class="railagent-transfer-help" id="railagent-transfer-help-button">${copy.transferHelp}</button>
+      <button type="button" class="railagent-transfer-help" id="railagent-transfer-help-button" data-railagent-transfer-control="transfer-help" data-railagent-speech-text="${copy.transferHelp}\uff0c\u9078\u64c7\u5f8c\u53ef\u4ee5\u8aaa\u51fa\u6240\u5728\u8eca\u7ad9\uff0c\u78ba\u8a8d\u5f8c\u986f\u793a\u7ad9\u52d9\u96fb\u8a71\u3002">${copy.transferHelp}</button>
       <form class="railagent-transfer-route" id="railagent-transfer-route-form">
         <h3>${copy.transferRoute}</h3>
         <p>${copy.transferRouteLead}</p>
-        <div class="railagent-transfer-field"><label for="railagent-route-origin">${copy.routeOrigin}</label><input id="railagent-route-origin" maxlength="200" placeholder="${copy.routePlaceholderOrigin}" required></div>
-        <div class="railagent-transfer-field"><label for="railagent-route-destination">${copy.routeDestination}</label><input id="railagent-route-destination" maxlength="200" placeholder="${copy.routePlaceholderDestination}" required></div>
-        <button type="submit">${copy.routeSubmit}</button>
-        <div class="railagent-transfer-answer" aria-live="polite" hidden></div>
+        <div class="railagent-transfer-field"><label for="railagent-route-origin">${copy.routeOrigin}</label><input id="railagent-route-origin" data-railagent-transfer-control="route-origin" data-railagent-speech-text="${copy.routeOriginGuide}" maxlength="200" placeholder="${copy.routePlaceholderOrigin}" required></div>
+        <div class="railagent-transfer-field"><label for="railagent-route-destination">${copy.routeDestination}</label><input id="railagent-route-destination" data-railagent-transfer-control="route-destination" data-railagent-speech-text="${copy.routeDestinationGuide}" maxlength="200" placeholder="${copy.routePlaceholderDestination}" required></div>
+        <button type="submit" data-railagent-transfer-control="route-submit" data-railagent-speech-text="${copy.routeSubmit}\uff0c\u5c07\u4f7f\u7528\u672c\u6a5f AI \u63d0\u4f9b\u8f49\u4e58\u5efa\u8b70\u3002">${copy.routeSubmit}</button>
+        <div class="railagent-transfer-answer" data-railagent-transfer-control="route-answer" aria-live="polite" hidden></div>
       </form>`;
     panel.appendChild(tools);
+    announceTransfer(copy.transferPageGuide, 'transfer-page');
 
     const form = tools.querySelector('#railagent-transfer-route-form');
     form.addEventListener('submit', async (event) => {
@@ -200,6 +212,7 @@
       submit.disabled = true;
       answer.hidden = false;
       answer.textContent = copy.routeThinking;
+      announceTransfer(copy.routeThinking, 'route-thinking');
       try {
         const response = await fetch(routeEndpoint, {
           method: 'POST',
@@ -209,8 +222,10 @@
         const body = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(body.error || `HTTP ${response.status}`);
         answer.textContent = body.answer || copy.routeError;
+        announceTransfer(answer.textContent, 'route-answer');
       } catch (error) {
         answer.textContent = `${copy.routeError}\n${error.message}`;
+        announceTransfer(answer.textContent, 'route-error');
       } finally {
         submit.disabled = false;
       }
@@ -225,14 +240,14 @@
       overlay.hidden = true;
       overlay.innerHTML = `
         <section class="railagent-transfer-dialog" role="dialog" aria-modal="true" aria-labelledby="railagent-transfer-title">
-          <button type="button" class="railagent-transfer-close" aria-label="${copy.close}">${copy.close}</button>
+          <button type="button" class="railagent-transfer-close" aria-label="${copy.close}" data-railagent-transfer-control="close" data-railagent-speech-text="${copy.close}\u8f49\u4e58\u5354\u52a9\u8996\u7a97\u3002">${copy.close}</button>
           <h2 id="railagent-transfer-title">${copy.callTitle}</h2>
           <p>${copy.callLead}</p>
           <form id="railagent-transfer-station-form">
-            <label class="railagent-transfer-field" for="railagent-transfer-station"><span>${copy.callLead}</span><input id="railagent-transfer-station" maxlength="200" placeholder="${copy.stationPlaceholder}" required></label>
+            <label class="railagent-transfer-field" for="railagent-transfer-station"><span>${copy.callLead}</span><input id="railagent-transfer-station" data-railagent-transfer-control="station-input" data-railagent-speech-text="${copy.callLead}" maxlength="200" placeholder="${copy.stationPlaceholder}" required></label>
             <div class="railagent-transfer-actions">
-              <button type="button" class="railagent-transfer-secondary" id="railagent-transfer-voice">${copy.startVoice}</button>
-              <button type="submit">${copy.findStation}</button>
+              <button type="button" class="railagent-transfer-secondary" id="railagent-transfer-voice" data-railagent-transfer-control="start-voice" data-railagent-speech-text="${copy.startVoice}\uff0c\u9078\u64c7\u5f8c\u8acb\u8aaa\u51fa\u6240\u5728\u8eca\u7ad9\u3002">${copy.startVoice}</button>
+              <button type="submit" data-railagent-transfer-control="find-station" data-railagent-speech-text="${copy.findStation}\uff0c\u78ba\u8a8d\u5f8c\u5c07\u67e5\u8a62\u7ad9\u52d9\u96fb\u8a71\u3002">${copy.findStation}</button>
             </div>
           </form>
           <div id="railagent-transfer-status" aria-live="polite"></div>
@@ -258,7 +273,8 @@
         event.preventDefault();
         const spokenStation = input.value.trim();
         if (!spokenStation) return;
-        status.textContent = copy.thinking;
+        status.textContent = copy.stationThinking;
+        announceTransfer(copy.stationThinking, 'station-thinking');
         callResult.replaceChildren();
         try {
           const response = await fetch(stationEndpoint, {
@@ -269,20 +285,23 @@
           const body = await response.json().catch(() => ({}));
           if (!response.ok) throw new Error(body.error || `HTTP ${response.status}`);
           status.textContent = body.confirmation || `${body.station} ${body.phone}`;
-          speak(body.confirmation || status.textContent);
+          announceTransfer(body.confirmation || status.textContent, 'station-confirmation');
           const call = document.createElement('a');
           call.className = 'railagent-transfer-call';
           call.href = `tel:${String(body.phone || '').replace(/[^+\\d]/g, '')}`;
           call.textContent = `${copy.calling} ${body.phone || ''}`;
+          call.setAttribute('data-railagent-transfer-control', 'call-staff');
+          call.setAttribute('data-railagent-speech-text', `${copy.calling} ${body.phone || ''}`);
           callResult.appendChild(call);
         } catch (error) {
           status.textContent = `${copy.stationError}\n${error.message}`;
+          announceTransfer(status.textContent, 'station-error');
         }
       });
     }
     overlay.hidden = false;
     overlay.querySelector('#railagent-transfer-station')?.focus();
-    speak(copy.callLead);
+    announceTransfer(copy.callLead, 'station-dialog');
   }
 
   function speechRecognitionConstructor() {
@@ -301,19 +320,24 @@
     recognition.maxAlternatives = 1;
     recognition.onresult = (event) => {
       input.value = event.results[0][0].transcript;
-      status.textContent = input.value;
+      status.textContent = `${copy.voiceRecognized}${input.value}`;
+      announceTransfer(`${copy.voiceRecognized}${input.value}\u3002\u8acb\u9078\u64c7${copy.findStation}\u3002`, 'voice-recognized');
     };
-    recognition.onerror = () => { status.textContent = copy.voiceUnavailable; };
+    recognition.onerror = () => {
+      status.textContent = copy.voiceUnavailable;
+      announceTransfer(copy.voiceUnavailable, 'voice-error');
+    };
+    announceTransfer(copy.voicePrompt, 'voice-prompt');
     recognition.start();
   }
 
-  function speak(message) {
-    if (!window.speechSynthesis || !message) return;
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(new SpeechSynthesisUtterance(message));
+  function announceTransfer(text, cue) {
+    if (!text) return;
+    window.dispatchEvent(new CustomEvent('railagent:announce', { detail: { text, cue } }));
   }
 
   function clearFriendlyTransferUi() {
+    document.getElementById('railagent-friendly-transfer-tools')?.remove();
     document.getElementById('railagent-transfer-dialog')?.remove();
   }
 
