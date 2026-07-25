@@ -11,15 +11,12 @@
 
   function enhanceFacilityReport() {
     const page = document.querySelector('[data-service-page="facility-report"]');
-    if (!page || page.dataset.facilityFeedbackReady) return;
+    if (!page || page.querySelector('#facility-issue')) return;
 
     const card = page.querySelector('.mp-card.mp-stack');
     const submitButton = card && card.querySelector('button.mp-primary');
     if (!card || !submitButton) return;
 
-    page.dataset.facilityFeedbackReady = 'true';
-    const sample = card.querySelector('.mp-footnote');
-    const notice = card.querySelector('.mp-notice');
     const form = createElement('form', { className: 'mp-stack', noValidate: true });
     const label = createElement('label', { htmlFor: 'facility-issue', textContent: ISSUE_LABEL });
     const input = createElement('textarea', {
@@ -36,7 +33,7 @@
     });
 
     label.append(input);
-    form.append(sample, label, error, notice, submit);
+    form.append(label, error, submit);
     card.replaceChildren(form);
 
     form.addEventListener('submit', function (event) {
@@ -51,9 +48,10 @@
 
       card.replaceChildren(
         createElement('p', {
-          className: 'mp-notice',
+          className: 'facility-report-feedback__success',
           role: 'status',
           textContent: THANK_YOU_MESSAGE,
+          style: 'margin: 0; text-align: center; color: #0f766e; font-weight: 700; line-height: 1.6;',
         }),
       );
     });
