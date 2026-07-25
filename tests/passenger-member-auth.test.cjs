@@ -187,7 +187,7 @@ test('replaces passenger account summary with login fields and keeps return acti
   assert.doesNotMatch(visibleText, /重設友善轉乘示範/);
 
   const joinEvent = {
-    type: 'pointerdown',
+    type: 'focusin',
     propagationStopped: false,
     preventDefault() {},
     stopPropagation() {

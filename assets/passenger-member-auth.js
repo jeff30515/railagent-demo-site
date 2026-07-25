@@ -277,6 +277,7 @@
 
     document.addEventListener('pointerdown', activateTab, true);
     document.addEventListener('click', activateTab, true);
+    document.addEventListener('focusin', activateTab, true);
   }
 
   window.PassengerMemberAuth = { enhancePassengerMemberAuth };
