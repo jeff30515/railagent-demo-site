@@ -30,7 +30,7 @@
 
 ## Commit
 
-- Commit SHA: recorded in the final task status after commit creation.
+- Implementation commit SHA: `4eb411a16955573f60224e3561e389fdebce47c7`
 
 ## Concerns
 
