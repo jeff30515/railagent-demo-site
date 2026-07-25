@@ -112,6 +112,23 @@ test('passenger i18n applies known Traditional Chinese text without changing sta
   assert.equal(document.documentElement.lang, 'th-TH');
 });
 
+test('passenger i18n apply on a scoped section falls back to document language', () => {
+  const buttonText = { nodeType: 3, nodeValue: '會員登入' };
+  const section = {
+    nodeType: 1,
+    childNodes: [{ nodeType: 1, childNodes: [buttonText], getAttribute: () => null, setAttribute: () => {} }],
+    getAttribute: () => null,
+    setAttribute: () => {},
+    querySelector: () => null,
+  };
+  const document = { documentElement: { lang: 'en-US' } };
+  const i18n = loadPassengerI18n({ document });
+
+  assert.equal(i18n.apply(section), true);
+  assert.equal(buttonText.nodeValue, 'Member Sign In');
+  assert.equal(document.documentElement.lang, 'en-US');
+});
+
 test('passenger i18n falls back to the active language chip when the root has no language', () => {
   const activeChip = {
     dataset: { language: 'ja-JP' },
@@ -131,4 +148,25 @@ test('passenger i18n falls back to the active language chip when the root has no
 
   assert.equal(i18n.getLanguage(), 'ja');
   assert.equal(i18n.translate('member.login'), i18n.translate('member.login', 'ja'));
+});
+
+test('passenger i18n resolves active short TH chip from its Thai aria label', () => {
+  const activeChip = {
+    textContent: 'TH',
+    getAttribute(name) {
+      return name === 'aria-label' ? 'Thai' : null;
+    },
+  };
+  const document = {
+    documentElement: { lang: '' },
+    querySelector(selector) {
+      return selector === '.mp-lang-chip.active, .mp-lang-chip.is-active, .mp-lang-chip[aria-pressed="true"]'
+        ? activeChip
+        : null;
+    },
+  };
+  const i18n = loadPassengerI18n({ document });
+
+  assert.equal(i18n.getLanguage(), 'th');
+  assert.equal(i18n.translate('member.login'), i18n.translate('member.login', 'th'));
 });

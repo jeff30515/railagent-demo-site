@@ -34,3 +34,33 @@
 ## Concerns
 
 - `git diff --check` emits line-ending warnings because Git will convert LF to CRLF when touching the modified files; no whitespace errors were reported.
+
+## Review Fix 2026-07-26
+
+### Files
+
+- `assets/passenger-i18n.js`
+- `tests/passenger-i18n.test.cjs`
+
+### Red
+
+- `node --test tests/passenger-i18n.test.cjs` failed 2/7 after adding regressions.
+- Expected failures:
+  - `apply(section)` returned `false` instead of translating with document `lang="en-US"`.
+  - Active chip with visible `TH` and `aria-label="Thai"` resolved to `zh-TW` instead of `th`.
+
+### Green
+
+- Scoped `getLanguage(root)` now falls back from root language/chip to `document.documentElement.lang`, then the document-level active chip.
+- Chip language detection now reads `aria-label` language labels and normalizes short visible codes such as `TH`.
+
+### Verification
+
+- Target: `node --test tests/passenger-i18n.test.cjs` -> 7 passed, 0 failed.
+- Full tests: `node --test tests/*.test.cjs` -> 14 passed, 0 failed.
+- Syntax: `node --check assets/passenger-i18n.js` -> passed with no output.
+- Whitespace: `git diff --check` -> exit 0; Git reported LF-to-CRLF working-copy warnings for touched files.
+
+### Concerns
+
+- No new concerns beyond the existing line-ending warnings.
