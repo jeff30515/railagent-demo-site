@@ -4,10 +4,11 @@
 
   function createElement(name, options) {
     const element = document.createElement(name);
-    Object.assign(element, options);
+    const { attributes, ...properties } = options || {};
+    Object.assign(element, properties);
 
-    if (options && options.attributes) {
-      Object.entries(options.attributes).forEach(([key, value]) => {
+    if (attributes) {
+      Object.entries(attributes).forEach(([key, value]) => {
         element.setAttribute(key, value);
       });
     }

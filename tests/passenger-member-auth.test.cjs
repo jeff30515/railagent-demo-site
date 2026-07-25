@@ -8,7 +8,11 @@ class Element {
   constructor(tagName) {
     this.tagName = tagName.toUpperCase();
     this.children = [];
-    this.attributes = {};
+    this.attributeMap = {};
+    Object.defineProperty(this, 'attributes', {
+      enumerable: true,
+      get: () => this.attributeMap,
+    });
     this.dataset = {};
     this.eventListeners = {};
     this.className = '';
@@ -38,7 +42,7 @@ class Element {
   }
 
   setAttribute(name, value) {
-    this.attributes[name] = String(value);
+    this.attributeMap[name] = String(value);
     if (name === 'class') this.className = String(value);
     if (name === 'id') this.id = String(value);
   }
@@ -46,7 +50,7 @@ class Element {
   getAttribute(name) {
     if (name === 'class') return this.className;
     if (name === 'id') return this.id;
-    return this.attributes[name] || null;
+    return this.attributeMap[name] || null;
   }
 
   addEventListener(type, handler) {
