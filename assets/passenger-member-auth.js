@@ -262,6 +262,17 @@
     return (panel && panel.closest('section')) || null;
   }
 
+  function isMemberNavigationActive(scope) {
+    const workspace = scope.querySelector('.mobile-app-public');
+    const navigation = workspace && workspace.querySelector('.mp-bottom-nav');
+    const buttons = navigation ? Array.from(navigation.querySelectorAll('button')) : [];
+    return (
+      navigation?.tagName === 'NAV' &&
+      buttons.length === 3 &&
+      buttons[2].getAttribute('aria-pressed') === 'true'
+    );
+  }
+
   function isLegacyAccountSection(section) {
     const text = getText(section);
     const label = section.getAttribute('aria-label') || '';
@@ -299,6 +310,8 @@
     injectStyles();
 
     const scope = root || document;
+    if (!isMemberNavigationActive(scope)) return false;
+
     const section = findRenderedMemberSection(scope) || findLegacyAccountSection(scope);
 
     if (!section) return false;
@@ -317,11 +330,7 @@
   }
 
   function renderMemberTabFromHash() {
-    const section =
-      findRenderedMemberSection(document) ||
-      findLegacyAccountSection(document);
-    const exitButton = section && (originalExitButtons.get(section) || findReturnButton(section));
-    if (section && exitButton) render(section, exitButton, activeMemberTab());
+    enhancePassengerMemberAuth(document);
   }
 
   window.PassengerMemberAuth = { enhancePassengerMemberAuth };

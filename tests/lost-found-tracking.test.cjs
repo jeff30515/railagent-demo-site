@@ -50,7 +50,7 @@ assert.match(
 );
 assert.match(
   indexHtml,
-  /passenger-member-auth\.js\?v=20260726-nine-language-parity-8/,
+  /passenger-member-auth\.js\?v=20260726-role-route-guard-11/,
   'The entry page should force browsers to fetch the updated member auth runtime.',
 );
 assert.match(
