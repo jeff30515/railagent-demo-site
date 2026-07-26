@@ -88,6 +88,9 @@ test('supervisor bottom navigation owns realtime home and history pages', () => 
   assert.match(source, /setNavigationButtonLabel\(button, '歷史'\)/);
   assert.doesNotMatch(source, /button\.textContent = '歷史'/);
   assert.match(source, /title\.textContent = '即時營運監控'/);
+  assert.match(source, /description\.textContent = '掌握拾獲物品、旅客追蹤與各站點即時營運概況'/);
+  assert.match(source, /historyTitle\.textContent = '歷史服務品質分析'/);
+  assert.match(source, /historyDescription\.textContent = '透過事件趨勢、使用次數與服務回饋檢視營運品質'/);
   assert.match(source, /data-supervisor-home-title/);
   assert.match(source, /data-supervisor-history-page/);
   assert.doesNotMatch(source, /function activeSupervisorTab\(root\)/);

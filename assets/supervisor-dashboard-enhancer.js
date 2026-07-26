@@ -138,8 +138,19 @@
       heading.dataset.supervisorHomeTitle = 'true';
       const title = document.createElement('h2');
       title.textContent = '即時營運監控';
-      heading.append(title);
+      const description = document.createElement('p');
+      description.className = 'mp-footnote';
+      description.textContent = '掌握拾獲物品、旅客追蹤與各站點即時營運概況';
+      heading.append(title, description);
       root.insertBefore(heading, root.firstChild);
+    } else {
+      let description = heading.querySelector(':scope > p.mp-footnote');
+      if (!description) {
+        description = document.createElement('p');
+        description.className = 'mp-footnote';
+        heading.append(description);
+      }
+      description.textContent = '掌握拾獲物品、旅客追蹤與各站點即時營運概況';
     }
     showNode(heading);
   }
@@ -341,6 +352,37 @@
     return app?.querySelector(':scope > .mp-shell.mp-shell-workspace') || null;
   }
 
+  function prepareHistoryHeading(page) {
+    let heading = page.querySelector(':scope > [data-supervisor-history-heading]');
+    if (!heading) {
+      heading = document.createElement('div');
+      heading.className = 'mp-hero-block';
+      heading.dataset.supervisorHistoryHeading = 'true';
+      const historyTitle = document.createElement('h2');
+      historyTitle.textContent = '歷史服務品質分析';
+      const historyDescription = document.createElement('p');
+      historyDescription.className = 'mp-footnote';
+      historyDescription.textContent = '透過事件趨勢、使用次數與服務回饋檢視營運品質';
+      heading.append(historyTitle, historyDescription);
+    } else {
+      const historyTitle = heading.querySelector(':scope > h2') || document.createElement('h2');
+      historyTitle.textContent = '歷史服務品質分析';
+      if (!historyTitle.parentNode) heading.append(historyTitle);
+      let historyDescription = heading.querySelector(':scope > p.mp-footnote');
+      if (!historyDescription) {
+        historyDescription = document.createElement('p');
+        historyDescription.className = 'mp-footnote';
+        heading.append(historyDescription);
+      }
+      historyDescription.textContent = '透過事件趨勢、使用次數與服務回饋檢視營運品質';
+    }
+
+    const historyContainer = page.querySelector(':scope > [data-supervisor-history]');
+    if (heading.parentNode === page) page.removeChild(heading);
+    page.insertBefore(heading, historyContainer || page.firstChild);
+    showNode(heading);
+  }
+
   function renderHistoryPage(app, analytics) {
     const shell = supervisorShell(app);
     if (!shell) {
@@ -362,6 +404,7 @@
       shell.append(page);
     }
     showNode(page);
+    prepareHistoryHeading(page);
     renderHistory(page, analytics, { hideLegacy: false });
   }
 
@@ -426,10 +469,8 @@
     [/^狀態佇列/, /^時段熱點$/].forEach((matcher) => {
       hideNode(cardFor(findByText(root, matcher)));
     });
-
-    hideNode(cardFor(findByText(root, /^站點熱點$/)));
     directCards(root)
-      .filter((node) => /站點熱點/.test(text(node)))
+      .filter((node) => /^(狀態佇列|時段熱點)/.test(text(node)))
       .forEach(hideNode);
 
     const queue = root.querySelector('section[aria-label="即時佇列"]');
@@ -509,7 +550,13 @@
 
     if (page === 'history') {
       const root = dashboard();
-      if (root) hideRealtimeHomeChrome(root);
+      if (root) {
+        hideRealtimeHomeChrome(root);
+        hideNode(cardFor(findByText(root, /^站點熱點$/)));
+        directCards(root)
+          .filter((node) => /^站點熱點/.test(text(node)))
+          .forEach(hideNode);
+      }
       historyAnalytics().then((analytics) => {
         if (activeSupervisorPage(app) === 'history') renderHistoryPage(app, analytics);
       });
