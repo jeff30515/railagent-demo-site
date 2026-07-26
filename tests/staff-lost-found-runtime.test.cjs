@@ -13,9 +13,12 @@ test('staff runtime uses the real case and found-item APIs for both requested un
   assert.doesNotMatch(source, /friendly-transfer|Demo/);
 });
 
-test('staff runtime only takes over the page when an API endpoint is explicitly configured', () => {
+test('staff runtime shares the passenger API configuration and never falls back to the demo staff page', () => {
   const source = fs.readFileSync(path.join(__dirname, '..', 'assets', 'staff-lost-found-runtime.js'), 'utf8');
   assert.match(source, /get\('apiBaseUrl'\)/);
-  assert.match(source, /if \(!base\) return;/);
+  assert.match(source, /railagent\.api-base-url/);
+  assert.match(source, /localStorage\.setItem\(apiBaseStorageKey, queryBase\)/);
+  assert.match(source, /尚未連接遺失物系統/);
+  assert.doesNotMatch(source, /fallbackMarkup/);
   assert.doesNotMatch(source, /\|\| 'http:\/\/127\.0\.0\.1:7071'/);
 });
