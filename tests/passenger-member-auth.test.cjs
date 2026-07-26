@@ -286,6 +286,26 @@ test('mounted member auth rerenders when the active language changes', () => {
   assert.doesNotMatch(visibleText, /Member login|Remember account|會員登入/);
 });
 
+test('member auth renders representative locale-specific copy for placeholder-prone languages', () => {
+  for (const [language, expectedText] of [
+    ['nan', 'Hoe-oan teng-jiip'],
+    ['hak', 'Fi-ngien ten-ngip'],
+    ['ja', '会員ログイン'],
+    ['ko', '회원 로그인'],
+    ['vi', 'Đăng nhập hội viên'],
+    ['th', 'เข้าสู่ระบบสมาชิก'],
+  ]) {
+    const document = createDocument(language);
+    const { section } = appendLegacyMemberSection(document);
+
+    loadEnhancer(document).PassengerMemberAuth.enhancePassengerMemberAuth(document);
+
+    const visibleText = textOf(section);
+    assert.match(visibleText, new RegExp(expectedText));
+    assert.doesNotMatch(visibleText, new RegExp(`Member ${language}`));
+  }
+});
+
 test('replaces the old account page even when its aria label differs from the title', () => {
   const document = createDocument();
   const section = document.createElement('section');

@@ -4,6 +4,36 @@ const test = require('node:test');
 const locales = require('../assets/passenger-runtime-locales.js');
 
 const expectedLanguages = ['zh-TW', 'nan', 'hak', 'en', 'ja', 'ko', 'vi', 'id', 'th'];
+const memberKeys = [
+  'memberTitle',
+  'memberLoginLead',
+  'memberJoinLead',
+  'memberTabsLabel',
+  'memberLoginTab',
+  'memberJoinTab',
+  'memberAccountLabel',
+  'memberPasswordLabel',
+  'memberRememberLabel',
+  'memberForgotPassword',
+  'memberLoginSubmit',
+  'memberLoginHint',
+  'memberLoginDemoStatus',
+  'memberForgotDemoStatus',
+  'memberJoinIdLabel',
+  'memberJoinPasswordLabel',
+  'memberJoinPasswordConfirmLabel',
+  'memberJoinNameLabel',
+  'memberJoinGenderLabel',
+  'memberJoinGenderMale',
+  'memberJoinGenderFemale',
+  'memberJoinBirthdayLabel',
+  'memberJoinEmailLabel',
+  'memberJoinMobileLabel',
+  'memberJoinResidenceLabel',
+  'memberJoinSubmit',
+  'memberJoinDemoStatus',
+  'memberReturn',
+];
 
 test('canonical passenger runtime provides complete copy for all nine languages', () => {
   assert.deepEqual(locales.SUPPORTED_LANGUAGES, expectedLanguages);
@@ -66,34 +96,7 @@ test('canonical passenger runtime provides complete copy for all nine languages'
       'caseUnfollowStatus',
       'feedback',
       'thankYou',
-      'memberTitle',
-      'memberLoginLead',
-      'memberJoinLead',
-      'memberTabsLabel',
-      'memberLoginTab',
-      'memberJoinTab',
-      'memberAccountLabel',
-      'memberPasswordLabel',
-      'memberRememberLabel',
-      'memberForgotPassword',
-      'memberLoginSubmit',
-      'memberLoginHint',
-      'memberLoginDemoStatus',
-      'memberForgotDemoStatus',
-      'memberJoinIdLabel',
-      'memberJoinPasswordLabel',
-      'memberJoinPasswordConfirmLabel',
-      'memberJoinNameLabel',
-      'memberJoinGenderLabel',
-      'memberJoinGenderMale',
-      'memberJoinGenderFemale',
-      'memberJoinBirthdayLabel',
-      'memberJoinEmailLabel',
-      'memberJoinMobileLabel',
-      'memberJoinResidenceLabel',
-      'memberJoinSubmit',
-      'memberJoinDemoStatus',
-      'memberReturn',
+      ...memberKeys,
     ]) {
       assert.equal(typeof copy[key], 'string', `${language}.${key}`);
       assert.ok(copy[key].trim(), `${language}.${key} must not be blank`);
@@ -110,6 +113,37 @@ test('canonical passenger runtime provides complete copy for all nine languages'
       assert.ok(pageLabels[key].trim(), `${language}.${key} must not be blank`);
     }
   }
+});
+
+test('member auth copy rejects generated placeholders and wrong-language prefixes', () => {
+  const wrongLanguagePatterns = {
+    'zh-TW': /\b(Member|Login anggota)\b/,
+    nan: /\bMember nan\b|\bMember hak\b|\bMember ja\b|\bMember ko\b|\bMember vi\b|\bMember th\b/,
+    hak: /\bMember nan\b|\bMember hak\b|\bMember ja\b|\bMember ko\b|\bMember vi\b|\bMember th\b/,
+    en: /\bMember nan\b|\bMember hak\b|\bMember ja\b|\bMember ko\b|\bMember vi\b|\bMember th\b/,
+    ja: /\bMember nan\b|\bMember hak\b|\bMember ja\b|\bMember ko\b|\bMember vi\b|\bMember th\b|\bLogin anggota\b/,
+    ko: /\bMember nan\b|\bMember hak\b|\bMember ja\b|\bMember ko\b|\bMember vi\b|\bMember th\b|\bLogin anggota\b/,
+    vi: /\bMember nan\b|\bMember hak\b|\bMember ja\b|\bMember ko\b|\bMember vi\b|\bMember th\b|\bLogin anggota\b/,
+    id: /\bMember nan\b|\bMember hak\b|\bMember ja\b|\bMember ko\b|\bMember vi\b|\bMember th\b/,
+    th: /\bMember nan\b|\bMember hak\b|\bMember ja\b|\bMember ko\b|\bMember vi\b|\bMember th\b|\bLogin anggota\b/,
+  };
+
+  for (const language of expectedLanguages) {
+    const copy = locales.getRuntimeCopy(language);
+
+    for (const key of memberKeys) {
+      assert.doesNotMatch(copy[key], wrongLanguagePatterns[language], `${language}.${key}`);
+    }
+  }
+});
+
+test('member auth copy contains representative natural strings for placeholder-prone languages', () => {
+  assert.equal(locales.getRuntimeCopy('nan').memberTitle, 'Hoe-oan teng-jiip');
+  assert.equal(locales.getRuntimeCopy('hak').memberTitle, 'Fi-ngien ten-ngip');
+  assert.equal(locales.getRuntimeCopy('ja').memberTitle, '会員ログイン');
+  assert.equal(locales.getRuntimeCopy('ko').memberTitle, '회원 로그인');
+  assert.equal(locales.getRuntimeCopy('vi').memberTitle, 'Đăng nhập hội viên');
+  assert.equal(locales.getRuntimeCopy('th').memberTitle, 'เข้าสู่ระบบสมาชิก');
 });
 
 test('language aliases normalize without downloading language resources', () => {
