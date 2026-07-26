@@ -86,8 +86,9 @@ class Element {
   }
 }
 
-function createDocument() {
+function createDocument(language = 'zh-TW') {
   const documentElement = new Element('html');
+  documentElement.lang = language;
   const eventListeners = {};
   return {
     documentElement,
@@ -150,6 +151,7 @@ function findByText(root, selector, expectedText) {
 
 function loadEnhancer(document) {
   const script = fs.readFileSync(path.join(__dirname, '..', 'assets', 'passenger-member-auth.js'), 'utf8');
+  const localeScript = fs.readFileSync(path.join(__dirname, '..', 'assets', 'passenger-runtime-locales.js'), 'utf8');
   const windowEvents = {};
   const windowObject = {
     location: { hash: '' },
@@ -168,8 +170,26 @@ function loadEnhancer(document) {
     },
     window: windowObject,
   };
+  vm.runInNewContext(localeScript, context);
   vm.runInNewContext(script, context);
   return context.window;
+}
+
+function appendLegacyMemberSection(document) {
+  const section = document.createElement('section');
+  section.setAttribute('aria-label', '帳戶');
+  const summary = document.createElement('article');
+  summary.className = 'mp-card mp-stack';
+  summary.textContent = '會員票夾 3';
+  const reset = document.createElement('button');
+  reset.className = 'mp-secondary';
+  reset.textContent = '設定友善轉乘偏好';
+  const exit = document.createElement('button');
+  exit.className = 'mp-primary';
+  exit.textContent = '返回身分選擇';
+  section.append(summary, reset, exit);
+  document.documentElement.append(section);
+  return { section, exit };
 }
 
 test('replaces passenger account summary with login fields and keeps return action', () => {
@@ -221,6 +241,49 @@ test('replaces passenger account summary with login fields and keeps return acti
 
   findByText(section, 'button', '返回身分選擇').dispatchEvent({ type: 'click' });
   assert.equal(exited, true);
+});
+
+test('member auth uses active locale copy and falls back for unknown languages', () => {
+  const document = createDocument('en');
+  const { section } = appendLegacyMemberSection(document);
+
+  loadEnhancer(document).PassengerMemberAuth.enhancePassengerMemberAuth(document);
+
+  const visibleText = textOf(section);
+  assert.match(visibleText, /Member login/);
+  assert.match(visibleText, /Enter your member account and password\./);
+  assert.match(visibleText, /Remember account/);
+  assert.match(visibleText, /Forgot password/);
+  assert.match(visibleText, /Return to identity selection/);
+  assert.doesNotMatch(visibleText, /會員登入|記住帳號|忘記密碼/);
+
+  const unknownDocument = createDocument('unknown');
+  const { section: fallbackSection } = appendLegacyMemberSection(unknownDocument);
+
+  loadEnhancer(unknownDocument).PassengerMemberAuth.enhancePassengerMemberAuth(unknownDocument);
+
+  const fallbackText = textOf(fallbackSection);
+  assert.match(fallbackText, /會員登入/);
+  assert.match(fallbackText, /記住帳號/);
+  assert.match(fallbackText, /返回身分選擇/);
+});
+
+test('mounted member auth rerenders when the active language changes', () => {
+  const document = createDocument('en');
+  const { section } = appendLegacyMemberSection(document);
+  const memberAuth = loadEnhancer(document).PassengerMemberAuth;
+
+  memberAuth.enhancePassengerMemberAuth(document);
+  assert.match(textOf(section), /Member login/);
+
+  document.documentElement.lang = 'id';
+  memberAuth.enhancePassengerMemberAuth(document);
+
+  const visibleText = textOf(section);
+  assert.match(visibleText, /Login anggota/);
+  assert.match(visibleText, /Ingat akun/);
+  assert.match(visibleText, /Kembali ke pilihan identitas/);
+  assert.doesNotMatch(visibleText, /Member login|Remember account|會員登入/);
 });
 
 test('replaces the old account page even when its aria label differs from the title', () => {

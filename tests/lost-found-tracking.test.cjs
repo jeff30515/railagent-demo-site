@@ -31,6 +31,11 @@ assert.doesNotMatch(
 );
 assert.match(
   indexHtml,
+  /passenger-runtime-locales\.js\?v=20260726-nine-language-parity-1/,
+  'The entry page should force browsers to fetch the shared passenger locale module.',
+);
+assert.match(
+  indexHtml,
   /lost-found-local-api\.js\?v=20260726-nine-language-parity-1/,
   'The entry page should force browsers to fetch the canonical passenger runtime.',
 );
@@ -52,10 +57,14 @@ assert.match(
 const localeScriptIndex = indexHtml.indexOf('passenger-runtime-locales.js');
 const canonicalRuntimeIndex = indexHtml.indexOf('lost-found-local-api.js');
 const facilityRuntimeIndex = indexHtml.indexOf('facility-report-feedback.js');
+const memberRuntimeIndex = indexHtml.indexOf('passenger-member-auth.js');
+const caseRuntimeIndex = indexHtml.indexOf('passenger-case-unfollow.js');
 
 assert.ok(localeScriptIndex >= 0, 'The shared passenger locale module must be loaded.');
 assert.ok(localeScriptIndex < canonicalRuntimeIndex);
 assert.ok(localeScriptIndex < facilityRuntimeIndex);
+assert.ok(localeScriptIndex < memberRuntimeIndex);
+assert.ok(localeScriptIndex < caseRuntimeIndex);
 assert.doesNotMatch(
   indexHtml,
   /passenger-i18n\.js|gate-i18n\.js|gate-i18n\.css/,

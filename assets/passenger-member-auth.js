@@ -1,7 +1,4 @@
 (function () {
-  const LOGIN_HINT =
-    '\u5efa\u8b70\u6703\u54e1\u6bcf\u4e09\u500b\u6708\u5b9a\u671f\u66f4\u63db\u5bc6\u78bc\uff0c\u5bc6\u78bc\u898f\u5247\u70ba8-12\u5b57\u5143\uff0c\u81f3\u5c11\u4e00\u500b\u82f1\u6587\u5b57\u8207\u4e00\u500b\u6578\u5b57';
-
   function createElement(name, options) {
     const element = document.createElement(name);
     const { attributes, ...properties } = options || {};
@@ -14,6 +11,14 @@
     }
 
     return element;
+  }
+
+  function currentCopy() {
+    const localeApi = window.RailAgentPassengerRuntimeLocales;
+    if (localeApi && typeof localeApi.getRuntimeCopy === 'function') {
+      return localeApi.getRuntimeCopy(document.documentElement.lang);
+    }
+    throw new Error('Passenger locale module must load before member auth runtime.');
   }
 
   function injectStyles() {
@@ -65,89 +70,92 @@
     return label;
   }
 
-  function createLoginForm(status) {
+  function createLoginForm(status, copy) {
     const form = createElement('form', { className: 'mp-card mp-stack passenger-member-auth__form', noValidate: true });
     form.append(
-      createField('member-login-account', '\u5e33\u865f', {
+      createField('member-login-account', copy.memberAccountLabel, {
         required: true,
         autocomplete: 'username',
       }),
-      createField('member-login-password', '\u5bc6\u78bc', {
+      createField('member-login-password', copy.memberPasswordLabel, {
         required: true,
         type: 'password',
         autocomplete: 'current-password',
       }),
-      createRememberField(),
-      createForgotPasswordButton(status),
-      createElement('p', { className: 'mp-footnote passenger-member-auth__hint', textContent: LOGIN_HINT }),
+      createRememberField(copy),
+      createForgotPasswordButton(status, copy),
+      createElement('p', { className: 'mp-footnote passenger-member-auth__hint', textContent: copy.memberLoginHint }),
       createElement('button', {
         type: 'submit',
         className: 'mp-primary',
-        textContent: '\u6703\u54e1\u767b\u5165',
+        textContent: copy.memberLoginSubmit,
       }),
     );
 
     form.addEventListener('submit', function (event) {
       event.preventDefault();
-      status.textContent = '\u6b64\u70ba\u6703\u54e1\u767b\u5165\u793a\u7bc4\uff0c\u5c1a\u672a\u4e32\u63a5\u771f\u5be6\u9a57\u8b49\u3002';
+      status.textContent = copy.memberLoginDemoStatus;
     });
 
     return form;
   }
 
-  function createRememberField() {
+  function createRememberField(copy) {
     const label = createElement('label', { className: 'passenger-member-auth__check' });
     const checkbox = createElement('input', {
       id: 'member-login-remember',
       name: 'member-login-remember',
       type: 'checkbox',
     });
-    label.append(checkbox, createElement('span', { textContent: '\u8a18\u4f4f\u5e33\u865f' }));
+    label.append(checkbox, createElement('span', { textContent: copy.memberRememberLabel }));
     return label;
   }
 
-  function createForgotPasswordButton(status) {
+  function createForgotPasswordButton(status, copy) {
     const button = createElement('button', {
       type: 'button',
       className: 'mp-secondary passenger-member-auth__link-button',
-      textContent: '\u5fd8\u8a18\u5bc6\u78bc',
+      textContent: copy.memberForgotPassword,
     });
     button.addEventListener('click', function () {
-      status.textContent = '\u6b64\u70ba\u5fd8\u8a18\u5bc6\u78bc\u793a\u7bc4\uff0c\u5c1a\u672a\u958b\u653e\u7dda\u4e0a\u91cd\u8a2d\u3002';
+      status.textContent = copy.memberForgotDemoStatus;
     });
     return button;
   }
 
-  function createJoinForm(status) {
+  function createJoinForm(status, copy) {
     const form = createElement('form', { className: 'mp-card mp-stack passenger-member-auth__form', noValidate: true });
     form.append(
-      createField('member-join-id', '\u8b49\u865f', { required: true, autocomplete: 'off' }),
-      createField('member-join-password', '\u5bc6\u78bc', {
+      createField('member-join-id', copy.memberJoinIdLabel, { required: true, autocomplete: 'off' }),
+      createField('member-join-password', copy.memberJoinPasswordLabel, {
         required: true,
         type: 'password',
         autocomplete: 'new-password',
       }),
-      createField('member-join-password-confirm', '\u518d\u6b21\u78ba\u8a8d\u5bc6\u78bc', {
+      createField('member-join-password-confirm', copy.memberJoinPasswordConfirmLabel, {
         required: true,
         type: 'password',
         autocomplete: 'new-password',
       }),
-      createField('member-join-name', '\u59d3\u540d', { required: true, autocomplete: 'name' }),
-      createField('member-join-gender', '\u6027\u5225', { required: true, select: ['\u7537', '\u5973'] }),
-      createField('member-join-birthday', '\u751f\u65e5', { required: true, type: 'date' }),
-      createField('member-join-email', 'E-mail', { required: true, type: 'email', autocomplete: 'email' }),
-      createField('member-join-mobile', '\u624b\u6a5f', { required: true, type: 'tel', autocomplete: 'tel' }),
-      createField('member-join-residence', '\u5c45\u4f4f\u5730', { required: true, autocomplete: 'street-address' }),
+      createField('member-join-name', copy.memberJoinNameLabel, { required: true, autocomplete: 'name' }),
+      createField('member-join-gender', copy.memberJoinGenderLabel, {
+        required: true,
+        select: [copy.memberJoinGenderMale, copy.memberJoinGenderFemale],
+      }),
+      createField('member-join-birthday', copy.memberJoinBirthdayLabel, { required: true, type: 'date' }),
+      createField('member-join-email', copy.memberJoinEmailLabel, { required: true, type: 'email', autocomplete: 'email' }),
+      createField('member-join-mobile', copy.memberJoinMobileLabel, { required: true, type: 'tel', autocomplete: 'tel' }),
+      createField('member-join-residence', copy.memberJoinResidenceLabel, { required: true, autocomplete: 'street-address' }),
       createElement('button', {
         type: 'submit',
         className: 'mp-primary',
-        textContent: '\u52a0\u5165\u6703\u54e1',
+        textContent: copy.memberJoinSubmit,
       }),
     );
 
     form.addEventListener('submit', function (event) {
       event.preventDefault();
-      status.textContent = '\u6b64\u70ba\u52a0\u5165\u6703\u54e1\u793a\u7bc4\uff0c\u5c1a\u672a\u5132\u5b58\u500b\u4eba\u8cc7\u6599\u3002';
+      status.textContent = copy.memberJoinDemoStatus;
     });
 
     return form;
@@ -169,6 +177,7 @@
   }
 
   function render(section, exitButton, activeTab) {
+    const copy = currentCopy();
     const status = createElement('p', {
       className: 'mp-footnote passenger-member-auth__status',
       textContent: '',
@@ -177,29 +186,29 @@
 
     const header = createElement('div', { className: 'mp-hero-block passenger-member-auth__header' });
     header.append(
-      createElement('h2', { textContent: '\u6703\u54e1\u767b\u5165' }),
-      createElement('p', { textContent: activeTab === 'login' ? '\u8acb\u8f38\u5165\u6703\u54e1\u5e33\u865f\u8207\u5bc6\u78bc\u3002' : '\u8acb\u586b\u5beb\u57fa\u672c\u8cc7\u6599\u5efa\u7acb\u6703\u54e1\u3002' }),
+      createElement('h2', { textContent: copy.memberTitle }),
+      createElement('p', { textContent: activeTab === 'login' ? copy.memberLoginLead : copy.memberJoinLead }),
     );
 
     const tabs = createElement('div', {
       className: 'mp-chip-row passenger-member-auth__tabs',
-      attributes: { role: 'tablist', 'aria-label': '\u6703\u54e1\u529f\u80fd' },
+      attributes: { role: 'tablist', 'aria-label': copy.memberTabsLabel },
     });
     tabs.append(
-      buildTab('\u6703\u54e1\u767b\u5165', 'login', activeTab === 'login'),
-      buildTab('\u52a0\u5165\u6703\u54e1', 'join', activeTab === 'join'),
+      buildTab(copy.memberLoginTab, 'login', activeTab === 'login'),
+      buildTab(copy.memberJoinTab, 'join', activeTab === 'join'),
     );
 
     const panel = createElement('div', {
       attributes: { 'data-member-auth': '', role: 'tabpanel' },
     });
-    panel.append(activeTab === 'login' ? createLoginForm(status) : createJoinForm(status), status);
+    panel.append(activeTab === 'login' ? createLoginForm(status, copy) : createJoinForm(status, copy), status);
 
     exitButton.type = 'button';
     exitButton.className = 'mp-primary passenger-member-auth__return';
-    exitButton.textContent = '\u8fd4\u56de\u8eab\u5206\u9078\u64c7';
+    exitButton.textContent = copy.memberReturn;
 
-    section.setAttribute('aria-label', '\u6703\u54e1\u767b\u5165');
+    section.setAttribute('aria-label', copy.memberTitle);
     section.replaceChildren(header, tabs, panel, exitButton);
   }
 
@@ -210,9 +219,16 @@
   }
 
   function findReturnButton(section) {
+    const renderedReturn = section.querySelector('.passenger-member-auth__return');
+    if (renderedReturn) return renderedReturn;
     return Array.from(section.querySelectorAll('button')).find((button) =>
       getText(button).includes('\u8fd4\u56de\u8eab\u5206\u9078\u64c7'),
     );
+  }
+
+  function findRenderedMemberSection(scope) {
+    const panel = scope.querySelector('[data-member-auth]');
+    return (panel && panel.closest('section')) || null;
   }
 
   function isLegacyAccountSection(section) {
@@ -238,7 +254,7 @@
     injectStyles();
 
     const scope = root || document;
-    const section = findLegacyAccountSection(scope);
+    const section = findRenderedMemberSection(scope) || findLegacyAccountSection(scope);
 
     if (!section) return false;
 
@@ -256,10 +272,8 @@
 
   function renderMemberTabFromHash() {
     const section =
-      findLegacyAccountSection(document) ||
-      Array.from(document.querySelectorAll('section')).find(
-        (candidate) => candidate.getAttribute('aria-label') === '\u6703\u54e1\u767b\u5165',
-      );
+      findRenderedMemberSection(document) ||
+      findLegacyAccountSection(document);
     const exitButton = section && findReturnButton(section);
     if (section && exitButton) render(section, exitButton, activeMemberTab());
   }
