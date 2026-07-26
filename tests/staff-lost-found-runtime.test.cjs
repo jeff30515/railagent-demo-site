@@ -64,6 +64,7 @@ test('the staff found-item screen pins the three newest records from the availab
   assert.match(source, /TRA-20230717-2217/);
   assert.match(source, /TRA-20230717-2040/);
   assert.match(source, /TRA-20230717-1925/);
+  assert.match(source, /let recentFoundItems = fixedRecentFoundItems/);
   assert.match(source, /recentFoundItems = fixedRecentFoundItems/);
   assert.doesNotMatch(source, /recentFoundItems = \(foundItems\.items \|\| \[\]\)\.slice\(0, 3\)/);
 });
@@ -89,9 +90,12 @@ test('the staff found-item screen removes the unrelated friendly-transfer contro
 
   assert.match(source, /友善轉乘協助/);
   assert.match(source, /轉乘路線/);
+  assert.match(source, /railagent-friendly-transfer-tools/);
+  assert.match(source, /railagent-transfer-route/);
   assert.match(passengerRuntime, /ntmetro-staff-banqiao/);
   assert.match(passengerRuntime, /tymetro-staff-qingpu/);
   assert.match(passengerRuntime, /function friendlyTransferPanel\(\) \{\s+const accountId = typeof localStorage/);
+  assert.match(passengerRuntime, /const isStaffPage = Boolean\(document\.querySelector/);
 });
 
 test('staff runtime uses the real case and found-item APIs for both requested units', () => {

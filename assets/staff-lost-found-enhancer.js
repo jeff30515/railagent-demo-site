@@ -7,15 +7,15 @@
     'ntmetro-staff-banqiao': { unitId: 'station-banqiao', station: '板橋' },
     'tymetro-staff-qingpu': { unitId: 'station-qingpu', station: '桃園青埔' }
   };
-  let liveTasks = [];
-  let recentFoundItems = [];
-  let token;
-  let loading;
   const fixedRecentFoundItems = [
     { itemId: 'TRA-20230717-2217', stationName: '車次 283', itemType: '黑色背包有衣物', color: '黑色', features: '4-24 豐原找', foundLocation: '車次 283', foundAt: '2023-07-17', trainNumber: '283' },
     { itemId: 'TRA-20230717-2040', stationName: '車次 149', itemType: '新竹找 Sugar 近金色手機', color: '近金色', features: '明顯使用痕跡，僅清水套包覆，無蓋手機套', foundLocation: '車次 149', foundAt: '2023-07-17', trainNumber: '149' },
     { itemId: 'TRA-20230717-1925', stationName: '車次 135', itemType: '黑色皮短夾', color: '黑色', features: '含多國貨幣、身分證與信用卡', foundLocation: '車次 135', foundAt: '2023-07-17', trainNumber: '135' }
   ];
+  let liveTasks = [];
+  let recentFoundItems = fixedRecentFoundItems;
+  let token;
+  let loading;
 
   if (queryBase) localStorage.setItem(apiBaseStorageKey, queryBase);
 
@@ -25,6 +25,10 @@
 
   function staff() {
     return accounts[localStorage.getItem('railagent.mobile.account')];
+  }
+
+  function staffPage() {
+    return Boolean(document.querySelector('[aria-label="站務首頁"], [aria-label="登記拾獲物"], [aria-label="staff task pool"]'));
   }
 
   async function api(path, init = {}) {
@@ -116,9 +120,11 @@
   }
 
   function removeFriendlyTransfer() {
+    document.getElementById('railagent-friendly-transfer-tools')?.remove();
     document.querySelectorAll('button').forEach((button) => {
       if (button.textContent.trim() === '友善轉乘協助') button.remove();
     });
+    document.querySelectorAll('.railagent-transfer-route').forEach((section) => section.remove());
     document.querySelectorAll('h2, h3').forEach((heading) => {
       if (heading.textContent.trim() === '轉乘路線') heading.closest('.mp-card')?.remove();
     });
@@ -156,7 +162,7 @@
   }
 
   function enhance() {
-    if (!staff()) return;
+    if (!staff() && !staffPage()) return;
     document.documentElement.lang = 'zh-TW';
     enhanceHome();
     enhanceFoundRegister();

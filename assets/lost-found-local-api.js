@@ -127,7 +127,8 @@
 
   function friendlyTransferPanel() {
     const accountId = typeof localStorage === 'undefined' ? null : localStorage.getItem('railagent.mobile.account');
-    if (['ntmetro-staff-banqiao', 'tymetro-staff-qingpu'].includes(accountId)) {
+    const isStaffPage = Boolean(document.querySelector('[aria-label="站務首頁"], [aria-label="登記拾獲物"], [aria-label="staff task pool"]'));
+    if (['ntmetro-staff-banqiao', 'tymetro-staff-qingpu'].includes(accountId) || isStaffPage) {
       return null;
     }
     return [...document.querySelectorAll('section.mp-stack[aria-label]')].find((page) =>
