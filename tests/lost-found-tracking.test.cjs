@@ -68,16 +68,17 @@ assert.match(
   /copy\.contact.*record\.contactPhone/,
   'Tracked case cards should show the preserved contact telephone.',
 );
-assert.ok(
-  enhancer.includes(String.raw`\u9ed1\u8272\u80cc\u5305\u907a\u5931\u7269\uff0c\u9700\u8981\u7ad9\u52d9\u5148\u6bd4\u5c0d\u5019\u9078\u62fe\u7372\u7269\u3002`),
-  'The legacy backpack case should be explicitly removed.',
+assert.match(
+  enhancer,
+  /EVT-2026-BQ-0187/,
+  'The obsolete fixed backpack case should be removed by its stable event ID.',
 );
 assert.ok(
   locales.getRuntimeCopy('zh-TW').feedback && !enhancer.includes(String.raw`\u670d\u52d9\u56de\u994b\uff08\u9589\u74b0\uff09`),
   'The public feedback heading should omit the closed-loop suffix.',
 );
 assert.ok(
-  enhancer.includes(String.raw`\u7d50\u6848\u5f8c\u56de\u994b\u6703\u5beb\u5165\u672c\u6a5f\u4e8b\u4ef6\u76ee\u9304\uff0c\u4f9b\u6b77\u53f2\u54c1\u8cea\u5206\u6790\u3002`) && enhancer.includes('paragraph.remove()'),
+  enhancer.includes("feedbackArticle.querySelector('p')?.remove()"),
   'The obsolete event-directory note should be removed from the rendered feedback card.',
 );
 assert.match(

@@ -388,8 +388,7 @@
   }
 
   const TRACKED_CASES_KEY = 'railagent-tracked-lost-found-cases';
-  const LEGACY_BACKPACK_SUMMARY = '\u9ed1\u8272\u80cc\u5305\u907a\u5931\u7269\uff0c\u9700\u8981\u7ad9\u52d9\u5148\u6bd4\u5c0d\u5019\u9078\u62fe\u7372\u7269\u3002';
-  const LEGACY_FEEDBACK_NOTE = '\u7d50\u6848\u5f8c\u56de\u994b\u6703\u5beb\u5165\u672c\u6a5f\u4e8b\u4ef6\u76ee\u9304\uff0c\u4f9b\u6b77\u53f2\u54c1\u8cea\u5206\u6790\u3002';
+  const LEGACY_BACKPACK_EVENT_ID = 'EVT-2026-BQ-0187';
 
   function readTrackedCases() {
     try {
@@ -408,19 +407,30 @@
   }
 
   function removeLegacyBackpackCase() {
-    [...document.querySelectorAll('article')].forEach((article) => {
-      if ((article.textContent || '').includes(LEGACY_BACKPACK_SUMMARY)) article.remove();
+    const page = document.querySelector('[aria-label="public own case list"]');
+    page?.querySelectorAll('article').forEach((article) => {
+      if ((article.textContent || '').includes(LEGACY_BACKPACK_EVENT_ID)) {
+        article.remove();
+      }
     });
   }
 
   function syncPublicFeedbackCopy(copy) {
-    const feedback = document.querySelector('article[aria-label="\u670d\u52d9\u56de\u994b"]');
-    if (!feedback) return;
-    const heading = feedback.querySelector('h3');
+    const page = document.querySelector('[aria-label="public own case list"]');
+    const feedbackArticle = [...(page?.querySelectorAll('article') ?? [])].find((article) =>
+      article.querySelector('input') && article.querySelector('button.mp-primary')
+    );
+    if (!feedbackArticle) return;
+    const heading = feedbackArticle.querySelector('h3');
     if (heading && heading.textContent !== copy.feedback) heading.textContent = copy.feedback;
-    [...feedback.querySelectorAll('p')].forEach((paragraph) => {
-      if ((paragraph.textContent || '').includes(LEGACY_FEEDBACK_NOTE)) paragraph.remove();
-      if ((paragraph.textContent || '').startsWith('\u5df2\u8a18\u9304\u56de\u994b\u65bc')) paragraph.textContent = copy.thankYou;
+    const feedbackLead = feedbackArticle.querySelector('p');
+    if (feedbackLead && !feedbackLead.className.split(/\s+/).includes('mp-status')) {
+      feedbackArticle.querySelector('p')?.remove();
+    }
+    [...feedbackArticle.querySelectorAll('p')].forEach((paragraph) => {
+      if ((paragraph.textContent || '').startsWith('\u5df2\u8a18\u9304\u56de\u994b\u65bc')) {
+        paragraph.textContent = copy.thankYou;
+      }
     });
   }
 

@@ -1,12 +1,12 @@
 (function () {
-  const ISSUE_LABEL = '\u8acb\u63cf\u8ff0\u73fe\u5834\u554f\u984c';
-  const REQUIRED_MESSAGE = '\u8acb\u8f38\u5165\u73fe\u5834\u554f\u984c\u5f8c\u518d\u9001\u51fa\u3002';
-  const THANK_YOU_MESSAGE = '\u611f\u8b1d\u60a8\u7684\u56de\u994b!';
-
   function createElement(name, options) {
     const element = document.createElement(name);
     Object.assign(element, options);
     return element;
+  }
+
+  function currentCopy() {
+    return window.RailAgentPassengerRuntimeLocales.getRuntimeCopy(document.documentElement.lang);
   }
 
   function enhanceFacilityReport() {
@@ -17,8 +17,9 @@
     const submitButton = card && card.querySelector('button.mp-primary');
     if (!card || !submitButton) return;
 
+    const copy = currentCopy();
     const form = createElement('form', { className: 'mp-stack', noValidate: true });
-    const label = createElement('label', { htmlFor: 'facility-issue', textContent: ISSUE_LABEL });
+    const label = createElement('label', { htmlFor: 'facility-issue', textContent: copy.facilityIssue });
     const input = createElement('textarea', {
       id: 'facility-issue',
       name: 'facility-issue',
@@ -39,7 +40,7 @@
     form.addEventListener('submit', function (event) {
       event.preventDefault();
       if (!input.value.trim()) {
-        error.textContent = REQUIRED_MESSAGE;
+        error.textContent = copy.facilityRequired;
         error.hidden = false;
         input.setAttribute('aria-invalid', 'true');
         input.focus();
@@ -50,7 +51,7 @@
         createElement('p', {
           className: 'facility-report-feedback__success',
           role: 'status',
-          textContent: THANK_YOU_MESSAGE,
+          textContent: copy.facilityThanks,
           style: 'margin: 0; text-align: center; color: #0f766e; font-weight: 700; line-height: 1.6;',
         }),
       );

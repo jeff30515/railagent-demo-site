@@ -6,8 +6,9 @@ const test = require('node:test');
 test('passenger case unfollow enhancer lets a re-tracked case render again', () => {
   const script = fs.readFileSync(path.join(__dirname, '..', 'assets', 'passenger-case-unfollow.js'), 'utf8');
 
-  assert.match(script, /取消追蹤/);
-  assert.match(script, /已取消追蹤/);
+  assert.match(script, /RailAgentPassengerRuntimeLocales/);
+  assert.match(script, /copy\.caseUnfollow/);
+  assert.match(script, /copy\.caseUnfollowStatus/);
   assert.doesNotMatch(script, /hiddenTaskIds/);
   assert.match(script, /railagent-tracked-lost-found-cases/);
   assert.match(script, /localStorage\.setItem\(TRACKED_CASES_KEY/);

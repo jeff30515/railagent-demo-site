@@ -17,13 +17,25 @@ assert.match(
   /noValidate: true/,
   'Facility reports should route blank submissions through the inline error message.',
 );
-assert.ok(
-  enhancement.includes(String.raw`\u8acb\u8f38\u5165\u73fe\u5834\u554f\u984c\u5f8c\u518d\u9001\u51fa\u3002`),
-  'Facility reports should explain why a blank submission cannot be sent.',
+assert.match(
+  enhancement,
+  /RailAgentPassengerRuntimeLocales/,
+  'Facility feedback should use the shared nine-language copy.',
 );
-assert.ok(
-  enhancement.includes(String.raw`\u611f\u8b1d\u60a8\u7684\u56de\u994b!`),
-  'Facility reports should use the requested acknowledgement.',
+assert.match(
+  enhancement,
+  /getRuntimeCopy\(document\.documentElement\.lang\)/,
+  'Facility copy should follow the active document language.',
+);
+assert.match(
+  enhancement,
+  /copy\.facilityRequired/,
+  'Facility reports should explain blank submissions with localized runtime copy.',
+);
+assert.match(
+  enhancement,
+  /copy\.facilityThanks/,
+  'Facility reports should acknowledge submissions with localized runtime copy.',
 );
 assert.ok(
   enhancement.includes("page.querySelector('#facility-issue')"),
