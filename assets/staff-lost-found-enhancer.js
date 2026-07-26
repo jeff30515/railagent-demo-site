@@ -126,7 +126,7 @@
   function enhanceFoundRegister() {
     const panel = document.querySelector('[aria-label="登記拾獲物"]');
     if (!panel) return;
-    const fields = Array.from(panel.querySelectorAll('.mp-field'));
+    const fields = Array.from(panel.querySelectorAll('.mp-field')).filter((field) => !field.dataset.staffTrainField);
     const [itemType, color, brand, features, location, date] = fields;
     setField(itemType, '物品類型', 'text');
     setField(color, '顏色', 'text');

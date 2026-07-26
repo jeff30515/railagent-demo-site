@@ -57,6 +57,12 @@ test('the staff found-item screen uses the requested fields and its unit’s new
   assert.match(source, /recentFoundItems\.slice\(0, 3\)/);
 });
 
+test('the found-item field order ignores the enhancer’s added train field on later renders', () => {
+  const source = fs.readFileSync(path.join(__dirname, '..', 'assets', 'staff-lost-found-enhancer.js'), 'utf8');
+
+  assert.match(source, /querySelectorAll\('\.mp-field'\)\)\.filter\(\(field\) => !field\.dataset\.staffTrainField\)/);
+});
+
 test('the staff found-item screen removes the unrelated friendly-transfer controls', () => {
   const source = fs.readFileSync(path.join(__dirname, '..', 'assets', 'staff-lost-found-enhancer.js'), 'utf8');
 
