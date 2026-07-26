@@ -6,6 +6,36 @@ const enhancer = fs.readFileSync(
   path.join(__dirname, '..', 'assets', 'lost-found-local-api.js'),
   'utf8',
 );
+const indexHtml = fs.readFileSync(
+  path.join(__dirname, '..', 'index.html'),
+  'utf8',
+);
+
+assert.match(
+  enhancer,
+  /const DEFAULT_API_BASE_URL = 'http:\/\/127\.0\.0\.1:7071'/,
+  'The completed passenger runtime should load from the bare URL with the local API default.',
+);
+assert.match(
+  enhancer,
+  /function resolveApiBaseUrl\(search\)/,
+  'The passenger runtime should resolve configured and default local API URLs through one path.',
+);
+assert.doesNotMatch(
+  enhancer,
+  /if \(!apiBaseUrl\) return/,
+  'The bare URL must not return before installing the completed passenger runtime.',
+);
+assert.match(
+  indexHtml,
+  /lost-found-local-api\.js\?v=20260726-single-passenger-runtime-1/,
+  'The entry page should force browsers to fetch the canonical passenger runtime.',
+);
+assert.doesNotMatch(
+  indexHtml,
+  /passenger-i18n\.js|gate-i18n\.js|gate-i18n\.css/,
+  'The obsolete multilingual overlays must not be loaded beside the canonical runtime.',
+);
 
 assert.ok(
   enhancer.includes(String.raw`\u8ffd\u8e64\u6b64\u7269\u4ef6`),
