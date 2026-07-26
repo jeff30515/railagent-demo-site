@@ -133,19 +133,7 @@
     setField(brand, '品牌', 'text');
     setField(features, '特徵', 'text');
     setField(location, '拾獲地點', 'text');
-    setField(date, '拾獲日期', 'datetime-local');
-    if (location && date && (location.compareDocumentPosition(date) & Node.DOCUMENT_POSITION_FOLLOWING)) location.before(date);
-    if (panel.querySelector('[data-staff-train-field]') || !location) {
-      replaceRecentFoundItems(panel);
-      return;
-    }
-    const trainField = location.cloneNode(true);
-    trainField.dataset.staffTrainField = 'true';
-    setField(trainField, '拾獲車次', 'text');
-    const trainInput = trainField.querySelector('input');
-    if (trainInput) trainInput.value = '';
-    location.after(trainField);
-    replaceRecentFoundItems(panel);
+    setField(date, '拾獲日期', 'text');
   }
 
   function enhanceTaskPool() {
