@@ -30,6 +30,13 @@
     node.setAttribute('aria-hidden', 'true');
   }
 
+  function showNode(node) {
+    if (!node) return;
+    node.hidden = false;
+    node.style.display = '';
+    node.removeAttribute('aria-hidden');
+  }
+
   function localTrackedCount() {
     try {
       const records = JSON.parse(window.localStorage.getItem(TRACKED_CASES_KEY) || '[]');
@@ -98,9 +105,17 @@
     const panel = cardFor(heading);
     if (!panel) return;
 
-    panel.querySelectorAll('.mp-kpi-row').forEach(hideNode);
-    [...panel.children].forEach(hideNode);
-    if (panel.querySelector('[data-supervisor-metrics]')) return;
+    panel.querySelectorAll('.mp-kpi-row').forEach((row) => {
+      if (!row.closest('[data-supervisor-metrics]')) hideNode(row);
+    });
+    [...panel.children]
+      .filter((child) => !child.matches('[data-supervisor-metrics]'))
+      .forEach(hideNode);
+    const existing = panel.querySelector(':scope > [data-supervisor-metrics]');
+    if (existing) {
+      showNode(existing);
+      return;
+    }
 
     const content = document.createElement('div');
     content.className = 'mp-stack';
@@ -153,8 +168,14 @@
     const panel = cardFor(heading);
     if (!panel) return;
 
-    [...panel.children].forEach(hideNode);
-    if (panel.querySelector('[data-supervisor-workforce]')) return;
+    [...panel.children]
+      .filter((child) => !child.matches('[data-supervisor-workforce]'))
+      .forEach(hideNode);
+    const existing = panel.querySelector(':scope > [data-supervisor-workforce]');
+    if (existing) {
+      showNode(existing);
+      return;
+    }
 
     const content = document.createElement('div');
     content.className = 'mp-stack';

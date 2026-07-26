@@ -47,4 +47,7 @@ test('supervisor enhancer does not remove React-owned nodes and retries after in
   assert.doesNotMatch(source, /new MutationObserver/);
   assert.match(source, /STARTUP_DELAYS\s*=\s*\[0,\s*100,\s*300,\s*800\]/);
   assert.match(source, /STARTUP_DELAYS\.forEach/);
+  assert.match(source, /showNode\(existing\)/);
+  assert.match(source, /!child\.matches\('\[data-supervisor-metrics\]'\)/);
+  assert.match(source, /!child\.matches\('\[data-supervisor-workforce\]'\)/);
 });
