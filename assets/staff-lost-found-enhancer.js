@@ -98,7 +98,7 @@
     const card = document.createElement('article');
     card.className = 'mp-list-item';
     const details = [item.features, item.foundLocation, item.trainNumber && `車次 ${item.trainNumber}`].filter(Boolean).join(' · ');
-    card.innerHTML = `<div class="mp-meta"><span class="mp-status">${escape(item.itemId)}</span><span>${escape(item.stationName)}</span></div><h3>${escape([item.color, item.itemType].filter(Boolean).join('') || '拾獲物')}</h3><p class="mp-footnote">${escape(details || item.foundAt || '尚無補充資訊')}</p>`;
+    card.innerHTML = `<div class="mp-meta"><span class="mp-status">${escape(item.itemId)}</span><span>${escape(item.stationName)}</span></div><h3>${escape(item.itemType || item.color || '拾獲物')}</h3><p class="mp-footnote">${escape(details || item.foundAt || '尚無補充資訊')}</p>`;
     return card;
   }
 
