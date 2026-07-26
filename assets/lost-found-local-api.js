@@ -604,6 +604,9 @@
     syncLocalModeUi();
     new MutationObserver(syncLocalModeUi).observe(document.body, { childList: true, subtree: true });
   });
+  // The React mobile bundle mounts after deferred helpers on slower connections.
+  // Run once more at load so its initial render cannot restore the legacy home controls.
+  window.addEventListener('load', syncLocalModeUi);
 
   document.addEventListener('click', (event) => {
     const button = event.target.closest('button');
