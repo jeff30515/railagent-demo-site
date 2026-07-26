@@ -31,27 +31,27 @@ assert.doesNotMatch(
 );
 assert.match(
   indexHtml,
-  /passenger-runtime-locales\.js\?v=20260726-nine-language-parity-3/,
+  /passenger-runtime-locales\.js\?v=20260726-nine-language-parity-4/,
   'The entry page should force browsers to fetch the shared passenger locale module.',
 );
 assert.match(
   indexHtml,
-  /lost-found-local-api\.js\?v=20260726-nine-language-parity-3/,
+  /lost-found-local-api\.js\?v=20260726-nine-language-parity-4/,
   'The entry page should force browsers to fetch the canonical passenger runtime.',
 );
 assert.match(
   indexHtml,
-  /facility-report-feedback\.js\?v=20260726-nine-language-parity-3/,
+  /facility-report-feedback\.js\?v=20260726-nine-language-parity-4/,
   'The entry page should force browsers to fetch the updated facility feedback runtime.',
 );
 assert.match(
   indexHtml,
-  /passenger-member-auth\.js\?v=20260726-nine-language-parity-3/,
+  /passenger-member-auth\.js\?v=20260726-nine-language-parity-4/,
   'The entry page should force browsers to fetch the updated member auth runtime.',
 );
 assert.match(
   indexHtml,
-  /passenger-case-unfollow\.js\?v=20260726-nine-language-parity-3/,
+  /passenger-case-unfollow\.js\?v=20260726-nine-language-parity-4/,
   'The entry page should force browsers to fetch the updated case action runtime.',
 );
 const localeScriptIndex = indexHtml.indexOf('passenger-runtime-locales.js');
@@ -461,10 +461,16 @@ function appendPassengerPages(document, labels) {
   home.setAttribute('aria-label', '旅客首頁');
   const services = document.createElement('div');
   services.className = 'mp-service-list';
+  const transferButton = document.createElement('button');
+  transferButton.className = 'mp-service';
+  transferButton.textContent = labels.friendlyTitle;
+  const lostButton = document.createElement('button');
+  lostButton.className = 'mp-service';
+  lostButton.textContent = labels.lostTitle;
   const facilityButton = document.createElement('button');
   facilityButton.className = 'mp-service';
-  facilityButton.textContent = labels.facilityTitle;
-  services.append(facilityButton);
+  facilityButton.textContent = labels.facilityTitle.replace('Report', 'report');
+  services.append(transferButton, lostButton, facilityButton);
   const quick = document.createElement('button');
   quick.className = 'mp-primary';
   quick.textContent = labels.quickHelp;
