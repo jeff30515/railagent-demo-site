@@ -315,8 +315,8 @@ test('mounted member auth rerenders when the active language changes', () => {
 
 test('member auth renders representative locale-specific copy for placeholder-prone languages', () => {
   for (const [language, expectedText] of [
-    ['nan', 'Hoe-oan teng-jiip'],
-    ['hak', 'Fi-ngien ten-ngip'],
+    ['nan', '會員登入'],
+    ['hak', '會員登入'],
     ['ja', '会員ログイン'],
     ['ko', '회원 로그인'],
     ['vi', 'Đăng nhập hội viên'],

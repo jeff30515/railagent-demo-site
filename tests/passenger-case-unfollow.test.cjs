@@ -28,6 +28,7 @@ class Element {
     this.dataset = {};
     this.eventListeners = {};
     this._textContent = '';
+    this.textContentWriteCount = 0;
     this.id = '';
     this.className = '';
   }
@@ -37,6 +38,7 @@ class Element {
   }
 
   set textContent(value) {
+    this.textContentWriteCount += 1;
     this._textContent = String(value);
     this.children = [];
   }
@@ -246,5 +248,25 @@ test('passenger unfollow uses active locale, fallback copy, and removes storage 
   assert.equal(
     section.querySelector('[data-passenger-unfollow-status]').textContent,
     `${locales.getRuntimeCopy('en').caseUnfollowStatus}EVT-2026-BQ-2001`,
+  );
+});
+
+test('passenger case enhancer does not rewrite unchanged button copy on every mutation pass', () => {
+  const document = createDocument('zh-TW');
+  const storage = new Map([
+    ['railagent-tracked-lost-found-cases', JSON.stringify([{ id: 'rec-1' }, { id: 'rec-2' }])],
+  ]);
+  const { first } = appendTrackedCasePage(document);
+  const api = loadUnfollowRuntime(document, storage);
+
+  assert.equal(api.enhancePassengerCases(document), true);
+  const button = first.querySelector('[data-passenger-unfollow]');
+  const writesAfterCreation = button.textContentWriteCount;
+
+  assert.equal(api.enhancePassengerCases(document), true);
+  assert.equal(
+    button.textContentWriteCount,
+    writesAfterCreation,
+    'An unchanged textContent write retriggers the document MutationObserver and locks the Cases page.',
   );
 });

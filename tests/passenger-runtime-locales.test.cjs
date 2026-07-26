@@ -173,8 +173,8 @@ test('member auth copy rejects generated placeholders and wrong-language prefixe
 });
 
 test('member auth copy contains representative natural strings for placeholder-prone languages', () => {
-  assert.equal(locales.getRuntimeCopy('nan').memberTitle, 'Hoe-oan teng-jiip');
-  assert.equal(locales.getRuntimeCopy('hak').memberTitle, 'Fi-ngien ten-ngip');
+  assert.deepEqual(locales.getRuntimeCopy('nan'), locales.getRuntimeCopy('zh-TW'));
+  assert.deepEqual(locales.getRuntimeCopy('hak'), locales.getRuntimeCopy('zh-TW'));
   assert.equal(locales.getRuntimeCopy('ja').memberTitle, '会員ログイン');
   assert.equal(locales.getRuntimeCopy('ko').memberTitle, '회원 로그인');
   assert.equal(locales.getRuntimeCopy('vi').memberTitle, 'Đăng nhập hội viên');
@@ -206,8 +206,8 @@ test('runtime extension copy rejects generated placeholders and wrong-language p
 });
 
 test('runtime extension copy contains representative natural strings for placeholder-prone languages', () => {
-  assert.equal(locales.getRuntimeCopy('nan').chatPlaceholder, 'Phah li e bun-toe...');
-  assert.equal(locales.getRuntimeCopy('hak').searchTitle, 'Pun-ki AI tsham-chhau kit-ko');
+  assert.deepEqual(locales.getPageLabels('nan'), locales.getPageLabels('zh-TW'));
+  assert.deepEqual(locales.getPageLabels('hak'), locales.getPageLabels('zh-TW'));
   assert.equal(locales.getRuntimeCopy('ja').stationError, 'Ekimei o ninshiki dekimasen. Mo ichido ekimei o hanasu ka nyuryoku shite kudasai.');
   assert.equal(locales.getRuntimeCopy('ko').pickupDate, 'Seupdeugil');
   assert.equal(locales.getRuntimeCopy('vi').transferRouteLead, 'Nhap vi tri hien tai va diem den de AI cuc bo goi y lo trinh.');

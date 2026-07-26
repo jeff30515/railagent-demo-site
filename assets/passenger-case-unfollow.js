@@ -68,7 +68,9 @@
       const recordId = recordIdForArticle(list, article);
       const existingButton = article.querySelector('[data-passenger-unfollow]');
       if (existingButton) {
-        existingButton.textContent = copy.caseUnfollow;
+        if (existingButton.textContent !== copy.caseUnfollow) {
+          existingButton.textContent = copy.caseUnfollow;
+        }
         return;
       }
 

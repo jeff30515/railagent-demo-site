@@ -892,15 +892,17 @@
 
   function getRuntimeCopy(value) {
     const language = normalizeLanguage(value);
+    const copyLanguage = language === 'nan' || language === 'hak' ? 'zh-TW' : language;
     return {
-      ...RUNTIME_COPY[language],
-      ...RUNTIME_COPY_EXTENSIONS[language],
-      ...MEMBER_COPY[language],
+      ...RUNTIME_COPY[copyLanguage],
+      ...RUNTIME_COPY_EXTENSIONS[copyLanguage],
+      ...MEMBER_COPY[copyLanguage],
     };
   }
 
   function getPageLabels(value) {
-    return PAGE_LABELS[normalizeLanguage(value)];
+    const language = normalizeLanguage(value);
+    return PAGE_LABELS[language === 'nan' || language === 'hak' ? 'zh-TW' : language];
   }
 
   return { SUPPORTED_LANGUAGES, normalizeLanguage, getRuntimeCopy, getPageLabels };

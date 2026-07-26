@@ -91,14 +91,6 @@
     document.head.appendChild(style);
   }
 
-  function markDemoContent() {
-    document.querySelectorAll('article[aria-label]').forEach((element) => {
-      if ((element.getAttribute('aria-label') || '').includes('\u65e2\u6709\u5354\u5c0b\u6848\u4ef6')) {
-        element.dataset.railagentLocalHidden = 'true';
-      }
-    });
-  }
-
   function removeLostItemSourceNotice() {
     const page = document.querySelector('[data-service-page="lost-item"]');
     if (!page) return;
@@ -457,7 +449,6 @@
   function syncLocalModeUi() {
     const { copy, pageLabels, language } = currentLocale();
     installStyles();
-    markDemoContent();
     installChatLauncher(copy, language);
     installFriendlyTransferTools(copy, language);
     clearStaleLostFoundResult();

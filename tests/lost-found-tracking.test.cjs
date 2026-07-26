@@ -35,12 +35,12 @@ assert.doesNotMatch(
 );
 assert.match(
   indexHtml,
-  /passenger-runtime-locales\.js\?v=20260726-nine-language-parity-8/,
+  /passenger-runtime-locales\.js\?v=20260726-passenger-canonical-12/,
   'The entry page should force browsers to fetch the shared passenger locale module.',
 );
 assert.match(
   indexHtml,
-  /lost-found-local-api\.js\?v=20260726-nine-language-parity-8/,
+  /lost-found-local-api\.js\?v=20260726-passenger-canonical-12/,
   'The entry page should force browsers to fetch the canonical passenger runtime.',
 );
 assert.match(
@@ -55,7 +55,7 @@ assert.match(
 );
 assert.match(
   indexHtml,
-  /passenger-case-unfollow\.js\?v=20260726-nine-language-parity-8/,
+  /passenger-case-unfollow\.js\?v=20260726-passenger-canonical-12/,
   'The entry page should force browsers to fetch the updated case action runtime.',
 );
 const localeScriptIndex = indexHtml.indexOf('passenger-runtime-locales.js');
@@ -71,7 +71,7 @@ assert.ok(localeScriptIndex < memberRuntimeIndex);
 assert.ok(localeScriptIndex < caseRuntimeIndex);
 assert.match(
   indexHtml,
-  /index-lostitem-talkback\.js\?v=20260726-nine-language-parity-8/,
+  /index-lostitem-talkback\.js\?v=20260726-passenger-canonical-12/,
   'The React application bundle must be cache-busted with the passenger runtime.',
 );
 assert.doesNotMatch(
@@ -88,6 +88,26 @@ assert.doesNotMatch(
   applicationBundle,
   /className:"mp-secondary",onClick:\(\)=>o\("more"\),children:b\.moreServices/,
   'The React-owned passenger home must not render the obsolete more-services action.',
+);
+assert.doesNotMatch(
+  applicationBundle,
+  /aria-label":b\.existingCase/,
+  'The old non-database lost-item demo case must be removed from the React tree for every language.',
+);
+assert.doesNotMatch(
+  enhancer,
+  /markDemoContent/,
+  'The removed demo must not be retained in the DOM and hidden by a locale-dependent overlay.',
+);
+assert.match(
+  applicationBundle,
+  /Dm=\{"zh-TW":mc,nan:mc,hak:mc,en:/,
+  'Taiwanese and Hakka passenger UI copy must use the Traditional Chinese canonical object.',
+);
+assert.match(
+  applicationBundle,
+  /function Bm\(s,d\)\{d=d==="nan"\|\|d==="hak"\?"zh-TW":d;/,
+  'Taiwanese and Hakka case details must use the Traditional Chinese canonical task copy.',
 );
 
 assert.ok(
@@ -577,7 +597,7 @@ test('injected passenger tools resync non-zh copy without Traditional Chinese fa
   assert.equal(document.querySelector('#railagent-transfer-help-button').textContent, 'Bantuan transfer ramah');
 });
 
-test('nan lost-item search uses page structure and ignores unrelated primary buttons', async () => {
+test('nan lost-item search uses Traditional Chinese copy and ignores unrelated primary buttons', async () => {
   const locales = require('../assets/passenger-runtime-locales.js');
   const document = createDocument('nan');
   const pages = appendPassengerPages(document, locales.getPageLabels('nan'));
@@ -597,8 +617,8 @@ test('nan lost-item search uses page structure and ignores unrelated primary but
 
   assert.equal(searchEvent.defaultPrevented, true);
   assert.equal(fetchCalls, 1);
-  assert.match(document.getElementById('railagent-local-lost-found-result').textContent, /Bo chhoe tioh u kho-leng sio-hu e sit-but/);
-  assert.doesNotMatch(document.getElementById('railagent-local-lost-found-result').textContent, /\u672c\u6a5f AI/);
+  assert.match(document.getElementById('railagent-local-lost-found-result').textContent, /\u672a\u627e\u5230\u53ef\u80fd\u76f8\u7b26\u7684\u907a\u5931\u7269/);
+  assert.match(document.getElementById('railagent-local-lost-found-result').textContent, /\u672c\u6a5f AI/);
   assert.doesNotMatch(document.getElementById('railagent-local-lost-found-result').textContent, /LFI (?:nan|hak|ja|ko|vi|th)/);
 });
 
@@ -606,8 +626,8 @@ test('lost-item rendered copy rejects generated placeholders across all passenge
   const locales = require('../assets/passenger-runtime-locales.js');
   const expectations = {
     'zh-TW': '\u672a\u627e\u5230\u53ef\u80fd\u76f8\u7b26\u7684\u907a\u5931\u7269\u3002',
-    nan: 'Bo chhoe tioh u kho-leng sio-hu e sit-but.',
-    hak: 'Mo tsham-to ko-nang siong-fu ge sit-vut.',
+    nan: '\u672a\u627e\u5230\u53ef\u80fd\u76f8\u7b26\u7684\u907a\u5931\u7269\u3002',
+    hak: '\u672a\u627e\u5230\u53ef\u80fd\u76f8\u7b26\u7684\u907a\u5931\u7269\u3002',
     en: 'No likely lost-item matches were found.',
     ja: 'Gaito shiso na ishitsubutsu wa mitsukarimasen deshita.',
     ko: 'Ilchi hal ganeungseong-i inneun bunsilmul-eul chatji mothaetseumnida.',
