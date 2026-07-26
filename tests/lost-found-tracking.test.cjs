@@ -256,6 +256,7 @@ function loadLocalApi(document, fetchImpl = async () => ({ ok: true, json: async
       },
       dispatchEvent() {},
       addEventListener() {},
+      setInterval() {},
     },
   };
   vm.runInNewContext(script, context);
@@ -337,4 +338,5 @@ test('reruns cleanup after the React mobile bundle finishes mounting', () => {
     /if \(document\.readyState === 'loading'\)/,
     'Deferred scripts must initialize immediately when DOMContentLoaded has already fired.'
   );
+  assert.match(enhancer, /function removeLegacyPassengerActions\(\)[\s\S]*?button\.remove\(\)/);
 });
