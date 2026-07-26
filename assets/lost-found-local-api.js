@@ -2,21 +2,23 @@
   'use strict';
 
   // Keep the same passenger UI available in every language even when the
-  // optional local API URL has not been supplied.  API-backed actions then
-  // show their existing connection error instead of disappearing from the UI.
-  const apiBaseUrl = new URLSearchParams(window.location.search).get('apiBaseUrl') || window.location.origin || 'http://127.0.0.1';
+  // optional local API URL has not been supplied. Do not use the static
+  // GitHub Pages origin as an API fallback: it has no local-AI endpoints.
+  const apiBaseUrl = new URLSearchParams(window.location.search).get('apiBaseUrl');
 
   let lostFoundEndpoint;
   let chatEndpoint;
   let stationEndpoint;
   let routeEndpoint;
-  try {
-    lostFoundEndpoint = new URL('/api/lost-found/match', apiBaseUrl).toString();
-    chatEndpoint = new URL('/api/passenger-chat', apiBaseUrl).toString();
-    stationEndpoint = new URL('/api/friendly-transfer/station', apiBaseUrl).toString();
-    routeEndpoint = new URL('/api/friendly-transfer/route', apiBaseUrl).toString();
-  } catch {
-    return;
+  if (apiBaseUrl) {
+    try {
+      lostFoundEndpoint = new URL('/api/lost-found/match', apiBaseUrl).toString();
+      chatEndpoint = new URL('/api/passenger-chat', apiBaseUrl).toString();
+      stationEndpoint = new URL('/api/friendly-transfer/station', apiBaseUrl).toString();
+      routeEndpoint = new URL('/api/friendly-transfer/route', apiBaseUrl).toString();
+    } catch {
+      // The UI stays available and reports the missing or invalid local API URL.
+    }
   }
 
   const baseCopy = {
@@ -27,6 +29,7 @@
     send: '\u50b3\u9001',
     thinking: 'RailAgent \u6b63\u5728\u601d\u8003\u2026',
     chatError: '\u76ee\u524d\u7121\u6cd5\u9023\u7dda\u81f3\u672c\u6a5f AI\uff0c\u8acb\u78ba\u8a8d API \u8207 Ollama \u6b63\u5728\u57f7\u884c\u5f8c\u518d\u8a66\u4e00\u6b21\u3002',
+    apiNotConnected: '\u672c\u6a5f API \u5c1a\u672a\u9023\u7dda\u3002\u8acb\u4f7f\u7528 ?apiBaseUrl=http://127.0.0.1:7071 \u958b\u555f\u672c\u9801\u3002',
     missingInput: '\u8acb\u81f3\u5c11\u586b\u5beb\u7269\u54c1\u985e\u578b\u6216\u7279\u5fb5\u95dc\u9375\u5b57\u3002',
     searching: '\u6b63\u5728\u4ee5\u672c\u6a5f Ollama \u641c\u5c0b\u53ef\u80fd\u76f8\u7b26\u7684\u907a\u5931\u7269\u2026',
     searchError: '\u672c\u6a5f AI \u641c\u5c0b\u5931\u6557\uff1a',
@@ -289,6 +292,11 @@
       const submit = form.querySelector('button[type="submit"]');
       const answer = form.querySelector('.railagent-transfer-answer');
       if (!origin || !destination || submit.disabled) return;
+      if (!routeEndpoint) {
+        answer.hidden = false;
+        answer.textContent = copy.apiNotConnected;
+        return;
+      }
       submit.disabled = true;
       answer.hidden = false;
       answer.textContent = copy.routeThinking;
@@ -356,6 +364,10 @@
         event.preventDefault();
         const spokenStation = input.value.trim();
         if (!spokenStation) return;
+        if (!stationEndpoint) {
+          status.textContent = copy.apiNotConnected;
+          return;
+        }
         status.textContent = copy.stationThinking;
         announceTransfer(copy.stationThinking, 'station-thinking');
         callResult.replaceChildren();
@@ -585,6 +597,10 @@
         event.preventDefault();
         const question = input.value.trim();
         if (!question || send.disabled) return;
+        if (!chatEndpoint) {
+          addChatMessage(messages, 'assistant', copy.apiNotConnected);
+          return;
+        }
         addChatMessage(messages, 'user', question);
         input.value = '';
         send.disabled = true;
@@ -663,6 +679,10 @@
     const request = { itemType: itemType.value.trim(), color: color.value.trim(), brand: brand.value.trim(), features: features.value.trim(), lostDate: lostDate.value.trim(), stationName: stationName.value.trim(), trainNumber: trainNumber.value.trim() };
     if (!request.itemType && !request.features) {
       render(button, null, copy.missingInput);
+      return;
+    }
+    if (!lostFoundEndpoint) {
+      render(button, null, copy.apiNotConnected);
       return;
     }
     button.disabled = true;
