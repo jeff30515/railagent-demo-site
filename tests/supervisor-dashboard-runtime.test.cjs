@@ -5,6 +5,12 @@ const test = require('node:test');
 
 const root = path.resolve(__dirname, '..');
 const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
+const functionBody = (source, name) => {
+  const start = source.indexOf(`function ${name}`);
+  assert.ok(start >= 0, `${name} exists`);
+  const next = source.indexOf('\n  function ', start + 1);
+  return source.slice(start, next >= 0 ? next : source.length);
+};
 
 test('supervisor dashboard enhancer is loaded after the mobile application', () => {
   const html = read('index.html');
@@ -52,4 +58,22 @@ test('supervisor enhancer does not remove React-owned nodes and retries after in
   assert.match(source, /showNode\(existing\)/);
   assert.match(source, /!child\.matches\('\[data-supervisor-metrics\]'\)/);
   assert.match(source, /!child\.matches\('\[data-supervisor-workforce\]'\)/);
+});
+
+test('supervisor enhancer isolates realtime and history tab ownership', () => {
+  const source = read('assets/supervisor-dashboard-enhancer.js');
+  const renderHistory = functionBody(source, 'renderHistory');
+
+  assert.match(source, /function activeSupervisorTab\(root\)/);
+  assert.match(source, /function restoreReactNodes\(root\)/);
+  assert.match(source, /function renderHistory\(root, analytics\)/);
+  assert.match(source, /data-supervisor-history/);
+  assert.match(source, /dataset\.supervisorHidden\s*=\s*'true'/);
+  assert.match(source, /querySelectorAll\('\[data-supervisor-hidden="true"\]'\)\.forEach\(showNode\)/);
+  assert.match(source, /const tab = activeSupervisorTab\(root\)/);
+  assert.match(source, /tab === 'realtime'/);
+  assert.match(source, /tab === 'history'/);
+  assert.match(source, /railagent:analytics-updated/);
+  assert.doesNotMatch(renderHistory, /data-supervisor-metrics|dataset\.supervisorMetrics/);
+  assert.doesNotMatch(renderHistory, /data-supervisor-workforce|dataset\.supervisorWorkforce/);
 });

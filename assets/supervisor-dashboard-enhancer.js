@@ -7,6 +7,8 @@
   const CLICK_DELAYS = [0, 50, 150, 400, 1000, 2000];
   let trackedCount = null;
   let trackedRequest = null;
+  let historySnapshot = null;
+  let historyRequest = null;
 
   function text(node) {
     return (node?.textContent || '').replace(/\s+/g, ' ').trim();
@@ -24,8 +26,16 @@
     return [...root.querySelectorAll('h2, h3, strong, p, button')].find((node) => matcher.test(text(node)));
   }
 
+  function cardByText(root, matcher) {
+    return [...root.querySelectorAll('article.mp-card, article, .mp-card')]
+      .find((node) => matcher.test(text(node))) || null;
+  }
+
   function hideNode(node) {
     if (!node) return;
+    if (!node.matches?.('[data-supervisor-metrics],[data-supervisor-workforce],[data-supervisor-history]')) {
+      node.dataset.supervisorHidden = 'true';
+    }
     node.hidden = true;
     node.style.display = 'none';
     node.setAttribute('aria-hidden', 'true');
@@ -36,6 +46,27 @@
     node.hidden = false;
     node.style.display = '';
     node.removeAttribute('aria-hidden');
+    delete node.dataset.supervisorHidden;
+  }
+
+  function clearEnhancerNode(node) {
+    while (node?.firstChild) node.removeChild(node.firstChild);
+  }
+
+  function restoreReactNodes(root) {
+    root.querySelectorAll('[data-supervisor-hidden="true"]').forEach(showNode);
+    root.querySelectorAll('[data-supervisor-metrics],[data-supervisor-workforce],[data-supervisor-history]')
+      .forEach(hideNode);
+  }
+
+  function activeSupervisorTab(root) {
+    if (!root) return 'realtime';
+    const buttons = [...root.querySelectorAll('button[aria-pressed]')];
+    const history = buttons.find((button) => /歷史服務品質分析/.test(text(button)));
+    const realtime = buttons.find((button) => /即時營運監控/.test(text(button)));
+    if (history?.getAttribute('aria-pressed') === 'true') return 'history';
+    if (realtime?.getAttribute('aria-pressed') === 'true') return 'realtime';
+    return 'realtime';
   }
 
   function localTrackedCount() {
@@ -93,6 +124,142 @@
     if (tracked) amount.setAttribute('data-supervisor-tracked-count', 'true');
     item.append(caption, amount);
     return item;
+  }
+
+  function card(title, children) {
+    const item = document.createElement('article');
+    item.className = 'mp-card mp-stack';
+    const heading = document.createElement('h3');
+    heading.style.margin = '0';
+    heading.textContent = title;
+    item.append(heading, ...children);
+    return item;
+  }
+
+  function totalFor(values) {
+    return Object.values(values || {}).reduce((sum, value) => sum + Number(value || 0), 0);
+  }
+
+  function renderCalendar(analytics) {
+    const lostItems = analytics?.lostItems || {};
+    const daily = lostItems.daily || {};
+    const calendar = document.createElement('div');
+    calendar.className = 'supervisor-calendar';
+    calendar.setAttribute('aria-label', '2023 年 7 月拾獲日曆');
+
+    ['日', '一', '二', '三', '四', '五', '六'].forEach((label) => {
+      const header = document.createElement('span');
+      header.className = 'supervisor-calendar-weekday';
+      header.textContent = label;
+      calendar.append(header);
+    });
+
+    for (let blank = 0; blank < 6; blank += 1) {
+      const cell = document.createElement('span');
+      cell.className = 'supervisor-calendar-day is-empty';
+      cell.setAttribute('aria-hidden', 'true');
+      calendar.append(cell);
+    }
+
+    for (let day = 1; day <= 31; day += 1) {
+      const key = `2023-07-${String(day).padStart(2, '0')}`;
+      const unavailable = day >= 18;
+      const cell = document.createElement('span');
+      cell.className = unavailable ? 'supervisor-calendar-day is-unavailable' : 'supervisor-calendar-day';
+      const dayLabel = document.createElement('em');
+      dayLabel.textContent = String(day);
+      const dayValue = document.createElement('strong');
+      dayValue.textContent = unavailable ? '—' : String(daily[key] ?? 0);
+      cell.append(dayLabel, dayValue);
+      calendar.append(cell);
+    }
+
+    return calendar;
+  }
+
+  function summaryText(value) {
+    return Number(value || 0).toLocaleString('en-US');
+  }
+
+  function historyKpiGroup(totals) {
+    const row = document.createElement('div');
+    row.className = 'mp-kpi-row';
+    row.append(
+      metric('近 7 日', summaryText(totals?.week), false),
+      metric('本月', summaryText(totals?.month), false),
+      metric('本年', summaryText(totals?.year), false)
+    );
+    return row;
+  }
+
+  function feedbackGrid(feedback) {
+    const row = document.createElement('div');
+    row.className = 'supervisor-feedback-grid';
+    [1, 2, 3, 4, 5].forEach((score) => {
+      const item = document.createElement('div');
+      item.className = 'mp-kpi supervisor-score-cell';
+      const label = document.createElement('em');
+      label.textContent = `${score} 分`;
+      const value = document.createElement('strong');
+      value.textContent = summaryText(feedback?.[score]);
+      item.append(label, value);
+      row.append(item);
+    });
+    return row;
+  }
+
+  function renderHistory(root, analytics) {
+    const legacyHistory = cardByText(root, /歷史服務品質分析/);
+    hideNode(legacyHistory);
+    [
+      /^跨運具交接與遺失物/,
+      /^類型／語言／無障礙分布/,
+      /^SLA 違約主因/,
+      /^近 30 日事件量趨勢/,
+      /^分析方法與 metadata 價值/
+    ].forEach((matcher) => hideNode(cardFor(findByText(root, matcher))));
+
+    const lostItems = analytics?.lostItems || {};
+    const existing = root.querySelector(':scope > [data-supervisor-history]');
+    const container = existing || document.createElement('section');
+    if (existing) {
+      showNode(existing);
+      clearEnhancerNode(container);
+    } else {
+      container.className = 'mp-stack supervisor-history';
+      container.dataset.supervisorHistory = 'true';
+      container.setAttribute('aria-label', '主管歷史服務品質四卡');
+    }
+
+    const calendarMeta = document.createElement('p');
+    calendarMeta.className = 'mp-footnote';
+    calendarMeta.textContent = `資料範圍至 ${String(lostItems.coverageEnd || '2023-07-17').replaceAll('-', '/')} · 總計 ${summaryText(lostItems.total || totalFor(lostItems.daily))} 件`;
+
+    container.append(
+      card('2023 年 7 月拾獲日曆', [calendarMeta, renderCalendar(analytics)]),
+      card('RailAgent 使用次數趨勢', [historyKpiGroup(analytics?.railAgent?.totals)]),
+      card('設施回報累計次數', [historyKpiGroup(analytics?.facilityReports?.totals)]),
+      card('服務回饋分數', [feedbackGrid(analytics?.feedback?.totals)])
+    );
+
+    if (!existing) root.append(container);
+  }
+
+  async function historyAnalytics() {
+    if (historySnapshot) return historySnapshot;
+    if (historyRequest) return historyRequest;
+    const snapshot = window.RailAgentSupervisorHistory?.snapshot;
+    if (!snapshot) return null;
+    historyRequest = snapshot()
+      .then((snapshot) => {
+        historySnapshot = snapshot;
+        return snapshot;
+      })
+      .catch(() => null)
+      .finally(() => {
+        historyRequest = null;
+      });
+    return historyRequest;
   }
 
   function updateTrackedMetric() {
@@ -199,9 +366,20 @@
   function enhance() {
     const root = dashboard();
     if (!root) return;
-    removeObsoletePanels(root);
-    replaceKpis(root);
-    replaceWorkforce(root);
+    restoreReactNodes(root);
+    const tab = activeSupervisorTab(root);
+
+    if (tab === 'realtime') {
+      removeObsoletePanels(root);
+      replaceKpis(root);
+      replaceWorkforce(root);
+    }
+
+    if (tab === 'history') {
+      historyAnalytics().then((analytics) => {
+        if (analytics && activeSupervisorTab(root) === 'history') renderHistory(root, analytics);
+      });
+    }
     loadTrackedCount();
   }
 
@@ -214,6 +392,10 @@
   });
   document.addEventListener('click', () => {
     CLICK_DELAYS.forEach(scheduleEnhance);
+  });
+  window.addEventListener('railagent:analytics-updated', () => {
+    historySnapshot = null;
+    if (activeSupervisorTab(dashboard()) === 'history') scheduleEnhance(0);
   });
   STARTUP_DELAYS.forEach(scheduleEnhance);
 })();

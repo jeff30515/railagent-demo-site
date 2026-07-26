@@ -7,6 +7,12 @@ const vm = require('node:vm');
 const root = path.resolve(__dirname, '..');
 const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 const plain = (value) => JSON.parse(JSON.stringify(value));
+const functionBody = (source, name) => {
+  const start = source.indexOf(`function ${name}`);
+  assert.ok(start >= 0, `${name} exists`);
+  const next = source.indexOf('\n  function ', start + 1);
+  return source.slice(start, next >= 0 ? next : source.length);
+};
 
 test('history snapshot contains the approved dataset totals', () => {
   const snapshot = JSON.parse(read('data/supervisor-history-analytics.json'));
@@ -193,4 +199,42 @@ test('browser analytics module uses newest valid record date instead of browser 
 
   assert.deepEqual(plain(current.railAgent.totals), { week: 121, month: 146, year: 263 });
   assert.deepEqual(plain(current.facilityReports.totals), { week: 24, month: 34, year: 75 });
+});
+
+test('supervisor history renderer declares the approved four card dataset output', () => {
+  const source = read('assets/supervisor-dashboard-enhancer.js');
+  const renderHistory = functionBody(source, 'renderHistory');
+
+  assert.match(source, /data-supervisor-history/);
+  assert.match(source, /2023 年 7 月拾獲日曆/);
+  assert.match(source, /資料範圍至/);
+  assert.match(source, /總計/);
+  assert.match(source, /RailAgent 使用次數趨勢/);
+  assert.match(source, /設施回報累計次數/);
+  assert.match(source, /服務回饋分數/);
+  assert.match(source, /function cardByText\(root, matcher\)/);
+  assert.match(source, /function clearEnhancerNode\(node\)/);
+  assert.match(renderHistory, /cardByText\(root, \/歷史服務品質分析\/\)/);
+  assert.match(renderHistory, /clearEnhancerNode\(container\)/);
+  assert.match(source, /const unavailable = day >= 18/);
+  assert.match(source, /dayValue\.textContent = unavailable \? '—'/);
+  assert.doesNotMatch(renderHistory, /data-supervisor-metrics|dataset\.supervisorMetrics/);
+  assert.doesNotMatch(renderHistory, /data-supervisor-workforce|dataset\.supervisorWorkforce/);
+});
+
+test('supervisor history calendar styles are scoped and phone-width safe', () => {
+  const css = read('assets/index-lostitem-v1.css');
+
+  assert.match(css, /\[data-supervisor-history\] \.supervisor-calendar\{display:grid;grid-template-columns:repeat\(7,minmax\(0,1fr\)\);gap:6px\}/);
+  assert.match(css, /\[data-supervisor-history\] \.supervisor-calendar-day\{/);
+  assert.match(css, /min-width:0/);
+  assert.match(css, /overflow-wrap:anywhere/);
+  assert.match(css, /@media\(max-width:390px\)/);
+});
+
+test('cache versions are bumped for the supervisor history rendering layer', () => {
+  const html = read('index.html');
+
+  assert.match(html, /supervisor-dashboard-enhancer\.js\?v=20260726-supervisor-history-render-1/);
+  assert.match(html, /index-lostitem-v1\.css\?v=20260726-supervisor-history-render-1/);
 });
