@@ -9,9 +9,27 @@
     return window.RailAgentPassengerRuntimeLocales.getRuntimeCopy(document.documentElement.lang);
   }
 
+  function syncMountedCopy(page) {
+    const copy = currentCopy();
+    const input = page.querySelector('#facility-issue');
+    if (!input) return copy;
+
+    const label = page.querySelector('label');
+    if (label && label.textContent !== copy.facilityIssue) {
+      label.textContent = copy.facilityIssue;
+      label.append(input);
+    }
+
+    return copy;
+  }
+
   function enhanceFacilityReport() {
     const page = document.querySelector('[data-service-page="facility-report"]');
-    if (!page || page.querySelector('#facility-issue')) return;
+    if (!page) return;
+    if (page.querySelector('#facility-issue')) {
+      syncMountedCopy(page);
+      return;
+    }
 
     const card = page.querySelector('.mp-card.mp-stack');
     const submitButton = card && card.querySelector('button.mp-primary');
@@ -39,8 +57,9 @@
 
     form.addEventListener('submit', function (event) {
       event.preventDefault();
+      const activeCopy = currentCopy();
       if (!input.value.trim()) {
-        error.textContent = copy.facilityRequired;
+        error.textContent = activeCopy.facilityRequired;
         error.hidden = false;
         input.setAttribute('aria-invalid', 'true');
         input.focus();
@@ -51,7 +70,7 @@
         createElement('p', {
           className: 'facility-report-feedback__success',
           role: 'status',
-          textContent: copy.facilityThanks,
+          textContent: activeCopy.facilityThanks,
           style: 'margin: 0; text-align: center; color: #0f766e; font-weight: 700; line-height: 1.6;',
         }),
       );
@@ -59,6 +78,6 @@
   }
 
   const observer = new MutationObserver(enhanceFacilityReport);
-  observer.observe(document.documentElement, { childList: true, subtree: true });
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['lang'], childList: true, subtree: true });
   enhanceFacilityReport();
 })();
