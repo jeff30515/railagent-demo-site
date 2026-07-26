@@ -112,16 +112,12 @@
   function installChatLauncher(copy, language) {
     const serviceList = document.querySelector('.mp-service-list');
     const serviceButtons = serviceList?.querySelectorAll('button.mp-service');
-    if (!serviceList || serviceButtons?.length !== 3) return;
-
-    const passengerHome = serviceList.closest('section.mp-stack');
-    [...(passengerHome?.children || [])].forEach((element) => {
-      if (element.matches('button.mp-primary') || element.matches('button.mp-secondary')) {
-        element.remove();
-      }
-    });
-
     const existing = document.getElementById('railagent-local-chat-launcher');
+    if (!serviceList || serviceButtons?.length !== 3) {
+      existing?.remove();
+      return;
+    }
+
     if (existing) {
       if (existing.dataset.locale !== language) {
         existing.dataset.locale = language;
@@ -137,16 +133,16 @@
     serviceList.insertAdjacentElement('afterend', launcher);
   }
 
-  function friendlyTransferPanel(pageLabels) {
-    const heading = [...document.querySelectorAll('.mp-hero-block h2')].find(
-      (element) => element.textContent.trim() === pageLabels.friendlyTitle,
-    );
-    const page = heading?.closest('section.mp-stack');
-    return page?.querySelector(':scope > section.mp-card.mp-stack') ? page : null;
+  function friendlyTransferPanel() {
+    return [...document.querySelectorAll('section.mp-stack[aria-label]')].find((page) =>
+      page.querySelector(':scope > .mp-hero-block') &&
+      page.querySelector(':scope > section.mp-card.mp-stack') &&
+      !page.getAttribute('data-service-page')
+    ) ?? null;
   }
 
-  function installFriendlyTransferTools(copy, pageLabels, language) {
-    const panel = friendlyTransferPanel(pageLabels);
+  function installFriendlyTransferTools(copy, language) {
+    const panel = friendlyTransferPanel();
     if (!panel) return;
 
     [...panel.querySelectorAll('button')].forEach((button) => {
@@ -463,13 +459,13 @@
     installStyles();
     markDemoContent();
     installChatLauncher(copy, language);
-    installFriendlyTransferTools(copy, pageLabels, language);
+    installFriendlyTransferTools(copy, language);
     clearStaleLostFoundResult();
     removeLegacyBackpackCase();
     removeLostItemSourceNotice();
     renderTrackedCases(copy);
     syncPublicFeedbackCopy(copy);
-    const hasFriendlyTransfer = Boolean(friendlyTransferPanel(pageLabels));
+    const hasFriendlyTransfer = Boolean(friendlyTransferPanel());
     if (!hasFriendlyTransfer) clearFriendlyTransferUi();
   }
 

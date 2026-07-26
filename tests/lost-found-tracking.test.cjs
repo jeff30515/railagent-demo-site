@@ -13,6 +13,10 @@ const indexHtml = fs.readFileSync(
   path.join(__dirname, '..', 'index.html'),
   'utf8',
 );
+const applicationBundle = fs.readFileSync(
+  path.join(__dirname, '..', 'assets', 'index-lostitem-talkback.js'),
+  'utf8',
+);
 
 assert.match(
   enhancer,
@@ -31,27 +35,27 @@ assert.doesNotMatch(
 );
 assert.match(
   indexHtml,
-  /passenger-runtime-locales\.js\?v=20260726-nine-language-parity-4/,
+  /passenger-runtime-locales\.js\?v=20260726-nine-language-parity-8/,
   'The entry page should force browsers to fetch the shared passenger locale module.',
 );
 assert.match(
   indexHtml,
-  /lost-found-local-api\.js\?v=20260726-nine-language-parity-4/,
+  /lost-found-local-api\.js\?v=20260726-nine-language-parity-8/,
   'The entry page should force browsers to fetch the canonical passenger runtime.',
 );
 assert.match(
   indexHtml,
-  /facility-report-feedback\.js\?v=20260726-nine-language-parity-4/,
+  /facility-report-feedback\.js\?v=20260726-nine-language-parity-8/,
   'The entry page should force browsers to fetch the updated facility feedback runtime.',
 );
 assert.match(
   indexHtml,
-  /passenger-member-auth\.js\?v=20260726-nine-language-parity-4/,
+  /passenger-member-auth\.js\?v=20260726-nine-language-parity-8/,
   'The entry page should force browsers to fetch the updated member auth runtime.',
 );
 assert.match(
   indexHtml,
-  /passenger-case-unfollow\.js\?v=20260726-nine-language-parity-4/,
+  /passenger-case-unfollow\.js\?v=20260726-nine-language-parity-8/,
   'The entry page should force browsers to fetch the updated case action runtime.',
 );
 const localeScriptIndex = indexHtml.indexOf('passenger-runtime-locales.js');
@@ -65,10 +69,25 @@ assert.ok(localeScriptIndex < canonicalRuntimeIndex);
 assert.ok(localeScriptIndex < facilityRuntimeIndex);
 assert.ok(localeScriptIndex < memberRuntimeIndex);
 assert.ok(localeScriptIndex < caseRuntimeIndex);
+assert.match(
+  indexHtml,
+  /index-lostitem-talkback\.js\?v=20260726-nine-language-parity-8/,
+  'The React application bundle must be cache-busted with the passenger runtime.',
+);
 assert.doesNotMatch(
   indexHtml,
   /passenger-i18n\.js|gate-i18n\.js|gate-i18n\.css/,
   'The obsolete multilingual overlays must not be loaded beside the canonical runtime.',
+);
+assert.doesNotMatch(
+  applicationBundle,
+  /className:"mp-primary",onClick:\(\)=>o\("friendly"\),children:b\.quickHelp/,
+  'The React-owned passenger home must not render the obsolete quick-help action.',
+);
+assert.doesNotMatch(
+  applicationBundle,
+  /className:"mp-secondary",onClick:\(\)=>o\("more"\),children:b\.moreServices/,
+  'The React-owned passenger home must not render the obsolete more-services action.',
 );
 
 assert.ok(
@@ -132,15 +151,15 @@ assert.doesNotMatch(
   /text\.includes\('\\u793a\\u7bc4\\u8cc7\\u6599\\u4f9d\\u7167'\)/,
   'Source-notice removal must not depend on Traditional Chinese text.',
 );
-assert.match(
+assert.doesNotMatch(
   enhancer,
   /pageLabels\.friendlyTitle/,
-  'Friendly-transfer page discovery should use the current locale labels.',
+  'Friendly-transfer page discovery must not depend on localized heading text.',
 );
-assert.match(
+assert.doesNotMatch(
   enhancer,
   /passengerHome\?\.children.*button\.mp-primary.*button\.mp-secondary.*remove\(\)/s,
-  'Obsolete direct home actions should be removed structurally without waiting for accessibility attributes.',
+  'The enhancer must not delete React-owned home nodes and trigger a removeChild crash.',
 );
 
 class Element {
@@ -477,11 +496,12 @@ function appendPassengerPages(document, labels) {
   const more = document.createElement('button');
   more.className = 'mp-secondary';
   more.textContent = labels.moreServices;
-  home.append(services, quick, more);
+  home.append(services);
   document.body.append(home);
 
   const transfer = document.createElement('section');
   transfer.className = 'mp-stack';
+  transfer.setAttribute('aria-label', labels.friendlyTitle);
   const hero = document.createElement('div');
   hero.className = 'mp-hero-block';
   const heading = document.createElement('h2');

@@ -142,6 +142,7 @@ function matchesSelector(node, selector) {
 }
 
 function textOf(node) {
+  if (node.hidden) return '';
   return [node.textContent, ...node.children.map(textOf)].join('');
 }
 
@@ -246,6 +247,11 @@ test('replaces passenger account summary with login fields and keeps return acti
 test('member auth uses active locale copy and falls back for unknown languages', () => {
   const document = createDocument('en');
   const { section } = appendLegacyMemberSection(document);
+  section.className = 'mp-stack';
+  section.setAttribute('aria-label', 'Account');
+  section.children[0].textContent = 'Demo passenger account / Visible events 1';
+  section.children[1].textContent = 'Reset friendly-transfer demo';
+  section.children[2].textContent = 'Back to role select';
 
   loadEnhancer(document).PassengerMemberAuth.enhancePassengerMemberAuth(document);
 
