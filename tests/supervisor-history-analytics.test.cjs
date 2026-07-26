@@ -40,6 +40,28 @@ test('browser analytics module is loaded before chat and supervisor enhancers', 
   assert.ok(supervisor > analytics);
 });
 
+test('real chat and successful facility submissions record supervisor history activity', () => {
+  const chatSource = read('assets/lost-found-local-api.js');
+  const facilitySource = read('assets/facility-report-feedback.js');
+
+  assert.match(chatSource, /recordRailAgentUse\(new Date\(\)\.toISOString\(\)\)/);
+  assert.match(facilitySource, /recordFacilityReport\(new Date\(\)\.toISOString\(\)\)/);
+
+  const emptyQuestionGuard = chatSource.indexOf('if (!question || send.disabled) return;');
+  const chatRecord = chatSource.indexOf('recordRailAgentUse(new Date().toISOString())');
+  const chatFetch = chatSource.indexOf('await fetch(chatEndpoint');
+  assert.ok(emptyQuestionGuard >= 0);
+  assert.ok(chatRecord > emptyQuestionGuard);
+  assert.ok(chatFetch > chatRecord);
+
+  const facilityValidationGuard = facilitySource.indexOf('if (!input.value.trim()) {');
+  const facilityRecord = facilitySource.indexOf('recordFacilityReport(new Date().toISOString())');
+  const facilitySuccess = facilitySource.indexOf("className: 'facility-report-feedback__success'");
+  assert.ok(facilityValidationGuard >= 0);
+  assert.ok(facilityRecord > facilityValidationGuard);
+  assert.ok(facilitySuccess > facilityRecord);
+});
+
 test('browser analytics module merges only valid local records newer than anchors', async () => {
   const source = read('assets/supervisor-history-analytics.js');
   const snapshot = JSON.parse(read('data/supervisor-history-analytics.json'));

@@ -525,6 +525,7 @@
         event.preventDefault();
         const question = input.value.trim();
         if (!question || send.disabled) return;
+        window.RailAgentSupervisorHistory?.recordRailAgentUse(new Date().toISOString());
         addChatMessage(messages, 'user', question);
         input.value = '';
         send.disabled = true;

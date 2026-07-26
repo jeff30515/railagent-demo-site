@@ -66,6 +66,7 @@
         return;
       }
 
+      window.RailAgentSupervisorHistory?.recordFacilityReport(new Date().toISOString());
       card.replaceChildren(
         createElement('p', {
           className: 'facility-report-feedback__success',
