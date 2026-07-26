@@ -600,10 +600,16 @@
     overlay.querySelector('textarea')?.focus();
   }
 
-  document.addEventListener('DOMContentLoaded', () => {
+  function bootstrapLocalModeUi() {
     syncLocalModeUi();
     new MutationObserver(syncLocalModeUi).observe(document.body, { childList: true, subtree: true });
-  });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bootstrapLocalModeUi, { once: true });
+  } else {
+    bootstrapLocalModeUi();
+  }
   // The React mobile bundle mounts after deferred helpers on slower connections.
   // Run once more at load so its initial render cannot restore the legacy home controls.
   window.addEventListener('load', syncLocalModeUi);

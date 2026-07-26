@@ -332,4 +332,9 @@ test('reruns cleanup after the React mobile bundle finishes mounting', () => {
     /window\.addEventListener\('load', syncLocalModeUi\)/,
     'The cleanup must run after the mobile bundle\'s first render, not only before it mounts.'
   );
+  assert.match(
+    enhancer,
+    /if \(document\.readyState === 'loading'\)/,
+    'Deferred scripts must initialize immediately when DOMContentLoaded has already fired.'
+  );
 });
