@@ -325,3 +325,11 @@ test('transfer tools attach without Chinese headings and chat remains only on pa
   assert.equal(document.getElementById('railagent-local-chat-launcher'), null);
   assert.ok(document.getElementById('railagent-friendly-transfer-tools'));
 });
+
+test('reruns cleanup after the React mobile bundle finishes mounting', () => {
+  assert.match(
+    enhancer,
+    /window\.addEventListener\('load', syncLocalModeUi\)/,
+    'The cleanup must run after the mobile bundle\'s first render, not only before it mounts.'
+  );
+});
