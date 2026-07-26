@@ -3,6 +3,12 @@ const fs = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
 
+test('the primary station workspace keeps ownership of the application root', () => {
+  const index = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+
+  assert.doesNotMatch(index, /staff-lost-found-runtime\.js/);
+});
+
 test('staff runtime uses the real case and found-item APIs for both requested units', () => {
   const source = fs.readFileSync(path.join(__dirname, '..', 'assets', 'staff-lost-found-runtime.js'), 'utf8');
   assert.match(source, /ntmetro-staff-banqiao/);
