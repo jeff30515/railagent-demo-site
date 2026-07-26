@@ -126,6 +126,7 @@ function findAll(root, selector) {
 
 function matchesSelector(node, selector) {
   if (selector === 'section') return node.tagName === 'SECTION';
+  if (selector === 'nav') return node.tagName === 'NAV';
   if (selector === 'button') return node.tagName === 'BUTTON';
   if (selector === 'a') return node.tagName === 'A';
   if (selector.startsWith('#')) return node.id === selector.slice(1);
@@ -193,8 +194,25 @@ function appendLegacyMemberSection(document) {
   return { section, exit };
 }
 
+function appendNavigation(document, activeIndex, workspaceClass = 'mobile-app-public') {
+  const workspace = document.createElement('main');
+  workspace.className = workspaceClass;
+  document.documentElement.append(workspace);
+
+  const navigation = document.createElement('nav');
+  for (let index = 0; index < 3; index += 1) {
+    const button = document.createElement('button');
+    button.setAttribute('aria-pressed', index === activeIndex ? 'true' : 'false');
+    navigation.append(button);
+  }
+  navigation.className = 'mp-bottom-nav';
+  workspace.append(navigation);
+  return navigation;
+}
+
 test('replaces passenger account summary with login fields and keeps return action', () => {
   const document = createDocument();
+  appendNavigation(document, 2);
   const section = document.createElement('section');
   section.setAttribute('aria-label', '帳戶');
   const summary = document.createElement('article');
@@ -246,6 +264,7 @@ test('replaces passenger account summary with login fields and keeps return acti
 
 test('member auth uses active locale copy and falls back for unknown languages', () => {
   const document = createDocument('en');
+  appendNavigation(document, 2);
   const { section } = appendLegacyMemberSection(document);
   section.className = 'mp-stack';
   section.setAttribute('aria-label', 'Account');
@@ -264,6 +283,7 @@ test('member auth uses active locale copy and falls back for unknown languages',
   assert.doesNotMatch(visibleText, /會員登入|記住帳號|忘記密碼/);
 
   const unknownDocument = createDocument('unknown');
+  appendNavigation(unknownDocument, 2);
   const { section: fallbackSection } = appendLegacyMemberSection(unknownDocument);
 
   loadEnhancer(unknownDocument).PassengerMemberAuth.enhancePassengerMemberAuth(unknownDocument);
@@ -276,6 +296,7 @@ test('member auth uses active locale copy and falls back for unknown languages',
 
 test('mounted member auth rerenders when the active language changes', () => {
   const document = createDocument('en');
+  appendNavigation(document, 2);
   const { section } = appendLegacyMemberSection(document);
   const memberAuth = loadEnhancer(document).PassengerMemberAuth;
 
@@ -302,6 +323,7 @@ test('member auth renders representative locale-specific copy for placeholder-pr
     ['th', 'เข้าสู่ระบบสมาชิก'],
   ]) {
     const document = createDocument(language);
+    appendNavigation(document, 2);
     const { section } = appendLegacyMemberSection(document);
 
     loadEnhancer(document).PassengerMemberAuth.enhancePassengerMemberAuth(document);
@@ -314,6 +336,7 @@ test('member auth renders representative locale-specific copy for placeholder-pr
 
 test('replaces the old account page even when its aria label differs from the title', () => {
   const document = createDocument();
+  appendNavigation(document, 2);
   const section = document.createElement('section');
   section.setAttribute('aria-label', '我的');
   const header = document.createElement('div');
@@ -338,4 +361,78 @@ test('replaces the old account page even when its aria label differs from the ti
   assert.match(visibleText, /帳號/);
   assert.doesNotMatch(visibleText, /民眾示範帳號/);
   assert.doesNotMatch(visibleText, /重設友善轉乘示範/);
+});
+
+test('does not replace a service page when the member navigation tab is inactive', () => {
+  const document = createDocument('zh-TW');
+  appendNavigation(document, 0);
+
+  const servicePage = document.createElement('section');
+  servicePage.className = 'mp-stack';
+  servicePage.setAttribute('aria-label', '遺失物協尋');
+
+  const form = document.createElement('article');
+  form.className = 'mp-card';
+  form.textContent = '遺失物搜尋表單';
+
+  const back = document.createElement('button');
+  back.className = 'mp-secondary';
+  back.textContent = '返回';
+
+  const search = document.createElement('button');
+  search.className = 'mp-primary';
+  search.textContent = '搜尋可能相符物品';
+
+  servicePage.append(form, back, search);
+  document.documentElement.append(servicePage);
+
+  const memberAuth = loadEnhancer(document);
+  const enhanced = memberAuth.PassengerMemberAuth.enhancePassengerMemberAuth(document);
+
+  assert.equal(enhanced, false);
+  assert.equal(servicePage.querySelector('[data-member-auth]'), null);
+  assert.match(textOf(servicePage), /遺失物搜尋表單/);
+
+  memberAuth.location.hash = '#member-join';
+  memberAuth.dispatchEvent({ type: 'hashchange' });
+
+  assert.equal(servicePage.querySelector('[data-member-auth]'), null);
+  assert.match(textOf(servicePage), /遺失物搜尋表單/);
+});
+
+test('does not replace the station staff account page with passenger member login', () => {
+  const document = createDocument('zh-TW');
+  appendNavigation(document, 2, 'mobile-app-staff');
+
+  const section = document.createElement('section');
+  section.className = 'mp-stack';
+  section.setAttribute('aria-label', '帳戶');
+
+  const account = document.createElement('article');
+  account.className = 'mp-card mp-stack';
+  account.textContent = '板橋站務';
+
+  const reset = document.createElement('button');
+  reset.className = 'mp-secondary';
+  reset.textContent = '重設友善轉乘示範';
+
+  const exit = document.createElement('button');
+  exit.className = 'mp-primary';
+  exit.textContent = '返回身分選擇';
+
+  section.append(account, reset, exit);
+  document.documentElement.append(section);
+
+  const memberAuth = loadEnhancer(document);
+  const enhanced = memberAuth.PassengerMemberAuth.enhancePassengerMemberAuth(document);
+
+  assert.equal(enhanced, false);
+  assert.equal(section.querySelector('[data-member-auth]'), null);
+  assert.match(textOf(section), /板橋站務/);
+
+  memberAuth.location.hash = '#member-join';
+  memberAuth.dispatchEvent({ type: 'hashchange' });
+
+  assert.equal(section.querySelector('[data-member-auth]'), null);
+  assert.match(textOf(section), /板橋站務/);
 });
