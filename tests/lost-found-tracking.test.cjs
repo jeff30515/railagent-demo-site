@@ -458,9 +458,12 @@ function appendPassengerPages(document, labels) {
   lost.append(unrelated);
   const searchPanel = document.createElement('section');
   for (let index = 0; index < 7; index += 1) {
+    const field = document.createElement('div');
+    field.className = 'mp-field';
     const input = document.createElement('input');
     input.value = index === 0 ? 'bag' : `field-${index}`;
-    searchPanel.append(input);
+    field.append(input);
+    searchPanel.append(field);
   }
   const search = document.createElement('button');
   search.className = 'mp-primary';

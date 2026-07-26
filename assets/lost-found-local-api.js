@@ -470,6 +470,16 @@
     }
   }
 
+  function lostItemSearchPanel(button, page) {
+    let panel = button.parentElement;
+    while (panel && panel !== page) {
+      const visibleInputs = [...panel.querySelectorAll('input')].filter((input) => input.offsetParent !== null);
+      if (visibleInputs.length >= 7) return panel;
+      panel = panel.parentElement;
+    }
+    return null;
+  }
+
   function addChatMessage(messages, kind, text) {
     const message = document.createElement('div');
     message.className = `railagent-chat-message railagent-chat-${kind}`;
@@ -574,14 +584,12 @@
       syncLocalModeUi();
       return;
     }
-    const directInputs = [...(button.parentElement?.children ?? [])].filter((element) =>
-      element.matches?.('input') && element.offsetParent !== null
-    );
     const lostItemPage = button.closest('[data-service-page="lost-item"]');
+    const searchPanel = lostItemPage ? lostItemSearchPanel(button, lostItemPage) : null;
     const isLostItemSearch =
       lostItemPage &&
       button.matches('button.mp-primary') &&
-      directInputs.length >= 7 &&
+      searchPanel &&
       !button.matches('.railagent-track-lost-found');
 
     if (!isLostItemSearch) return;
