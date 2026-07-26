@@ -83,22 +83,26 @@ class TestElement {
 
   matchesSingle(selector) {
     if (selector === '*') return true;
-    if (/^[a-z]+$/i.test(selector)) return this.tagName.toLowerCase() === selector.toLowerCase();
-    if (selector === '.mp-card') return this.className.split(/\s+/).includes('mp-card');
-    if (selector === 'article.mp-card') {
-      return this.tagName === 'ARTICLE' && this.className.split(/\s+/).includes('mp-card');
-    }
-    if (selector === 'button[aria-pressed]') {
-      return this.tagName === 'BUTTON' && this.attributes.has('aria-pressed');
-    }
     const dataMatch = selector.match(/^\[data-([a-z-]+)(?:="([^"]+)")?\]$/);
     if (dataMatch) {
       const key = dataMatch[1].replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
       if (!(key in this.dataset)) return false;
       return dataMatch[2] === undefined || this.dataset[key] === dataMatch[2];
     }
-    const ariaMatch = selector.match(/^\[aria-label="([^"]+)"\]$/);
-    if (ariaMatch) return this.getAttribute('aria-label') === ariaMatch[1];
+    const tagMatch = selector.match(/^[a-z]+/i);
+    if (tagMatch && this.tagName.toLowerCase() !== tagMatch[0].toLowerCase()) return false;
+    const classMatches = [...selector.matchAll(/\.([a-z0-9_-]+)/gi)];
+    if (classMatches.length) {
+      const classes = this.className.split(/\s+/);
+      if (classMatches.some((match) => !classes.includes(match[1]))) return false;
+    }
+    const attributeMatches = [...selector.matchAll(/\[([a-z-]+)(?:="([^"]+)")?\]/gi)];
+    for (const match of attributeMatches) {
+      const value = this.getAttribute(match[1]);
+      if (value === null) return false;
+      if (match[2] !== undefined && value !== match[2]) return false;
+    }
+    if (tagMatch || classMatches.length || attributeMatches.length) return true;
     return false;
   }
 
@@ -131,6 +135,16 @@ class TestElement {
     visit(this);
     return results;
   }
+
+  insertBefore(child, reference) {
+    child.parentNode = this;
+    const index = this.children.indexOf(reference);
+    if (index < 0) {
+      this.children.push(child);
+    } else {
+      this.children.splice(index, 0, child);
+    }
+  }
 }
 
 function createDocument(rootElement) {
@@ -153,6 +167,19 @@ function appendCard(rootElement, title) {
   article.append(heading);
   rootElement.append(article);
   return article;
+}
+
+function navButton(label, active) {
+  const button = new TestElement('button');
+  button.textContent = label;
+  button.setAttribute('aria-pressed', active ? 'true' : 'false');
+  return button;
+}
+
+function setActive(buttons, label) {
+  buttons.forEach((button) => {
+    button.setAttribute('aria-pressed', button.textContent === label ? 'true' : 'false');
+  });
 }
 
 async function flushPromises() {
@@ -557,6 +584,139 @@ test('supervisor history keeps the core difference notice hidden after tab resto
   assert.match(visibleText, /本月事件量趨勢/);
 });
 
+test('supervisor bottom navigation renders isolated realtime, history, and account pages', async () => {
+  const source = read('assets/supervisor-dashboard-enhancer.js');
+  const app = new TestElement('div');
+  app.className = 'mobile-app-supervisor';
+
+  const rootElement = new TestElement('section');
+  rootElement.setAttribute('aria-label', '銝餌恣??擏???');
+  const originalHero = new TestElement('div');
+  originalHero.className = 'mp-hero-block';
+  const originalHeroTitle = new TestElement('h2');
+  originalHeroTitle.textContent = 'Legacy supervisor hero';
+  originalHero.append(originalHeroTitle);
+  const topTabList = new TestElement('div');
+  topTabList.setAttribute('role', 'tablist');
+  topTabList.setAttribute('aria-label', '銝餌恣璅∠?');
+  rootElement.append(originalHero, topTabList);
+  appendCard(rootElement, '頝券??瑟???隞嗅?????');
+  appendCard(rootElement, '蝡?鈭箏?');
+  appendCard(rootElement, '?詨?撌桃嚗楊憭抒?撓鞈?');
+  const realtimeQueue = new TestElement('section');
+  realtimeQueue.setAttribute('aria-label', '?單?雿?');
+  realtimeQueue.textContent = 'old realtime task queue';
+  rootElement.append(realtimeQueue);
+
+  const shell = new TestElement('section');
+  shell.className = 'mp-shell mp-shell-workspace';
+  const workspaceActions = new TestElement('div');
+  workspaceActions.className = 'mp-workspace-actions';
+  const oldTaskQueue = new TestElement('article');
+  oldTaskQueue.className = 'mp-card';
+  oldTaskQueue.textContent = 'old supervisor task queue';
+  const friendlyTransfer = new TestElement('article');
+  friendlyTransfer.className = 'mp-card';
+  friendlyTransfer.textContent = 'friendly-transfer card';
+  shell.append(workspaceActions, oldTaskQueue, friendlyTransfer);
+
+  const account = new TestElement('section');
+  account.textContent = 'supervisor account content';
+  const navigation = new TestElement('nav');
+  navigation.className = 'mp-bottom-nav';
+  navigation.setAttribute('aria-label', 'RailAgent App 撠汗');
+  const home = navButton('擐?', true);
+  const tasks = navButton('敺齒', false);
+  const accountButton = navButton('撣單', false);
+  const buttons = [home, tasks, accountButton];
+  navigation.append(home, tasks, accountButton);
+  app.append(rootElement, shell, account, navigation);
+
+  const callbacks = [];
+  let clickHandler = null;
+  const document = createDocument(app);
+  document.addEventListener = (type, callback) => {
+    if (type === 'click') clickHandler = callback;
+  };
+  document.querySelector = (selector) => {
+    if (selector === '.mobile-app-supervisor') return app;
+    if (selector === '[aria-label="主管營運駕駛艙"]') return rootElement;
+    if (selector === '[aria-label="銝餌恣??擏???]') return rootElement;
+    return TestElement.prototype.querySelector.call(document, selector);
+  };
+  const context = {
+    console,
+    Promise,
+    document,
+    setTimeout: (callback) => callbacks.push(callback),
+    clearTimeout,
+    URLSearchParams,
+    window: {
+      addEventListener() {},
+      location: { search: '' },
+      localStorage: { getItem: () => null },
+      RailAgentSupervisorHistory: {
+        snapshot: async () => ({
+          lostItems: { coverageEnd: '2023-07-17', total: 2083, daily: {} },
+          railAgent: { totals: { week: 119, month: 144, year: 261 } },
+          facilityReports: { totals: { week: 24, month: 34, year: 75 } },
+          feedback: { totals: { 1: 6, 2: 12, 3: 25, 4: 35, 5: 36 } },
+        }),
+      },
+    },
+  };
+  context.window.setTimeout = context.setTimeout;
+  context.globalThis = context.window;
+
+  vm.runInNewContext(source, context);
+  const runEnhance = async (label) => {
+    setActive(buttons, label);
+    clickHandler?.();
+    callbacks.splice(0).forEach((callback) => callback());
+    await flushPromises();
+  };
+
+  await runEnhance('擐?');
+  assert.equal(tasks.textContent, '甇瑕');
+  const activePageText = rootElement.querySelector(':scope > [data-supervisor-home-title]').textContent;
+  assert.equal(activePageText, '?單?????');
+  assert.equal(topTabList.hidden, true);
+  assert.equal(originalHero.hidden, true);
+
+  await runEnhance('甇瑕');
+  await runEnhance('撣單');
+  assert.equal(account.hidden, false);
+  assert.equal(account.textContent, 'supervisor account content');
+  await runEnhance('擐?');
+  await runEnhance('甇瑕');
+  await runEnhance('擐?');
+
+  assert.equal(app.querySelectorAll('[data-supervisor-home-title]').length, 1);
+  assert.equal(app.querySelectorAll('[data-supervisor-history-page]').length, 1);
+  assert.equal(app.querySelectorAll('[data-supervisor-history]').length, 1);
+  const homeText = rootElement.children.filter((child) => !child.hidden).map((child) => child.textContent).join(' ');
+  assert.ok(homeText.includes(activePageText));
+  assert.equal(rootElement.querySelector('[data-supervisor-metrics]').hidden, false);
+  assert.equal(rootElement.querySelector('[data-supervisor-workforce]').hidden, false);
+  assert.equal(homeText.includes('RailAgent 使用次數統計'), false);
+
+  await runEnhance('甇瑕');
+  const historyText = shell.children.filter((child) => !child.hidden).map((child) => child.textContent).join(' ');
+  assert.equal(shell.querySelectorAll('article.mp-card').filter((card) => !card.hidden).length, 4);
+  assert.ok(historyText.includes('本月事件量趨勢'));
+  assert.ok(historyText.includes('RailAgent 使用次數統計'));
+  assert.ok(historyText.includes('服務設施回報次數'));
+  assert.ok(historyText.includes('服務回饋統計'));
+  assert.equal(historyText.includes('old supervisor task queue'), false);
+  assert.equal(historyText.includes('friendly-transfer card'), false);
+  assert.equal(historyText.includes('頝券'), false);
+  assert.equal(historyText.includes('蝡'), false);
+  assert.equal(oldTaskQueue.hidden, true);
+  assert.equal(friendlyTransfer.hidden, true);
+  assert.equal(originalHero.hidden, true);
+  assert.equal(topTabList.hidden, true);
+});
+
 test('supervisor history renderer declares the approved four card dataset output', () => {
   const source = read('assets/supervisor-dashboard-enhancer.js');
   const renderHistory = functionBody(source, 'renderHistory');
@@ -596,9 +756,9 @@ test('supervisor history calendar styles are scoped and phone-width safe', () =>
   assert.match(css, /@media\(max-width:390px\)/);
 });
 
-test('cache versions are bumped for the supervisor history rendering layer', () => {
+test('cache versions are bumped for the supervisor bottom navigation layer', () => {
   const html = read('index.html');
 
-  assert.match(html, /supervisor-dashboard-enhancer\.js\?v=20260726-supervisor-history-render-2/);
-  assert.match(html, /index-lostitem-v1\.css\?v=20260726-supervisor-history-render-2/);
+  assert.match(html, /supervisor-dashboard-enhancer\.js\?v=20260727-supervisor-bottom-navigation-1/);
+  assert.match(html, /index-lostitem-v1\.css\?v=20260727-supervisor-bottom-navigation-1/);
 });

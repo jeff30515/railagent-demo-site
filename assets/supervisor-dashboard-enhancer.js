@@ -18,6 +18,34 @@
     return document.querySelector('[aria-label="主管營運駕駛艙"]');
   }
 
+  function supervisorApp() {
+    return document.querySelector('.mobile-app-supervisor') || dashboard();
+  }
+
+  function supervisorNavigation(app) {
+    const navigation = app?.querySelector(':scope > .mp-bottom-nav') || null;
+    return navigation;
+  }
+
+  function supervisorNavButtons(app) {
+    return [...(supervisorNavigation(app)?.querySelectorAll('button') || [])];
+  }
+
+  function activeSupervisorPage(app) {
+    const buttons = supervisorNavButtons(app);
+    const fallbackButtons = buttons.length ? buttons : [...(app?.querySelectorAll('button[aria-pressed]') || [])];
+    const active = fallbackButtons.find((button) => button.getAttribute('aria-pressed') === 'true');
+    const label = text(active);
+    if (/帳戶|撣單/.test(label)) return 'account';
+    if (/任務|歷史|敺齒|甇瑕/.test(label)) return 'history';
+    return 'realtime';
+  }
+
+  function renameHistoryNavigation(app) {
+    const button = supervisorNavButtons(app).find((item) => /任務|歷史|敺齒|甇瑕/.test(text(item)));
+    if (button) button.textContent = '甇瑕';
+  }
+
   function cardFor(node) {
     return node?.closest('article.mp-card, article, .mp-card') || null;
   }
@@ -31,9 +59,14 @@
       .find((node) => matcher.test(text(node))) || null;
   }
 
+  function directCards(root) {
+    return [...root.querySelectorAll('article.mp-card, article, .mp-card')]
+      .filter((node) => node.parentNode === root);
+  }
+
   function hideNode(node) {
     if (!node) return;
-    if (!node.matches?.('[data-supervisor-metrics],[data-supervisor-workforce],[data-supervisor-history]')) {
+    if (!node.matches?.('[data-supervisor-metrics],[data-supervisor-workforce],[data-supervisor-history],[data-supervisor-home-title],[data-supervisor-history-page]')) {
       node.dataset.supervisorHidden = 'true';
     }
     node.hidden = true;
@@ -55,18 +88,37 @@
 
   function restoreReactNodes(root) {
     root.querySelectorAll('[data-supervisor-hidden="true"]').forEach(showNode);
-    root.querySelectorAll('[data-supervisor-metrics],[data-supervisor-workforce],[data-supervisor-history]')
+    root.querySelectorAll('[data-supervisor-metrics],[data-supervisor-workforce],[data-supervisor-history],[data-supervisor-home-title],[data-supervisor-history-page]')
       .forEach(hideNode);
   }
 
-  function activeSupervisorTab(root) {
-    if (!root) return 'realtime';
-    const buttons = [...root.querySelectorAll('button[aria-pressed]')];
-    const history = buttons.find((button) => /歷史服務品質分析/.test(text(button)));
-    const realtime = buttons.find((button) => /即時營運監控/.test(text(button)));
-    if (history?.getAttribute('aria-pressed') === 'true') return 'history';
-    if (realtime?.getAttribute('aria-pressed') === 'true') return 'realtime';
-    return 'realtime';
+  function restoreSupervisorNodes(app) {
+    restoreReactNodes(app);
+  }
+
+  function hideRealtimeHomeChrome(root) {
+    const originalHero = [...root.children]
+      .find((node) => node.matches('.mp-hero-block') && !node.matches('[data-supervisor-home-title]'));
+    const topTabs = root.querySelector(':scope > [role="tablist"][aria-label="主管頁籤"]')
+      || root.querySelector(':scope > [role="tablist"]');
+    hideNode(originalHero);
+    hideNode(topTabs);
+  }
+
+  function prepareRealtimeHome(root) {
+    hideRealtimeHomeChrome(root);
+
+    let heading = root.querySelector(':scope > [data-supervisor-home-title]');
+    if (!heading) {
+      heading = document.createElement('div');
+      heading.className = 'mp-hero-block';
+      heading.dataset.supervisorHomeTitle = 'true';
+      const title = document.createElement('h2');
+      title.textContent = '?單?????';
+      heading.append(title);
+      root.insertBefore(heading, root.firstChild);
+    }
+    showNode(heading);
   }
 
   function localTrackedCount() {
@@ -212,19 +264,21 @@
   }
 
   function renderHistory(root, analytics) {
-    const legacyHistory = cardByText(root, /歷史服務品質分析/);
-    hideNode(legacyHistory);
-    [...root.querySelectorAll('article.mp-card, article, .mp-card')]
-      .filter((node) => node.parentNode === root && !node.closest('[data-supervisor-history]'))
-      .forEach(hideNode);
-    [
-      /^跨運具交接與遺失物/,
-      /^類型／語言／無障礙分布/,
-      /^SLA 違約主因/,
-      /^近 30 日事件量趨勢/,
-      /^分析方法與 metadata 價值/
-    ].forEach((matcher) => hideNode(cardFor(findByText(root, matcher))));
-
+    const options = arguments[2] || {};
+    if (options.hideLegacy !== false) {
+      const legacyHistory = cardByText(root, /歷史服務品質分析/) || cardByText(root, /甇瑕/);
+      hideNode(legacyHistory);
+      [...root.querySelectorAll('article.mp-card, article, .mp-card')]
+        .filter((node) => node.parentNode === root && !node.closest('[data-supervisor-history]'))
+        .forEach(hideNode);
+      [
+        /^跨運具交接與遺失物/,
+        /^類型／語言／無障礙分布/,
+        /^SLA 違約主因/,
+        /^近 30 日事件量趨勢/,
+        /^分析方法與 metadata 價值/
+      ].forEach((matcher) => hideNode(cardFor(findByText(root, matcher))));
+    }
     const lostItems = analytics?.lostItems || {};
     const hasAnalytics = !!analytics;
     const existing = root.querySelector(':scope > [data-supervisor-history]');
@@ -260,6 +314,34 @@
     if (!existing) root.append(container);
   }
 
+  function supervisorShell(app) {
+    return app?.querySelector(':scope > .mp-shell.mp-shell-workspace') || null;
+  }
+
+  function renderHistoryPage(app, analytics) {
+    const shell = supervisorShell(app);
+    if (!shell) {
+      removeObsoletePanels(app);
+      renderHistory(app, analytics);
+      return;
+    }
+
+    [...shell.children]
+      .filter((node) => !node.matches('.mp-workspace-actions,[data-supervisor-history-page]'))
+      .forEach(hideNode);
+
+    let page = shell.querySelector(':scope > [data-supervisor-history-page]');
+    if (!page) {
+      page = document.createElement('section');
+      page.className = 'mp-stack';
+      page.dataset.supervisorHistoryPage = 'true';
+      page.setAttribute('aria-label', '甇瑕???釭??');
+      shell.append(page);
+    }
+    showNode(page);
+    renderHistory(page, analytics, { hideLegacy: false });
+  }
+
   async function historyAnalytics() {
     if (historySnapshot) return historySnapshot;
     if (historyRequest) return historyRequest;
@@ -285,7 +367,7 @@
 
   function replaceKpis(root) {
     const heading = findByText(root, /^跨運具服務事件即時營運監控/);
-    const panel = cardFor(heading);
+    const panel = cardFor(heading) || directCards(root)[0] || null;
     if (!panel) return;
 
     panel.querySelectorAll('.mp-kpi-row').forEach((row) => {
@@ -348,7 +430,7 @@
 
   function replaceWorkforce(root) {
     const heading = findByText(root, /^站務人力/);
-    const panel = cardFor(heading);
+    const panel = cardFor(heading) || directCards(root).find((node) => /蝡|workforce/i.test(text(node))) || null;
     if (!panel) return;
 
     [...panel.children]
@@ -379,23 +461,31 @@
   }
 
   function enhance() {
-    const root = dashboard();
-    if (!root) return;
-    restoreReactNodes(root);
-    const tab = activeSupervisorTab(root);
-    removeObsoletePanels(root);
+    const app = supervisorApp();
+    if (!app) return;
 
-    if (tab === 'realtime') {
+    restoreSupervisorNodes(app);
+    renameHistoryNavigation(app);
+    const page = activeSupervisorPage(app);
+
+    if (page === 'realtime') {
+      const root = dashboard();
+      if (!root) return;
+      prepareRealtimeHome(root);
+      removeObsoletePanels(root);
       replaceKpis(root);
       replaceWorkforce(root);
+      loadTrackedCount();
+      return;
     }
 
-    if (tab === 'history') {
+    if (page === 'history') {
+      const root = dashboard();
+      if (root) hideRealtimeHomeChrome(root);
       historyAnalytics().then((analytics) => {
-        if (activeSupervisorTab(root) === 'history') renderHistory(root, analytics);
+        if (activeSupervisorPage(app) === 'history') renderHistoryPage(app, analytics);
       });
     }
-    loadTrackedCount();
   }
 
   function scheduleEnhance(delay) {
@@ -410,7 +500,7 @@
   });
   window.addEventListener('railagent:analytics-updated', () => {
     historySnapshot = null;
-    if (activeSupervisorTab(dashboard()) === 'history') scheduleEnhance(0);
+    if (activeSupervisorPage(supervisorApp()) === 'history') scheduleEnhance(0);
   });
   STARTUP_DELAYS.forEach(scheduleEnhance);
 })();

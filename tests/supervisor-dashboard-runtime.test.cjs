@@ -64,16 +64,28 @@ test('supervisor enhancer isolates realtime and history tab ownership', () => {
   const source = read('assets/supervisor-dashboard-enhancer.js');
   const renderHistory = functionBody(source, 'renderHistory');
 
-  assert.match(source, /function activeSupervisorTab\(root\)/);
+  assert.match(source, /function activeSupervisorPage\(app\)/);
   assert.match(source, /function restoreReactNodes\(root\)/);
   assert.match(source, /function renderHistory\(root, analytics\)/);
   assert.match(source, /data-supervisor-history/);
   assert.match(source, /dataset\.supervisorHidden\s*=\s*'true'/);
   assert.match(source, /querySelectorAll\('\[data-supervisor-hidden="true"\]'\)\.forEach\(showNode\)/);
-  assert.match(source, /const tab = activeSupervisorTab\(root\)/);
-  assert.match(source, /tab === 'realtime'/);
-  assert.match(source, /tab === 'history'/);
+  assert.match(source, /const page = activeSupervisorPage\(app\)/);
+  assert.match(source, /page === 'realtime'/);
+  assert.match(source, /page === 'history'/);
   assert.match(source, /railagent:analytics-updated/);
   assert.doesNotMatch(renderHistory, /data-supervisor-metrics|dataset\.supervisorMetrics/);
   assert.doesNotMatch(renderHistory, /data-supervisor-workforce|dataset\.supervisorWorkforce/);
+});
+
+test('supervisor bottom navigation owns realtime home and history pages', () => {
+  const source = read('assets/supervisor-dashboard-enhancer.js');
+
+  assert.match(source, /function supervisorApp\(\)/);
+  assert.match(source, /function supervisorNavigation\(app\)/);
+  assert.match(source, /function activeSupervisorPage\(app\)/);
+  assert.match(source, /button\.textContent = '甇瑕'/);
+  assert.match(source, /data-supervisor-home-title/);
+  assert.match(source, /data-supervisor-history-page/);
+  assert.doesNotMatch(source, /function activeSupervisorTab\(root\)/);
 });
