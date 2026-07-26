@@ -1,4 +1,6 @@
 (function () {
+  const originalExitButtons = new WeakMap();
+
   function createElement(name, options) {
     const element = document.createElement(name);
     const { attributes, ...properties } = options || {};
@@ -38,7 +40,8 @@
         '.mobile-product .passenger-member-auth__link-button{width:auto;justify-self:start;min-height:40px;padding:0 1rem}' +
         '.mobile-product .passenger-member-auth__hint{margin:0;line-height:1.55}' +
         '.mobile-product .passenger-member-auth__status{min-height:1.4em;margin:.25rem 0 0;color:var(--mp-teal);font-weight:800}' +
-        '.mobile-product .passenger-member-auth__return{margin-top:.25rem}',
+        '.mobile-product .passenger-member-auth__return{margin-top:.25rem}' +
+        '.mobile-product [data-railagent-member-legacy="true"]{display:none!important}',
     });
     document.head.append(style);
   }
@@ -178,6 +181,24 @@
 
   function render(section, exitButton, activeTab) {
     const copy = currentCopy();
+    const locale = document.documentElement.lang;
+    let surface = Array.from(section.children || []).find((child) =>
+      child.className.split(/\s+/).includes('passenger-member-auth__surface')
+    );
+    if (!surface) {
+      Array.from(section.children || []).forEach((child) => {
+        child.hidden = true;
+        child.dataset.railagentMemberLegacy = 'true';
+      });
+      surface = createElement('div', {
+        className: 'mp-stack passenger-member-auth__surface',
+      });
+      section.append(surface);
+    }
+    if (surface.dataset.locale === locale && surface.dataset.tab === activeTab) return;
+    surface.dataset.locale = locale;
+    surface.dataset.tab = activeTab;
+
     const status = createElement('p', {
       className: 'mp-footnote passenger-member-auth__status',
       textContent: '',
@@ -204,12 +225,18 @@
     });
     panel.append(activeTab === 'login' ? createLoginForm(status, copy) : createJoinForm(status, copy), status);
 
-    exitButton.type = 'button';
-    exitButton.className = 'mp-primary passenger-member-auth__return';
-    exitButton.textContent = copy.memberReturn;
+    const returnButton = createElement('button', {
+      type: 'button',
+      className: 'mp-primary passenger-member-auth__return',
+      textContent: copy.memberReturn,
+    });
+    returnButton.addEventListener('click', function () {
+      if (typeof exitButton.click === 'function') exitButton.click();
+      else exitButton.dispatchEvent({ type: 'click' });
+    });
 
     section.setAttribute('aria-label', copy.memberTitle);
-    section.replaceChildren(header, tabs, panel, exitButton);
+    surface.replaceChildren(header, tabs, panel, returnButton);
   }
 
   function getText(node) {
@@ -221,9 +248,13 @@
   function findReturnButton(section) {
     const renderedReturn = section.querySelector('.passenger-member-auth__return');
     if (renderedReturn) return renderedReturn;
-    return Array.from(section.querySelectorAll('button')).find((button) =>
+    const translatedReturn = Array.from(section.querySelectorAll('button')).find((button) =>
       getText(button).includes('\u8fd4\u56de\u8eab\u5206\u9078\u64c7'),
     );
+    if (translatedReturn) return translatedReturn;
+    return Array.from(section.children || [])
+      .filter((child) => child.tagName === 'BUTTON')
+      .at(-1) || null;
   }
 
   function findRenderedMemberSection(scope) {
@@ -234,10 +265,24 @@
   function isLegacyAccountSection(section) {
     const text = getText(section);
     const label = section.getAttribute('aria-label') || '';
+    const directChildren = Array.from(section.children || []);
+    const directButtons = directChildren.filter((child) => child.tagName === 'BUTTON');
+    const hasAccountShape =
+      section.tagName === 'SECTION' &&
+      section.className.split(/\s+/).includes('mp-stack') &&
+      directButtons.length === 2 &&
+      directChildren.some((child) =>
+        child.tagName === 'ARTICLE' && child.className.split(/\s+/).includes('mp-card')
+      );
     return (
       !section.querySelector('[data-member-auth]') &&
-      text.includes('\u8fd4\u56de\u8eab\u5206\u9078\u64c7') &&
-      (label.includes('\u5e33\u6236') || label.includes('\u6211\u7684') || text.includes('\u5e33\u6236'))
+      (
+        hasAccountShape ||
+        (
+          text.includes('\u8fd4\u56de\u8eab\u5206\u9078\u64c7') &&
+          (label.includes('\u5e33\u6236') || label.includes('\u6211\u7684') || text.includes('\u5e33\u6236'))
+        )
+      )
     );
   }
 
@@ -258,10 +303,11 @@
 
     if (!section) return false;
 
-    const exitButton = findReturnButton(section);
+    const exitButton = originalExitButtons.get(section) || findReturnButton(section);
 
     if (!exitButton) return false;
 
+    originalExitButtons.set(section, exitButton);
     render(section, exitButton, activeMemberTab());
     return true;
   }
@@ -274,7 +320,7 @@
     const section =
       findRenderedMemberSection(document) ||
       findLegacyAccountSection(document);
-    const exitButton = section && findReturnButton(section);
+    const exitButton = section && (originalExitButtons.get(section) || findReturnButton(section));
     if (section && exitButton) render(section, exitButton, activeMemberTab());
   }
 
