@@ -6,6 +6,10 @@ const enhancer = fs.readFileSync(
   path.join(__dirname, '..', 'assets', 'lost-found-local-api.js'),
   'utf8',
 );
+const indexHtml = fs.readFileSync(
+  path.join(__dirname, '..', 'index.html'),
+  'utf8',
+);
 
 assert.match(
   enhancer,
@@ -21,6 +25,16 @@ assert.doesNotMatch(
   enhancer,
   /if \(!apiBaseUrl\) return/,
   'The bare URL must not return before installing the completed passenger runtime.',
+);
+assert.match(
+  indexHtml,
+  /lost-found-local-api\.js\?v=20260726-single-passenger-runtime-1/,
+  'The entry page should force browsers to fetch the canonical passenger runtime.',
+);
+assert.doesNotMatch(
+  indexHtml,
+  /passenger-i18n\.js|gate-i18n\.js|gate-i18n\.css/,
+  'The obsolete multilingual overlays must not be loaded beside the canonical runtime.',
 );
 
 assert.ok(
