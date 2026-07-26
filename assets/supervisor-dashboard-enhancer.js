@@ -37,13 +37,13 @@
     const active = fallbackButtons.find((button) => button.getAttribute('aria-pressed') === 'true');
     const label = text(active);
     if (/帳戶|撣單/.test(label)) return 'account';
-    if (/任務|歷史|敺齒|甇瑕/.test(label)) return 'history';
+    if (/待辦|任務|歷史|敺齒|甇瑕/.test(label)) return 'history';
     return 'realtime';
   }
 
   function renameHistoryNavigation(app) {
-    const button = supervisorNavButtons(app).find((item) => /任務|歷史|敺齒|甇瑕/.test(text(item)));
-    if (button) button.textContent = '甇瑕';
+    const button = supervisorNavButtons(app).find((item) => /待辦|任務|歷史|敺齒|甇瑕/.test(text(item)));
+    if (button) button.textContent = '歷史';
   }
 
   function cardFor(node) {
@@ -114,7 +114,7 @@
       heading.className = 'mp-hero-block';
       heading.dataset.supervisorHomeTitle = 'true';
       const title = document.createElement('h2');
-      title.textContent = '?單?????';
+      title.textContent = '即時營運監控';
       heading.append(title);
       root.insertBefore(heading, root.firstChild);
     }
@@ -335,7 +335,7 @@
       page = document.createElement('section');
       page.className = 'mp-stack';
       page.dataset.supervisorHistoryPage = 'true';
-      page.setAttribute('aria-label', '甇瑕???釭??');
+      page.setAttribute('aria-label', '歷史服務品質分析');
       shell.append(page);
     }
     showNode(page);

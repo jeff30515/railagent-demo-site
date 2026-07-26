@@ -84,7 +84,8 @@ test('supervisor bottom navigation owns realtime home and history pages', () => 
   assert.match(source, /function supervisorApp\(\)/);
   assert.match(source, /function supervisorNavigation\(app\)/);
   assert.match(source, /function activeSupervisorPage\(app\)/);
-  assert.match(source, /button\.textContent = '甇瑕'/);
+  assert.match(source, /button\.textContent = '歷史'/);
+  assert.match(source, /title\.textContent = '即時營運監控'/);
   assert.match(source, /data-supervisor-home-title/);
   assert.match(source, /data-supervisor-history-page/);
   assert.doesNotMatch(source, /function activeSupervisorTab\(root\)/);

@@ -625,9 +625,9 @@ test('supervisor bottom navigation renders isolated realtime, history, and accou
   const navigation = new TestElement('nav');
   navigation.className = 'mp-bottom-nav';
   navigation.setAttribute('aria-label', 'RailAgent App 撠汗');
-  const home = navButton('擐?', true);
-  const tasks = navButton('敺齒', false);
-  const accountButton = navButton('撣單', false);
+  const home = navButton('首頁', true);
+  const tasks = navButton('待辦', false);
+  const accountButton = navButton('帳戶', false);
   const buttons = [home, tasks, accountButton];
   navigation.append(home, tasks, accountButton);
   app.append(rootElement, shell, account, navigation);
@@ -676,20 +676,20 @@ test('supervisor bottom navigation renders isolated realtime, history, and accou
     await flushPromises();
   };
 
-  await runEnhance('擐?');
-  assert.equal(tasks.textContent, '甇瑕');
+  await runEnhance('首頁');
+  assert.deepEqual(buttons.map((button) => button.textContent), ['首頁', '歷史', '帳戶']);
   const activePageText = rootElement.querySelector(':scope > [data-supervisor-home-title]').textContent;
-  assert.equal(activePageText, '?單?????');
+  assert.equal(activePageText, '即時營運監控');
   assert.equal(topTabList.hidden, true);
   assert.equal(originalHero.hidden, true);
 
-  await runEnhance('甇瑕');
-  await runEnhance('撣單');
+  await runEnhance('歷史');
+  await runEnhance('帳戶');
   assert.equal(account.hidden, false);
   assert.equal(account.textContent, 'supervisor account content');
-  await runEnhance('擐?');
-  await runEnhance('甇瑕');
-  await runEnhance('擐?');
+  await runEnhance('首頁');
+  await runEnhance('歷史');
+  await runEnhance('首頁');
 
   assert.equal(app.querySelectorAll('[data-supervisor-home-title]').length, 1);
   assert.equal(app.querySelectorAll('[data-supervisor-history-page]').length, 1);
@@ -700,7 +700,7 @@ test('supervisor bottom navigation renders isolated realtime, history, and accou
   assert.equal(rootElement.querySelector('[data-supervisor-workforce]').hidden, false);
   assert.equal(homeText.includes('RailAgent 使用次數統計'), false);
 
-  await runEnhance('甇瑕');
+  await runEnhance('歷史');
   const historyText = shell.children.filter((child) => !child.hidden).map((child) => child.textContent).join(' ');
   assert.equal(shell.querySelectorAll('article.mp-card').filter((card) => !card.hidden).length, 4);
   assert.ok(historyText.includes('本月事件量趨勢'));
