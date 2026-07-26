@@ -229,6 +229,12 @@
     homeServiceList.appendChild(launcher);
   }
 
+  function removeLegacyPassengerActions() {
+    document
+      .querySelectorAll('[data-railagent-speech-cue="quick-help"], [data-railagent-speech-cue="more-services"]')
+      .forEach((button) => button.remove());
+  }
+
   function installFriendlyTransferTools() {
     const panel = findFriendlyTransferPage();
     if (!panel) return;
@@ -502,6 +508,7 @@
   function syncLocalModeUi() {
     copy = getCopy();
     installStyles();
+    removeLegacyPassengerActions();
     markDemoContent();
     installChatLauncher();
     installFriendlyTransferTools();
@@ -613,6 +620,12 @@
   // The React mobile bundle mounts after deferred helpers on slower connections.
   // Run once more at load so its initial render cannot restore the legacy home controls.
   window.addEventListener('load', syncLocalModeUi);
+  // React may reconcile the legacy actions after an external DOM change.
+  // Keep deleting those obsolete nodes; never merely hide them.
+  window.setInterval(() => {
+    removeLegacyPassengerActions();
+    markDemoContent();
+  }, 120);
 
   document.addEventListener('click', (event) => {
     const button = event.target.closest('button');
