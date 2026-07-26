@@ -556,6 +556,39 @@ test('nan lost-item search uses page structure and ignores unrelated primary but
 
   assert.equal(searchEvent.defaultPrevented, true);
   assert.equal(fetchCalls, 1);
-  assert.match(document.getElementById('railagent-local-lost-found-result').textContent, /LFI nan/);
+  assert.match(document.getElementById('railagent-local-lost-found-result').textContent, /Bo chhoe tioh u kho-leng sio-hu e sit-but/);
   assert.doesNotMatch(document.getElementById('railagent-local-lost-found-result').textContent, /\u672c\u6a5f AI/);
+  assert.doesNotMatch(document.getElementById('railagent-local-lost-found-result').textContent, /LFI (?:nan|hak|ja|ko|vi|th)/);
+});
+
+test('lost-item rendered copy rejects generated placeholders across all passenger languages', async () => {
+  const locales = require('../assets/passenger-runtime-locales.js');
+  const expectations = {
+    'zh-TW': '\u672a\u627e\u5230\u53ef\u80fd\u76f8\u7b26\u7684\u907a\u5931\u7269\u3002',
+    nan: 'Bo chhoe tioh u kho-leng sio-hu e sit-but.',
+    hak: 'Mo tsham-to ko-nang siong-fu ge sit-vut.',
+    en: 'No likely lost-item matches were found.',
+    ja: 'Gaito shiso na ishitsubutsu wa mitsukarimasen deshita.',
+    ko: 'Ilchi hal ganeungseong-i inneun bunsilmul-eul chatji mothaetseumnida.',
+    vi: 'Khong tim thay do that lac co kha nang phu hop.',
+    id: 'Tidak ada kecocokan barang hilang yang mungkin.',
+    th: 'Mai phop khong hai thi na cha trong kan.',
+  };
+
+  for (const language of locales.SUPPORTED_LANGUAGES) {
+    const document = createDocument(language);
+    const pages = appendPassengerPages(document, locales.getPageLabels(language));
+    loadPassengerRuntime(document, async () => ({
+      ok: true,
+      json: async () => ({ sourceMaxPickupDate: '', aiMode: 'local', candidates: [] }),
+    }));
+
+    document.dispatchEvent({ type: 'DOMContentLoaded' });
+    click(document, pages.search);
+    await new Promise((resolve) => setImmediate(resolve));
+
+    const resultText = document.getElementById('railagent-local-lost-found-result').textContent;
+    assert.match(resultText, new RegExp(expectations[language]), language);
+    assert.doesNotMatch(resultText, /LFI (?:nan|hak|ja|ko|vi|th)/, language);
+  }
 });

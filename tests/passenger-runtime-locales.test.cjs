@@ -34,6 +34,41 @@ const memberKeys = [
   'memberJoinDemoStatus',
   'memberReturn',
 ];
+const runtimeExtensionKeys = [
+  'chatPlaceholder',
+  'thinking',
+  'missingInput',
+  'searching',
+  'searchError',
+  'searchTitle',
+  'noMatch',
+  'snapshot',
+  'mode',
+  'similar',
+  'pickupDate',
+  'unknown',
+  'unknownItem',
+  'contact',
+  'thankYou',
+  'transferRouteLead',
+  'callTitle',
+  'callLead',
+  'stationPlaceholder',
+  'startVoice',
+  'findStation',
+  'calling',
+  'stationError',
+  'voiceUnavailable',
+  'routePlaceholderOrigin',
+  'routePlaceholderDestination',
+  'routeThinking',
+  'transferPageGuide',
+  'routeOriginGuide',
+  'routeDestinationGuide',
+  'voicePrompt',
+  'voiceRecognized',
+  'stationThinking',
+];
 
 test('canonical passenger runtime provides complete copy for all nine languages', () => {
   assert.deepEqual(locales.SUPPORTED_LANGUAGES, expectedLanguages);
@@ -144,6 +179,39 @@ test('member auth copy contains representative natural strings for placeholder-p
   assert.equal(locales.getRuntimeCopy('ko').memberTitle, '회원 로그인');
   assert.equal(locales.getRuntimeCopy('vi').memberTitle, 'Đăng nhập hội viên');
   assert.equal(locales.getRuntimeCopy('th').memberTitle, 'เข้าสู่ระบบสมาชิก');
+});
+
+test('runtime extension copy rejects generated placeholders and wrong-language prefixes', () => {
+  const placeholderPattern = /\bLFI (?:nan|hak|ja|ko|vi|th)\b/;
+  const wrongLanguagePatterns = {
+    'zh-TW': /\b(?:Type your question|Tulis pertanyaan|Local AI search results)\b/,
+    nan: /\b(?:Type your question|Tulis pertanyaan|Local AI search results)\b/,
+    hak: /\b(?:Type your question|Tulis pertanyaan|Local AI search results)\b/,
+    en: /\bLFI (?:nan|hak|ja|ko|vi|th)\b/,
+    ja: /\b(?:Type your question|Tulis pertanyaan|Local AI search results)\b/,
+    ko: /\b(?:Type your question|Tulis pertanyaan|Local AI search results)\b/,
+    vi: /\b(?:Type your question|Tulis pertanyaan|Local AI search results)\b/,
+    id: /\bLFI (?:nan|hak|ja|ko|vi|th)\b/,
+    th: /\b(?:Type your question|Tulis pertanyaan|Local AI search results)\b/,
+  };
+
+  for (const language of expectedLanguages) {
+    const copy = locales.getRuntimeCopy(language);
+
+    for (const key of runtimeExtensionKeys) {
+      assert.doesNotMatch(copy[key], placeholderPattern, `${language}.${key}`);
+      assert.doesNotMatch(copy[key], wrongLanguagePatterns[language], `${language}.${key}`);
+    }
+  }
+});
+
+test('runtime extension copy contains representative natural strings for placeholder-prone languages', () => {
+  assert.equal(locales.getRuntimeCopy('nan').chatPlaceholder, 'Phah li e bun-toe...');
+  assert.equal(locales.getRuntimeCopy('hak').searchTitle, 'Pun-ki AI tsham-chhau kit-ko');
+  assert.equal(locales.getRuntimeCopy('ja').stationError, 'Ekimei o ninshiki dekimasen. Mo ichido ekimei o hanasu ka nyuryoku shite kudasai.');
+  assert.equal(locales.getRuntimeCopy('ko').pickupDate, 'Seupdeugil');
+  assert.equal(locales.getRuntimeCopy('vi').transferRouteLead, 'Nhap vi tri hien tai va diem den de AI cuc bo goi y lo trinh.');
+  assert.equal(locales.getRuntimeCopy('th').chatPlaceholder, 'Phim kham tham khong khun...');
 });
 
 test('language aliases normalize without downloading language resources', () => {
