@@ -116,11 +116,11 @@
     );
     if (!facilityButton) return;
 
-    serviceButtons.forEach((button) => {
-      const text = button.textContent.trim();
-      if (text === pageLabels.quickHelp || text === pageLabels.moreServices) {
-        button.dataset.railagentLocalHidden = 'true';
-      }
+    const passengerHome = facilityButton.closest('section.mp-stack');
+    ['quick-help', 'more-services'].forEach((speechCue) => {
+      passengerHome
+        ?.querySelector(`[data-railagent-speech-cue="${speechCue}"]`)
+        ?.remove();
     });
 
     const existing = document.getElementById('railagent-local-chat-launcher');

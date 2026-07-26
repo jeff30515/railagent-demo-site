@@ -31,27 +31,27 @@ assert.doesNotMatch(
 );
 assert.match(
   indexHtml,
-  /passenger-runtime-locales\.js\?v=20260726-nine-language-parity-1/,
+  /passenger-runtime-locales\.js\?v=20260726-nine-language-parity-2/,
   'The entry page should force browsers to fetch the shared passenger locale module.',
 );
 assert.match(
   indexHtml,
-  /lost-found-local-api\.js\?v=20260726-nine-language-parity-1/,
+  /lost-found-local-api\.js\?v=20260726-nine-language-parity-2/,
   'The entry page should force browsers to fetch the canonical passenger runtime.',
 );
 assert.match(
   indexHtml,
-  /facility-report-feedback\.js\?v=20260726-nine-language-parity-1/,
+  /facility-report-feedback\.js\?v=20260726-nine-language-parity-2/,
   'The entry page should force browsers to fetch the updated facility feedback runtime.',
 );
 assert.match(
   indexHtml,
-  /passenger-member-auth\.js\?v=20260726-nine-language-parity-1/,
+  /passenger-member-auth\.js\?v=20260726-nine-language-parity-2/,
   'The entry page should force browsers to fetch the updated member auth runtime.',
 );
 assert.match(
   indexHtml,
-  /passenger-case-unfollow\.js\?v=20260726-nine-language-parity-1/,
+  /passenger-case-unfollow\.js\?v=20260726-nine-language-parity-2/,
   'The entry page should force browsers to fetch the updated case action runtime.',
 );
 const localeScriptIndex = indexHtml.indexOf('passenger-runtime-locales.js');
@@ -139,8 +139,8 @@ assert.match(
 );
 assert.match(
   enhancer,
-  /pageLabels\.quickHelp.*pageLabels\.moreServices/s,
-  'Obsolete home actions should be removed for the current locale.',
+  /\['quick-help', 'more-services'\].*data-railagent-speech-cue.*remove\(\)/s,
+  'Obsolete home actions should be removed by stable speech cues rather than localized text.',
 );
 
 class Element {
@@ -454,15 +454,25 @@ function loadPassengerRuntime(document, fetchImpl = async () => ({ ok: true, jso
 }
 
 function appendPassengerPages(document, labels) {
+  const home = document.createElement('section');
+  home.className = 'mp-stack';
+  home.setAttribute('aria-label', '旅客首頁');
   const services = document.createElement('div');
   services.className = 'mp-service-list';
-  for (const label of [labels.facilityTitle, labels.quickHelp, labels.moreServices]) {
-    const button = document.createElement('button');
-    button.className = 'mp-service';
-    button.textContent = label;
-    services.append(button);
-  }
-  document.body.append(services);
+  const facilityButton = document.createElement('button');
+  facilityButton.className = 'mp-service';
+  facilityButton.textContent = labels.facilityTitle;
+  services.append(facilityButton);
+  const quick = document.createElement('button');
+  quick.className = 'mp-primary';
+  quick.setAttribute('data-railagent-speech-cue', 'quick-help');
+  quick.textContent = labels.quickHelp;
+  const more = document.createElement('button');
+  more.className = 'mp-secondary';
+  more.setAttribute('data-railagent-speech-cue', 'more-services');
+  more.textContent = labels.moreServices;
+  home.append(services, quick, more);
+  document.body.append(home);
 
   const transfer = document.createElement('section');
   transfer.className = 'mp-stack';
@@ -503,7 +513,7 @@ function appendPassengerPages(document, labels) {
   searchPanel.append(search);
   lost.append(searchPanel);
   document.body.append(lost);
-  return { transferHeading: heading, search, unrelated, notice };
+  return { transferHeading: heading, search, unrelated, notice, facilityButton, quick, more };
 }
 
 test('injected passenger tools resync non-zh copy without Traditional Chinese fallback', () => {
@@ -513,6 +523,8 @@ test('injected passenger tools resync non-zh copy without Traditional Chinese fa
   loadPassengerRuntime(document);
 
   document.dispatchEvent({ type: 'DOMContentLoaded' });
+  assert.equal(pages.quick.parentNode, null);
+  assert.equal(pages.more.parentNode, null);
   click(document, document.getElementById('railagent-local-chat-launcher'));
 
   assert.equal(document.querySelector('#railagent-local-chat textarea').getAttribute('placeholder'), 'Type your question...');
@@ -524,9 +536,7 @@ test('injected passenger tools resync non-zh copy without Traditional Chinese fa
   document.documentElement.lang = 'id';
   const idLabels = locales.getPageLabels('id');
   pages.transferHeading.textContent = idLabels.friendlyTitle;
-  document.body.querySelectorAll('.mp-service').forEach((button, index) => {
-    button.textContent = [idLabels.facilityTitle, idLabels.quickHelp, idLabels.moreServices][index];
-  });
+  pages.facilityButton.textContent = idLabels.facilityTitle;
   document.dispatchEvent({ type: 'DOMContentLoaded' });
   click(document, document.getElementById('railagent-local-chat-launcher'));
 
