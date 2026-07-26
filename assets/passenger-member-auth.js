@@ -1,43 +1,6 @@
 (function () {
-  const FALLBACK_COPY = {
-    'member.login': '\u6703\u54e1\u767b\u5165',
-    'member.loginLead': '\u8acb\u8f38\u5165\u6703\u54e1\u5e33\u865f\u8207\u5bc6\u78bc\u3002',
-    'member.account': '\u5e33\u865f',
-    'member.password': '\u5bc6\u78bc',
-    'member.remember': '\u8a18\u4f4f\u5e33\u865f',
-    'member.forgotPassword': '\u5fd8\u8a18\u5bc6\u78bc',
-    'member.loginHint':
-      '\u5efa\u8b70\u6703\u54e1\u6bcf\u4e09\u500b\u6708\u5b9a\u671f\u66f4\u63db\u5bc6\u78bc\uff0c\u5bc6\u78bc\u898f\u5247\u70ba8-12\u5b57\u5143\uff0c\u81f3\u5c11\u4e00\u500b\u82f1\u6587\u5b57\u8207\u4e00\u500b\u6578\u5b57',
-    'member.loginDemoStatus': '\u6b64\u70ba\u6703\u54e1\u767b\u5165\u793a\u7bc4\uff0c\u5c1a\u672a\u4e32\u63a5\u771f\u5be6\u9a57\u8b49\u3002',
-    'member.forgotPasswordDemoStatus': '\u6b64\u70ba\u5fd8\u8a18\u5bc6\u78bc\u793a\u7bc4\uff0c\u5c1a\u672a\u958b\u653e\u7dda\u4e0a\u91cd\u8a2d\u3002',
-    'member.join': '\u52a0\u5165\u6703\u54e1',
-    'member.joinLead': '\u8acb\u586b\u5beb\u57fa\u672c\u8cc7\u6599\u5efa\u7acb\u6703\u54e1\u3002',
-    'member.id': '\u8b49\u865f',
-    'member.passwordConfirm': '\u518d\u6b21\u78ba\u8a8d\u5bc6\u78bc',
-    'member.name': '\u59d3\u540d',
-    'member.gender': '\u6027\u5225',
-    'member.genderMale': '\u7537',
-    'member.genderFemale': '\u5973',
-    'member.birthday': '\u751f\u65e5',
-    'member.email': 'E-mail',
-    'member.mobile': '\u624b\u6a5f',
-    'member.residence': '\u5c45\u4f4f\u5730',
-    'member.joinDemoStatus': '\u6b64\u70ba\u52a0\u5165\u6703\u54e1\u793a\u7bc4\uff0c\u5c1a\u672a\u5132\u5b58\u500b\u4eba\u8cc7\u6599\u3002',
-    'member.returnToGate': '\u8fd4\u56de\u8eab\u5206\u9078\u64c7',
-    'member.functions': '\u6703\u54e1\u529f\u80fd',
-    'member.accountTitle': '\u5e33\u6236',
-  };
-
-  function t(key) {
-    const i18n = window.PassengerI18n;
-    if (i18n && typeof i18n.translate === 'function') return i18n.translate(key);
-    return FALLBACK_COPY[key] || key;
-  }
-
-  function applyI18n(section) {
-    const i18n = window.PassengerI18n;
-    if (i18n && typeof i18n.apply === 'function') i18n.apply(section);
-  }
+  const LOGIN_HINT =
+    '\u5efa\u8b70\u6703\u54e1\u6bcf\u4e09\u500b\u6708\u5b9a\u671f\u66f4\u63db\u5bc6\u78bc\uff0c\u5bc6\u78bc\u898f\u5247\u70ba8-12\u5b57\u5143\uff0c\u81f3\u5c11\u4e00\u500b\u82f1\u6587\u5b57\u8207\u4e00\u500b\u6578\u5b57';
 
   function createElement(name, options) {
     const element = document.createElement(name);
@@ -105,28 +68,28 @@
   function createLoginForm(status) {
     const form = createElement('form', { className: 'mp-card mp-stack passenger-member-auth__form', noValidate: true });
     form.append(
-      createField('member-login-account', t('member.account'), {
+      createField('member-login-account', '\u5e33\u865f', {
         required: true,
         autocomplete: 'username',
       }),
-      createField('member-login-password', t('member.password'), {
+      createField('member-login-password', '\u5bc6\u78bc', {
         required: true,
         type: 'password',
         autocomplete: 'current-password',
       }),
       createRememberField(),
       createForgotPasswordButton(status),
-      createElement('p', { className: 'mp-footnote passenger-member-auth__hint', textContent: t('member.loginHint') }),
+      createElement('p', { className: 'mp-footnote passenger-member-auth__hint', textContent: LOGIN_HINT }),
       createElement('button', {
         type: 'submit',
         className: 'mp-primary',
-        textContent: t('member.login'),
+        textContent: '\u6703\u54e1\u767b\u5165',
       }),
     );
 
     form.addEventListener('submit', function (event) {
       event.preventDefault();
-      status.textContent = t('member.loginDemoStatus');
+      status.textContent = '\u6b64\u70ba\u6703\u54e1\u767b\u5165\u793a\u7bc4\uff0c\u5c1a\u672a\u4e32\u63a5\u771f\u5be6\u9a57\u8b49\u3002';
     });
 
     return form;
@@ -139,7 +102,7 @@
       name: 'member-login-remember',
       type: 'checkbox',
     });
-    label.append(checkbox, createElement('span', { textContent: t('member.remember') }));
+    label.append(checkbox, createElement('span', { textContent: '\u8a18\u4f4f\u5e33\u865f' }));
     return label;
   }
 
@@ -147,10 +110,10 @@
     const button = createElement('button', {
       type: 'button',
       className: 'mp-secondary passenger-member-auth__link-button',
-      textContent: t('member.forgotPassword'),
+      textContent: '\u5fd8\u8a18\u5bc6\u78bc',
     });
     button.addEventListener('click', function () {
-      status.textContent = t('member.forgotPasswordDemoStatus');
+      status.textContent = '\u6b64\u70ba\u5fd8\u8a18\u5bc6\u78bc\u793a\u7bc4\uff0c\u5c1a\u672a\u958b\u653e\u7dda\u4e0a\u91cd\u8a2d\u3002';
     });
     return button;
   }
@@ -158,33 +121,33 @@
   function createJoinForm(status) {
     const form = createElement('form', { className: 'mp-card mp-stack passenger-member-auth__form', noValidate: true });
     form.append(
-      createField('member-join-id', t('member.id'), { required: true, autocomplete: 'off' }),
-      createField('member-join-password', t('member.password'), {
+      createField('member-join-id', '\u8b49\u865f', { required: true, autocomplete: 'off' }),
+      createField('member-join-password', '\u5bc6\u78bc', {
         required: true,
         type: 'password',
         autocomplete: 'new-password',
       }),
-      createField('member-join-password-confirm', t('member.passwordConfirm'), {
+      createField('member-join-password-confirm', '\u518d\u6b21\u78ba\u8a8d\u5bc6\u78bc', {
         required: true,
         type: 'password',
         autocomplete: 'new-password',
       }),
-      createField('member-join-name', t('member.name'), { required: true, autocomplete: 'name' }),
-      createField('member-join-gender', t('member.gender'), { required: true, select: [t('member.genderMale'), t('member.genderFemale')] }),
-      createField('member-join-birthday', t('member.birthday'), { required: true, type: 'date' }),
-      createField('member-join-email', t('member.email'), { required: true, type: 'email', autocomplete: 'email' }),
-      createField('member-join-mobile', t('member.mobile'), { required: true, type: 'tel', autocomplete: 'tel' }),
-      createField('member-join-residence', t('member.residence'), { required: true, autocomplete: 'street-address' }),
+      createField('member-join-name', '\u59d3\u540d', { required: true, autocomplete: 'name' }),
+      createField('member-join-gender', '\u6027\u5225', { required: true, select: ['\u7537', '\u5973'] }),
+      createField('member-join-birthday', '\u751f\u65e5', { required: true, type: 'date' }),
+      createField('member-join-email', 'E-mail', { required: true, type: 'email', autocomplete: 'email' }),
+      createField('member-join-mobile', '\u624b\u6a5f', { required: true, type: 'tel', autocomplete: 'tel' }),
+      createField('member-join-residence', '\u5c45\u4f4f\u5730', { required: true, autocomplete: 'street-address' }),
       createElement('button', {
         type: 'submit',
         className: 'mp-primary',
-        textContent: t('member.join'),
+        textContent: '\u52a0\u5165\u6703\u54e1',
       }),
     );
 
     form.addEventListener('submit', function (event) {
       event.preventDefault();
-      status.textContent = t('member.joinDemoStatus');
+      status.textContent = '\u6b64\u70ba\u52a0\u5165\u6703\u54e1\u793a\u7bc4\uff0c\u5c1a\u672a\u5132\u5b58\u500b\u4eba\u8cc7\u6599\u3002';
     });
 
     return form;
@@ -214,17 +177,17 @@
 
     const header = createElement('div', { className: 'mp-hero-block passenger-member-auth__header' });
     header.append(
-      createElement('h2', { textContent: t('member.login') }),
-      createElement('p', { textContent: activeTab === 'login' ? t('member.loginLead') : t('member.joinLead') }),
+      createElement('h2', { textContent: '\u6703\u54e1\u767b\u5165' }),
+      createElement('p', { textContent: activeTab === 'login' ? '\u8acb\u8f38\u5165\u6703\u54e1\u5e33\u865f\u8207\u5bc6\u78bc\u3002' : '\u8acb\u586b\u5beb\u57fa\u672c\u8cc7\u6599\u5efa\u7acb\u6703\u54e1\u3002' }),
     );
 
     const tabs = createElement('div', {
       className: 'mp-chip-row passenger-member-auth__tabs',
-      attributes: { role: 'tablist', 'aria-label': t('member.functions') },
+      attributes: { role: 'tablist', 'aria-label': '\u6703\u54e1\u529f\u80fd' },
     });
     tabs.append(
-      buildTab(t('member.login'), 'login', activeTab === 'login'),
-      buildTab(t('member.join'), 'join', activeTab === 'join'),
+      buildTab('\u6703\u54e1\u767b\u5165', 'login', activeTab === 'login'),
+      buildTab('\u52a0\u5165\u6703\u54e1', 'join', activeTab === 'join'),
     );
 
     const panel = createElement('div', {
@@ -234,11 +197,10 @@
 
     exitButton.type = 'button';
     exitButton.className = 'mp-primary passenger-member-auth__return';
-    exitButton.textContent = t('member.returnToGate');
+    exitButton.textContent = '\u8fd4\u56de\u8eab\u5206\u9078\u64c7';
 
-    section.setAttribute('aria-label', t('member.login'));
+    section.setAttribute('aria-label', '\u6703\u54e1\u767b\u5165');
     section.replaceChildren(header, tabs, panel, exitButton);
-    applyI18n(section);
   }
 
   function getText(node) {
@@ -248,44 +210,18 @@
   }
 
   function findReturnButton(section) {
-    return (
-      section.querySelector('.passenger-member-auth__return') ||
-      Array.from(section.querySelectorAll('button')).find((button) => hasClass(button, 'mp-primary')) ||
-      Array.from(section.querySelectorAll('button')).find((button) =>
-        getText(button).includes('\u8fd4\u56de\u8eab\u5206\u9078\u64c7') || getText(button).includes(t('member.returnToGate')),
-      )
-    );
-  }
-
-  function hasClass(node, className) {
-    return (node.className || '').split(/\s+/).includes(className);
-  }
-
-  function hasLegacyAccountCard(section) {
-    return Array.from(section.querySelectorAll('.mp-card')).some((card) => hasClass(card, 'mp-stack'));
-  }
-
-  function hasLocalizedAccountLabel(section) {
-    const label = section.getAttribute('aria-label') || '';
-    const accountTitle = t('member.accountTitle');
-    return Boolean(
-      label &&
-        (label.includes(accountTitle) ||
-          label.includes('\u5e33\u6236') ||
-          label.includes('\u6211\u7684') ||
-          label.includes('Account') ||
-          label.includes('\u30a2\u30ab\u30a6\u30f3\u30c8') ||
-          label.includes('\uacc4\uc815')),
+    return Array.from(section.querySelectorAll('button')).find((button) =>
+      getText(button).includes('\u8fd4\u56de\u8eab\u5206\u9078\u64c7'),
     );
   }
 
   function isLegacyAccountSection(section) {
     const text = getText(section);
+    const label = section.getAttribute('aria-label') || '';
     return (
       !section.querySelector('[data-member-auth]') &&
-      hasLegacyAccountCard(section) &&
-      findReturnButton(section) &&
-      (hasLocalizedAccountLabel(section) || text.includes('\u5e33\u6236'))
+      text.includes('\u8fd4\u56de\u8eab\u5206\u9078\u64c7') &&
+      (label.includes('\u5e33\u6236') || label.includes('\u6211\u7684') || text.includes('\u5e33\u6236'))
     );
   }
 
@@ -322,9 +258,7 @@
     const section =
       findLegacyAccountSection(document) ||
       Array.from(document.querySelectorAll('section')).find(
-        (candidate) =>
-          candidate.getAttribute('aria-label') === '\u6703\u54e1\u767b\u5165' ||
-          candidate.getAttribute('aria-label') === t('member.login'),
+        (candidate) => candidate.getAttribute('aria-label') === '\u6703\u54e1\u767b\u5165',
       );
     const exitButton = section && findReturnButton(section);
     if (section && exitButton) render(section, exitButton, activeMemberTab());

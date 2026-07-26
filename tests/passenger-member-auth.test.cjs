@@ -148,139 +148,7 @@ function findByText(root, selector, expectedText) {
   return root.querySelectorAll(selector).find((node) => textOf(node).includes(expectedText));
 }
 
-function createPassengerI18n(language) {
-  const copy = {
-    en: {
-      'member.login': 'Member Sign In',
-      'member.loginLead': 'Enter your member account and password.',
-      'member.account': 'Account',
-      'member.password': 'Password',
-      'member.remember': 'Remember Account',
-      'member.forgotPassword': 'Forgot Password',
-      'member.loginHint':
-        'Members should change passwords every three months. Use 8-12 characters with at least one letter and one number.',
-      'member.loginDemoStatus': 'This member sign-in demo is not connected to real authentication.',
-      'member.forgotPasswordDemoStatus': 'This forgot-password demo does not provide online reset yet.',
-      'member.join': 'Join as Member',
-      'member.joinLead': 'Fill in the basic details to create a member account.',
-      'member.id': 'ID Number',
-      'member.passwordConfirm': 'Confirm Password Again',
-      'member.name': 'Name',
-      'member.gender': 'Gender',
-      'member.genderMale': 'Male',
-      'member.genderFemale': 'Female',
-      'member.birthday': 'Birthday',
-      'member.email': 'E-mail',
-      'member.mobile': 'Mobile',
-      'member.residence': 'Residence',
-      'member.joinDemoStatus': 'This member registration demo has not saved personal data.',
-      'member.returnToGate': 'Back to Role Selection',
-      'member.functions': 'Member Functions',
-    },
-    ja: {
-      'member.login': 'メンバーサインイン',
-      'member.loginLead': '会員アカウントとパスワードを入力してください。',
-      'member.account': 'アカウント',
-      'member.password': 'パスワード',
-      'member.remember': 'アカウントを記憶',
-      'member.forgotPassword': 'パスワードを忘れた場合',
-      'member.loginHint': '8-12文字で英字と数字を含めてください。',
-      'member.loginDemoStatus': 'このメンバーサインインデモは実認証に接続されていません。',
-      'member.forgotPasswordDemoStatus': 'オンラインリセットはまだ提供していません。',
-      'member.join': '会員登録',
-      'member.joinLead': '基本情報を入力して会員アカウントを作成してください。',
-      'member.id': 'ID番号',
-      'member.passwordConfirm': 'パスワード確認',
-      'member.name': '名前',
-      'member.gender': '性別',
-      'member.genderMale': '男性',
-      'member.genderFemale': '女性',
-      'member.birthday': '生年月日',
-      'member.email': 'E-mail',
-      'member.mobile': '携帯電話',
-      'member.residence': '住所',
-      'member.joinDemoStatus': 'この会員登録デモは個人情報を保存しません。',
-      'member.returnToGate': '役割選択へ戻る',
-      'member.functions': '会員機能',
-      'member.accountTitle': 'アカウント',
-    },
-    ko: {
-      'member.login': '회원 로그인',
-      'member.loginLead': '회원 계정과 비밀번호를 입력하세요.',
-      'member.account': '계정',
-      'member.password': '비밀번호',
-      'member.remember': '계정 기억',
-      'member.forgotPassword': '비밀번호 찾기',
-      'member.loginHint': '8-12자, 영문과 숫자를 포함하세요.',
-      'member.loginDemoStatus': '이 회원 로그인 데모는 실제 인증에 연결되어 있지 않습니다.',
-      'member.forgotPasswordDemoStatus': '온라인 재설정은 아직 제공하지 않습니다.',
-      'member.join': '회원 가입',
-      'member.joinLead': '기본 정보를 입력하여 회원 계정을 만드세요.',
-      'member.id': 'ID 번호',
-      'member.passwordConfirm': '비밀번호 확인',
-      'member.name': '이름',
-      'member.gender': '성별',
-      'member.genderMale': '남성',
-      'member.genderFemale': '여성',
-      'member.birthday': '생일',
-      'member.email': 'E-mail',
-      'member.mobile': '휴대폰',
-      'member.residence': '거주지',
-      'member.joinDemoStatus': '이 회원 가입 데모는 개인 정보를 저장하지 않습니다.',
-      'member.returnToGate': '역할 선택으로 돌아가기',
-      'member.functions': '회원 기능',
-      'member.accountTitle': '계정',
-    },
-  };
-
-  return {
-    applyCalls: [],
-    translate(key) {
-      return copy[language][key] || key;
-    },
-    apply(section) {
-      this.applyCalls.push(section);
-      return true;
-    },
-  };
-}
-
-test('enhances localized account pages without Traditional Chinese labels', () => {
-  const fixtures = [
-    { language: 'en', accountTitle: 'Account', returnLabel: 'Back to Role Selection', expected: 'Member Sign In' },
-    { language: 'ja', accountTitle: 'アカウント', returnLabel: '役割選択へ戻る', expected: 'メンバーサインイン' },
-    { language: 'ko', accountTitle: '계정', returnLabel: '역할 선택으로 돌아가기', expected: '회원 로그인' },
-  ];
-
-  fixtures.forEach(({ language, accountTitle, returnLabel, expected }) => {
-    const document = createDocument();
-    const section = document.createElement('section');
-    section.className = 'mp-stack';
-    section.setAttribute('aria-label', accountTitle);
-    const header = document.createElement('div');
-    header.className = 'mp-hero-block';
-    header.textContent = accountTitle;
-    const summary = document.createElement('article');
-    summary.className = 'mp-card mp-stack';
-    summary.textContent = `${accountTitle} visible cases 2`;
-    const reset = document.createElement('button');
-    reset.className = 'mp-secondary';
-    reset.textContent = 'Reset demo';
-    const exit = document.createElement('button');
-    exit.className = 'mp-primary';
-    exit.textContent = returnLabel;
-    section.append(header, summary, reset, exit);
-    document.documentElement.append(section);
-
-    loadEnhancer(document, createPassengerI18n(language)).PassengerMemberAuth.enhancePassengerMemberAuth(document);
-
-    assert.match(textOf(section), new RegExp(expected));
-    assert.ok(section.querySelector('#member-login-account'));
-    assert.equal(section.querySelector('[data-member-auth]') !== null, true);
-  });
-});
-
-function loadEnhancer(document, passengerI18n) {
+function loadEnhancer(document) {
   const script = fs.readFileSync(path.join(__dirname, '..', 'assets', 'passenger-member-auth.js'), 'utf8');
   const windowEvents = {};
   const windowObject = {
@@ -298,46 +166,11 @@ function loadEnhancer(document, passengerI18n) {
     MutationObserver: class {
       observe() {}
     },
-    window: {
-      ...windowObject,
-      PassengerI18n: passengerI18n,
-    },
+    window: windowObject,
   };
   vm.runInNewContext(script, context);
   return context.window;
 }
-
-test('renders member login form with English i18n while retaining login account id', () => {
-  const document = createDocument();
-  const section = document.createElement('section');
-  section.setAttribute('aria-label', '\u5e33\u6236');
-  const summary = document.createElement('article');
-  summary.className = 'mp-card mp-stack';
-  summary.textContent = '\u53ef\u898b\u4e8b\u4ef6 3';
-  const reset = document.createElement('button');
-  reset.className = 'mp-secondary';
-  reset.textContent = '\u91cd\u8a2d\u53cb\u5584\u8f49\u4e58\u793a\u7bc4';
-  const exit = document.createElement('button');
-  exit.className = 'mp-primary';
-  exit.textContent = '\u8fd4\u56de\u8eab\u5206\u9078\u64c7';
-  section.append(summary, reset, exit);
-  document.documentElement.append(section);
-  const passengerI18n = createPassengerI18n('en');
-
-  loadEnhancer(document, passengerI18n).PassengerMemberAuth.enhancePassengerMemberAuth(document);
-
-  const visibleText = textOf(section);
-  assert.match(visibleText, /Member Sign In/);
-  assert.match(visibleText, /Enter your member account and password\./);
-  assert.match(visibleText, /Account/);
-  assert.match(visibleText, /Password/);
-  assert.match(visibleText, /Remember Account/);
-  assert.match(visibleText, /Forgot Password/);
-  assert.match(visibleText, /Back to Role Selection/);
-  assert.ok(section.querySelector('#member-login-account'));
-  assert.equal(section.querySelector('#member-login-account').name, 'member-login-account');
-  assert.equal(passengerI18n.applyCalls[0], section);
-});
 
 test('replaces passenger account summary with login fields and keeps return action', () => {
   const document = createDocument();

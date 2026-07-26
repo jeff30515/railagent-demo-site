@@ -1,27 +1,23 @@
 (() => {
   'use strict';
 
-  // Keep the same passenger UI available in every language even when the
-  // optional local API URL has not been supplied. Do not use the static
-  // GitHub Pages origin as an API fallback: it has no local-AI endpoints.
   const apiBaseUrl = new URLSearchParams(window.location.search).get('apiBaseUrl');
+  if (!apiBaseUrl) return;
 
   let lostFoundEndpoint;
   let chatEndpoint;
   let stationEndpoint;
   let routeEndpoint;
-  if (apiBaseUrl) {
-    try {
-      lostFoundEndpoint = new URL('/api/lost-found/match', apiBaseUrl).toString();
-      chatEndpoint = new URL('/api/passenger-chat', apiBaseUrl).toString();
-      stationEndpoint = new URL('/api/friendly-transfer/station', apiBaseUrl).toString();
-      routeEndpoint = new URL('/api/friendly-transfer/route', apiBaseUrl).toString();
-    } catch {
-      // The UI stays available and reports the missing or invalid local API URL.
-    }
+  try {
+    lostFoundEndpoint = new URL('/api/lost-found/match', apiBaseUrl).toString();
+    chatEndpoint = new URL('/api/passenger-chat', apiBaseUrl).toString();
+    stationEndpoint = new URL('/api/friendly-transfer/station', apiBaseUrl).toString();
+    routeEndpoint = new URL('/api/friendly-transfer/route', apiBaseUrl).toString();
+  } catch {
+    return;
   }
 
-  const baseCopy = {
+  const copy = {
     askRailAgent: '\u554f RailAgent',
     chatSubtitle: '\u672c\u6a5f AI \u5c0d\u8a71\u5354\u52a9',
     close: '\u95dc\u9589',
@@ -29,7 +25,6 @@
     send: '\u50b3\u9001',
     thinking: 'RailAgent \u6b63\u5728\u601d\u8003\u2026',
     chatError: '\u76ee\u524d\u7121\u6cd5\u9023\u7dda\u81f3\u672c\u6a5f AI\uff0c\u8acb\u78ba\u8a8d API \u8207 Ollama \u6b63\u5728\u57f7\u884c\u5f8c\u518d\u8a66\u4e00\u6b21\u3002',
-    apiNotConnected: '\u672c\u6a5f API \u5c1a\u672a\u9023\u7dda\u3002\u8acb\u4f7f\u7528 ?apiBaseUrl=http://127.0.0.1:7071 \u958b\u555f\u672c\u9801\u3002',
     missingInput: '\u8acb\u81f3\u5c11\u586b\u5beb\u7269\u54c1\u985e\u578b\u6216\u7279\u5fb5\u95dc\u9375\u5b57\u3002',
     searching: '\u6b63\u5728\u4ee5\u672c\u6a5f Ollama \u641c\u5c0b\u53ef\u80fd\u76f8\u7b26\u7684\u907a\u5931\u7269\u2026',
     searchError: '\u672c\u6a5f AI \u641c\u5c0b\u5931\u6557\uff1a',
@@ -72,32 +67,6 @@
     ,voiceRecognized: '\u5df2\u8fa8\u8b58\uff1a'
     ,stationThinking: '\u6b63\u5728\u78ba\u8a8d\u8eca\u7ad9\u8207\u7ad9\u52d9\u96fb\u8a71\u3002'
   };
-
-  const localizedCopy = {
-    en: {
-      askRailAgent: 'Ask RailAgent', chatSubtitle: 'Local AI chat support', close: 'Close', chatPlaceholder: 'Type your question…', send: 'Send', thinking: 'RailAgent is thinking…',
-      transferHelp: 'Transfer assistance', transferRoute: 'Transfer route suggestion', transferRouteLead: 'Enter where you are and where you want to go for a local-AI reference.',
-      routeOrigin: 'Current location', routeDestination: 'Destination', routePlaceholderOrigin: 'Example: Taipei Main Station', routePlaceholderDestination: 'Example: Nangang Station', routeSubmit: 'Get transfer suggestion',
-      callTitle: 'Call station staff for assistance', callLead: 'Tell us or type the station where you are now.', stationPlaceholder: 'Example: I am at Taipei Main Station', startVoice: 'Start voice input', findStation: 'Confirm station', calling: 'Call station staff',
-    },
-    ja: { askRailAgent: 'RailAgent に質問', chatSubtitle: 'ローカル AI 対話支援', close: '閉じる', chatPlaceholder: '質問を入力…', send: '送信', thinking: 'RailAgent が考えています…', transferHelp: '乗換支援', transferRoute: '乗換ルートの提案', transferRouteLead: '現在地と目的地を入力すると、ローカル AI が参考情報を提示します。', routeOrigin: '現在地', routeDestination: '目的地', routeSubmit: '乗換提案を取得', callTitle: '駅係員に支援を依頼', callLead: '現在いる駅を入力または話してください。', startVoice: '音声入力を開始', findStation: '駅を確認', calling: '駅係員に電話' },
-    ko: { askRailAgent: 'RailAgent에게 문의', chatSubtitle: '로컬 AI 대화 지원', close: '닫기', chatPlaceholder: '질문을 입력하세요…', send: '보내기', thinking: 'RailAgent가 생각 중입니다…', transferHelp: '환승 지원', transferRoute: '환승 경로 제안', transferRouteLead: '현재 위치와 목적지를 입력하면 로컬 AI가 참고 정보를 제공합니다.', routeOrigin: '현재 위치', routeDestination: '목적지', routeSubmit: '환승 제안 받기', callTitle: '역무원 지원 요청', callLead: '현재 있는 역을 입력하거나 말해 주세요.', startVoice: '음성 입력 시작', findStation: '역 확인', calling: '역무원에게 전화' },
-    vi: { askRailAgent: 'Hỏi RailAgent', chatSubtitle: 'Hỗ trợ trò chuyện AI cục bộ', close: 'Đóng', chatPlaceholder: 'Nhập câu hỏi của bạn…', send: 'Gửi', thinking: 'RailAgent đang xử lý…', transferHelp: 'Hỗ trợ chuyển tuyến', transferRoute: 'Gợi ý tuyến chuyển', routeOrigin: 'Vị trí hiện tại', routeDestination: 'Điểm đến', routeSubmit: 'Lấy gợi ý chuyển tuyến', callTitle: 'Gọi nhân viên nhà ga hỗ trợ', callLead: 'Nhập hoặc nói tên ga bạn đang ở.', startVoice: 'Bắt đầu nhập bằng giọng nói', findStation: 'Xác nhận ga', calling: 'Gọi nhân viên nhà ga' },
-    id: { askRailAgent: 'Tanya RailAgent', chatSubtitle: 'Bantuan chat AI lokal', close: 'Tutup', chatPlaceholder: 'Masukkan pertanyaan Anda…', send: 'Kirim', thinking: 'RailAgent sedang memproses…', transferHelp: 'Bantuan transit', transferRoute: 'Saran rute transit', routeOrigin: 'Lokasi saat ini', routeDestination: 'Tujuan', routeSubmit: 'Dapatkan saran transit', callTitle: 'Hubungi petugas stasiun', callLead: 'Ketik atau ucapkan stasiun Anda saat ini.', startVoice: 'Mulai masukan suara', findStation: 'Konfirmasi stasiun', calling: 'Hubungi petugas stasiun' },
-    th: { askRailAgent: 'ถาม RailAgent', chatSubtitle: 'ผู้ช่วยสนทนา AI ในเครื่อง', close: 'ปิด', chatPlaceholder: 'พิมพ์คำถามของคุณ…', send: 'ส่ง', thinking: 'RailAgent กำลังประมวลผล…', transferHelp: 'ช่วยเหลือการต่อรถ', transferRoute: 'แนะนำเส้นทางต่อรถ', routeOrigin: 'ตำแหน่งปัจจุบัน', routeDestination: 'ปลายทาง', routeSubmit: 'รับคำแนะนำการต่อรถ', callTitle: 'ติดต่อเจ้าหน้าที่สถานี', callLead: 'พิมพ์หรือพูดชื่อสถานีที่คุณอยู่', startVoice: 'เริ่มป้อนด้วยเสียง', findStation: 'ยืนยันสถานี', calling: 'โทรหาเจ้าหน้าที่สถานี' },
-  };
-
-  function activeLanguage() {
-    const language = (document.documentElement.lang || '').toLowerCase();
-    if (language.startsWith('zh')) return 'zh-TW';
-    return language.split('-')[0];
-  }
-
-  function getCopy() {
-    return { ...baseCopy, ...(localizedCopy[activeLanguage()] || {}) };
-  }
-
-  let copy = getCopy();
 
   const searchLabels = [
     '\u641c\u5c0b\u53ef\u80fd\u76f8\u7b26\u7269\u54c1',
@@ -169,78 +138,82 @@
   }
 
   function markDemoContent() {
-    const lostPage = findLostItemPage();
-    if (!lostPage) return;
-    // The original notice and seeded case are part of the old lost-item UI.
-    // Remove them instead of hiding them, so React redraws cannot make them
-    // reappear in Taiwanese, Hakka, or any other language.
-    lostPage.querySelectorAll('.mp-notice').forEach((element) => element.remove());
-    lostPage.querySelectorAll('article').forEach((element) => {
-      if (element.querySelector('h3') && !element.querySelector('input, textarea, button.railagent-track-lost-found')) {
-        element.remove();
+    document.querySelectorAll('article[aria-label]').forEach((element) => {
+      if ((element.getAttribute('aria-label') || '').includes('\u65e2\u6709\u5354\u5c0b\u6848\u4ef6')) {
+        element.dataset.railagentLocalHidden = 'true';
+      }
+    });
+    document.querySelectorAll('p').forEach((element) => {
+      const text = element.textContent || '';
+      if (text.includes('\u793a\u7bc4\u8cc7\u6599\u4f9d\u7167') || text.includes('Demo records follow')) {
+        element.dataset.railagentLocalHidden = 'true';
       }
     });
   }
 
-  function servicePage(name) {
-    return document.querySelector(`[data-service-page="${name}"]`);
-  }
-
-  function isVisible(element) {
-    return Boolean(element && element.offsetParent !== null);
-  }
-
-  function visibleWorkspaceSections() {
-    return [...document.querySelectorAll('main .mp-shell > section')].filter(isVisible);
-  }
-
-  function findLostItemPage() {
-    return servicePage('lost-item') || visibleWorkspaceSections().find((section) =>
-      section.querySelectorAll('input').length >= 7
-    ) || null;
-  }
-
-  function findFriendlyTransferPage() {
-    return servicePage('friendly-transfer') || visibleWorkspaceSections().find((section) => {
-      const tags = section.querySelectorAll('.mp-tags .mp-tag').length;
-      return tags >= 4 && Boolean(section.querySelector('button.mp-primary'));
-    }) || null;
-  }
-
   function installChatLauncher() {
-    const homeServiceList = document.querySelector('.mp-service-list');
-    if (!homeServiceList) {
-      document.getElementById('railagent-local-chat-launcher')?.remove();
-      return;
-    }
+    const facilityButton = [...document.querySelectorAll('button')].find((button) =>
+      button.offsetParent !== null && button.textContent.trim().includes('\u670d\u52d9\u8a2d\u65bd\u56de\u5831')
+    );
+    if (!facilityButton) return;
 
-    // These two legacy actions are only present on the old three-card home.
-    // Use the React speech cue rather than a translated visible label so every
-    // language gets the same four-card home layout.
-    document
-      .querySelectorAll('[data-railagent-speech-cue="quick-help"], [data-railagent-speech-cue="more-services"]')
-      .forEach((button) => button.remove());
+    [...document.querySelectorAll('button')].forEach((button) => {
+      const text = button.textContent.trim();
+      if (text === '\u5feb\u901f\u6c42\u52a9' || text === '\u66f4\u591a\u670d\u52d9') {
+        button.dataset.railagentLocalHidden = 'true';
+      }
+    });
 
     if (document.getElementById('railagent-local-chat-launcher')) return;
     const launcher = document.createElement('button');
     launcher.id = 'railagent-local-chat-launcher';
     launcher.type = 'button';
     launcher.innerHTML = `<span><strong>${copy.askRailAgent}</strong><small>${copy.chatSubtitle}</small></span>`;
-    homeServiceList.appendChild(launcher);
-  }
-
-  function removeLegacyPassengerActions() {
-    document
-      .querySelectorAll('[data-railagent-speech-cue="quick-help"], [data-railagent-speech-cue="more-services"]')
-      .forEach((button) => button.remove());
+    facilityButton.insertAdjacentElement('afterend', launcher);
   }
 
   function installFriendlyTransferTools() {
-    const panel = findFriendlyTransferPage();
+    const heading = [...document.querySelectorAll('h2')].find((element) =>
+      element.offsetParent !== null && element.textContent.trim() === '\u53cb\u5584\u8f49\u4e58\u5354\u52a9'
+    );
+    const panel = heading?.closest('section');
     if (!panel) return;
 
-    panel.querySelectorAll('.mp-card').forEach((card) => {
-      if (card.querySelector('.mp-tags')) card.remove();
+    [...panel.querySelectorAll('button')].forEach((button) => {
+      if (button.textContent.trim() === '\u5efa\u7acb\u5354\u52a9') button.dataset.railagentLocalHidden = 'true';
+    });
+    [...panel.querySelectorAll('p')].forEach((paragraph) => {
+      if ((paragraph.textContent || '').includes('Demo')) paragraph.dataset.railagentLocalHidden = 'true';
+    });
+    [...panel.querySelectorAll('.mp-card')].forEach((card) => {
+      if (card.querySelector('.mp-tags')) card.dataset.railagentLocalHidden = 'true';
+    });
+    [...panel.querySelectorAll('button')].forEach((button) => {
+      if (['\u7e41\u9ad4\u4e2d\u6587', '\u8f2a\u6905', '\u907f\u958b\u6a13\u68af', '\u8f49\u4e58\u9ad8\u9435'].includes(button.textContent.trim())) {
+        button.parentElement?.setAttribute('data-railagent-local-hidden', 'true');
+      }
+    });
+    [...panel.querySelectorAll('.mp-tags')].forEach((tagList) => {
+      const labels = [...tagList.querySelectorAll('.mp-tag')].map((tag) => tag.textContent.trim());
+      if (labels.length === 4 && labels.includes('繁體中文') && labels.includes('輪椅') && labels.includes('避開樓梯') && labels.includes('轉乘高鐵')) {
+        tagList.setAttribute('data-railagent-local-hidden', 'true');
+        const wrapper = tagList.parentElement;
+        if (wrapper && [...wrapper.children].length === 1) {
+          wrapper.setAttribute('data-railagent-local-hidden', 'true');
+        }
+      }
+    });
+    const legacyTransferTags = [
+      String.fromCharCode(0x7e41, 0x9ad4, 0x4e2d, 0x6587),
+      String.fromCharCode(0x8f2a, 0x6905),
+      String.fromCharCode(0x907f, 0x958b, 0x6a13, 0x68af),
+      String.fromCharCode(0x8f49, 0x4e58, 0x9ad8, 0x9435)
+    ];
+    [...document.querySelectorAll('.mp-tags')].forEach((tagList) => {
+      const labels = [...tagList.querySelectorAll('.mp-tag')].map((tag) => tag.textContent.trim());
+      if (labels.length === legacyTransferTags.length && legacyTransferTags.every((label) => labels.includes(label))) {
+        tagList.closest('.mp-card')?.setAttribute('data-railagent-local-hidden', 'true');
+      }
     });
     if (document.getElementById('railagent-friendly-transfer-tools')) return;
 
@@ -261,7 +234,6 @@
     announceTransfer(copy.transferPageGuide, 'transfer-page');
 
     const form = tools.querySelector('#railagent-transfer-route-form');
-    if (!form) return;
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
       const origin = form.querySelector('#railagent-route-origin').value.trim();
@@ -269,11 +241,6 @@
       const submit = form.querySelector('button[type="submit"]');
       const answer = form.querySelector('.railagent-transfer-answer');
       if (!origin || !destination || submit.disabled) return;
-      if (!routeEndpoint) {
-        answer.hidden = false;
-        answer.textContent = copy.apiNotConnected;
-        return;
-      }
       submit.disabled = true;
       answer.hidden = false;
       answer.textContent = copy.routeThinking;
@@ -341,10 +308,6 @@
         event.preventDefault();
         const spokenStation = input.value.trim();
         if (!spokenStation) return;
-        if (!stationEndpoint) {
-          status.textContent = copy.apiNotConnected;
-          return;
-        }
         status.textContent = copy.stationThinking;
         announceTransfer(copy.stationThinking, 'station-thinking');
         callResult.replaceChildren();
@@ -506,9 +469,7 @@
   }
 
   function syncLocalModeUi() {
-    copy = getCopy();
     installStyles();
-    removeLegacyPassengerActions();
     markDemoContent();
     installChatLauncher();
     installFriendlyTransferTools();
@@ -516,28 +477,19 @@
     removeLegacyBackpackCase();
     renderTrackedCases();
     syncPublicFeedbackCopy();
-    if (!findFriendlyTransferPage()) clearFriendlyTransferUi();
+    const hasFriendlyTransfer = [...document.querySelectorAll('h2')].some((element) =>
+      element.offsetParent !== null && element.textContent.trim() === '\u53cb\u5584\u8f49\u4e58\u5354\u52a9'
+    );
+    if (!hasFriendlyTransfer) clearFriendlyTransferUi();
   }
 
   function clearStaleLostFoundResult() {
     const hasVisibleLostFoundSearch = [...document.querySelectorAll('button')].some((button) =>
-      isLostFoundSearchButton(button)
+      button.offsetParent !== null && searchLabels.includes(button.textContent.trim())
     );
     if (!hasVisibleLostFoundSearch) {
       document.getElementById('railagent-local-lost-found-result')?.remove();
     }
-  }
-
-  function isLostFoundSearchButton(button) {
-    if (!button || !isVisible(button)) return false;
-    if (searchLabels.includes(button.textContent.trim())) return true;
-    const panel = findLostItemPage();
-    return Boolean(
-      panel &&
-      [...panel.querySelectorAll('button')].includes(button) &&
-      button.matches('button.mp-primary') &&
-      panel.querySelectorAll('input').length >= 7
-    );
   }
 
   function addChatMessage(messages, kind, text) {
@@ -576,10 +528,6 @@
         event.preventDefault();
         const question = input.value.trim();
         if (!question || send.disabled) return;
-        if (!chatEndpoint) {
-          addChatMessage(messages, 'assistant', copy.apiNotConnected);
-          return;
-        }
         addChatMessage(messages, 'user', question);
         input.value = '';
         send.disabled = true;
@@ -607,25 +555,10 @@
     overlay.querySelector('textarea')?.focus();
   }
 
-  function bootstrapLocalModeUi() {
+  document.addEventListener('DOMContentLoaded', () => {
     syncLocalModeUi();
     new MutationObserver(syncLocalModeUi).observe(document.body, { childList: true, subtree: true });
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', bootstrapLocalModeUi, { once: true });
-  } else {
-    bootstrapLocalModeUi();
-  }
-  // The React mobile bundle mounts after deferred helpers on slower connections.
-  // Run once more at load so its initial render cannot restore the legacy home controls.
-  window.addEventListener('load', syncLocalModeUi);
-  // React may reconcile the legacy actions after an external DOM change.
-  // Keep deleting those obsolete nodes; never merely hide them.
-  window.setInterval(() => {
-    removeLegacyPassengerActions();
-    markDemoContent();
-  }, 120);
+  });
 
   document.addEventListener('click', (event) => {
     const button = event.target.closest('button');
@@ -656,14 +589,14 @@
       syncLocalModeUi();
       return;
     }
-    if (!isLostFoundSearchButton(button)) return;
+    if (!searchLabels.includes(buttonText)) return;
     event.preventDefault();
     event.stopImmediatePropagation();
     void search(button);
   }, true);
 
   async function search(button) {
-    const panel = findLostItemPage() || button.closest('section');
+    const panel = button.closest('section');
     const inputs = [...(panel?.querySelectorAll('input') ?? [])].filter((input) => input.offsetParent !== null);
     if (inputs.length < 7) {
       render(button, null, copy.missingInput);
@@ -673,10 +606,6 @@
     const request = { itemType: itemType.value.trim(), color: color.value.trim(), brand: brand.value.trim(), features: features.value.trim(), lostDate: lostDate.value.trim(), stationName: stationName.value.trim(), trainNumber: trainNumber.value.trim() };
     if (!request.itemType && !request.features) {
       render(button, null, copy.missingInput);
-      return;
-    }
-    if (!lostFoundEndpoint) {
-      render(button, null, copy.apiNotConnected);
       return;
     }
     button.disabled = true;
