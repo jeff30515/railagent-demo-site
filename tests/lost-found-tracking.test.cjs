@@ -157,6 +157,7 @@ class Element {
     this.hidden = false;
     this.value = '';
     this.disabled = false;
+    this.innerHTMLSetCount = 0;
     Object.defineProperty(this, 'attributes', {
       enumerable: true,
       get: () => this.attributeMap,
@@ -185,6 +186,7 @@ class Element {
   }
 
   set innerHTML(value) {
+    this.innerHTMLSetCount += 1;
     this.children = [];
     this._textContent = '';
     parseHtmlInto(this, String(value));
@@ -523,7 +525,11 @@ test('injected passenger tools resync non-zh copy without Traditional Chinese fa
   document.dispatchEvent({ type: 'DOMContentLoaded' });
   assert.equal(pages.quick.parentNode, null);
   assert.equal(pages.more.parentNode, null);
-  click(document, document.getElementById('railagent-local-chat-launcher'));
+  const launcher = document.getElementById('railagent-local-chat-launcher');
+  assert.equal(launcher.innerHTMLSetCount, 1);
+  document.dispatchEvent({ type: 'DOMContentLoaded' });
+  assert.equal(launcher.innerHTMLSetCount, 1);
+  click(document, launcher);
 
   assert.equal(document.querySelector('#railagent-local-chat textarea').getAttribute('placeholder'), 'Type your question...');
   assert.equal(document.querySelector('#railagent-friendly-transfer-tools h3').textContent, 'Transfer route');
@@ -536,6 +542,7 @@ test('injected passenger tools resync non-zh copy without Traditional Chinese fa
   pages.transferHeading.textContent = idLabels.friendlyTitle;
   pages.facilityButton.textContent = idLabels.facilityTitle;
   document.dispatchEvent({ type: 'DOMContentLoaded' });
+  assert.equal(launcher.innerHTMLSetCount, 2);
   click(document, document.getElementById('railagent-local-chat-launcher'));
 
   assert.equal(document.querySelector('#railagent-local-chat textarea').getAttribute('placeholder'), 'Tulis pertanyaan Anda...');

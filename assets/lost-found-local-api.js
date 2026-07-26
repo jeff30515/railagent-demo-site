@@ -109,7 +109,7 @@
     if (sourceLink) sourceLink.closest('p')?.remove();
   }
 
-  function installChatLauncher(copy, pageLabels) {
+  function installChatLauncher(copy, pageLabels, language) {
     const serviceButtons = [...document.querySelectorAll('.mp-service-list button.mp-service')];
     const facilityButton = serviceButtons.find((button) =>
       button.textContent.trim().includes(pageLabels.facilityTitle)
@@ -125,12 +125,16 @@
 
     const existing = document.getElementById('railagent-local-chat-launcher');
     if (existing) {
-      existing.innerHTML = `<span><strong>${copy.askRailAgent}</strong><small>${copy.chatSubtitle}</small></span>`;
+      if (existing.dataset.locale !== language) {
+        existing.dataset.locale = language;
+        existing.innerHTML = `<span><strong>${copy.askRailAgent}</strong><small>${copy.chatSubtitle}</small></span>`;
+      }
       return;
     }
     const launcher = document.createElement('button');
     launcher.id = 'railagent-local-chat-launcher';
     launcher.type = 'button';
+    launcher.dataset.locale = language;
     launcher.innerHTML = `<span><strong>${copy.askRailAgent}</strong><small>${copy.chatSubtitle}</small></span>`;
     facilityButton.insertAdjacentElement('afterend', launcher);
   }
@@ -460,7 +464,7 @@
     const { copy, pageLabels, language } = currentLocale();
     installStyles();
     markDemoContent();
-    installChatLauncher(copy, pageLabels);
+    installChatLauncher(copy, pageLabels, language);
     installFriendlyTransferTools(copy, pageLabels, language);
     clearStaleLostFoundResult();
     removeLegacyBackpackCase();
