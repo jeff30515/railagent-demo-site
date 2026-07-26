@@ -1,9 +1,9 @@
 (function () {
   'use strict';
 
-  // The checked-in TRA dataset currently contains this many lost-and-found records.
   const TOTAL_FOUND_ITEMS = 23919;
   const TRACKED_CASES_KEY = 'railagent-tracked-lost-found-cases';
+  const STARTUP_DELAYS = [0, 100, 300, 800];
   let trackedCount = null;
   let trackedRequest = null;
 
@@ -21,6 +21,13 @@
 
   function findByText(root, matcher) {
     return [...root.querySelectorAll('h2, h3, strong, p, button')].find((node) => matcher.test(text(node)));
+  }
+
+  function hideNode(node) {
+    if (!node) return;
+    node.hidden = true;
+    node.style.display = 'none';
+    node.setAttribute('aria-hidden', 'true');
   }
 
   function localTrackedCount() {
@@ -68,14 +75,14 @@
     return trackedCount;
   }
 
-  function metric(label, value, className) {
+  function metric(label, value, tracked) {
     const item = document.createElement('div');
     item.className = 'mp-kpi';
     const caption = document.createElement('em');
     caption.textContent = label;
     const amount = document.createElement('strong');
     amount.textContent = String(value);
-    if (className) amount.className = className;
+    if (tracked) amount.setAttribute('data-supervisor-tracked-count', 'true');
     item.append(caption, amount);
     return item;
   }
@@ -91,61 +98,80 @@
     const panel = cardFor(heading);
     if (!panel) return;
 
-    heading.textContent = '跨運具服務事件即時營運監控';
-    [...panel.querySelectorAll('p.mp-footnote')].forEach((node) => node.remove());
+    panel.querySelectorAll('.mp-kpi-row').forEach(hideNode);
+    [...panel.children].forEach(hideNode);
+    if (panel.querySelector('[data-supervisor-metrics]')) return;
 
-    const kpiRow = panel.querySelector('.mp-kpi-row');
-    if (!kpiRow || kpiRow.dataset.supervisorMetrics === 'true') return;
-    kpiRow.replaceChildren(
-      metric('拾獲物品', TOTAL_FOUND_ITEMS),
-      metric('旅客追蹤', trackedCount ?? localTrackedCount(), 'supervisor-tracked-count')
+    const content = document.createElement('div');
+    content.className = 'mp-stack';
+    content.dataset.supervisorMetrics = 'true';
+    const title = document.createElement('strong');
+    title.textContent = '跨運具服務事件即時營運監控';
+    const row = document.createElement('div');
+    row.className = 'mp-kpi-row';
+    row.append(
+      metric('拾獲物品', TOTAL_FOUND_ITEMS, false),
+      metric('旅客追蹤', trackedCount ?? localTrackedCount(), true)
     );
-    kpiRow.querySelector('.supervisor-tracked-count')?.setAttribute('data-supervisor-tracked-count', 'true');
-    kpiRow.dataset.supervisorMetrics = 'true';
+    content.append(title, row);
+    panel.append(content);
   }
 
   function removeObsoletePanels(root) {
-    const notice = findByText(root, /核心差異：跨大眾運輸資訊/);
-    notice?.remove();
+    hideNode(findByText(root, /核心差異：跨大眾運輸資訊/));
 
-    [/^狀態佇列/, /^時段熱點$/, /^優先佇列/, /^開啟待辦 drill-down$/].forEach((matcher) => {
-      const node = findByText(root, matcher);
-      if (!node) return;
-      const panel = cardFor(node);
-      if (panel && panel !== root) panel.remove();
-      else node.remove();
+    [/^狀態佇列/, /^時段熱點$/].forEach((matcher) => {
+      hideNode(cardFor(findByText(root, matcher)));
     });
+
+    const queue = root.querySelector('section[aria-label="即時佇列"]');
+    hideNode(queue);
+    hideNode(findByText(root, /^優先佇列/));
+    hideNode(findByText(root, /^開啟待辦 drill-down$/));
+  }
+
+  function workforceItem(name, station, estimate) {
+    const item = document.createElement('article');
+    item.className = 'mp-list-item';
+    const meta = document.createElement('div');
+    meta.className = 'mp-meta';
+    const status = document.createElement('span');
+    status.className = 'mp-status';
+    status.textContent = '現有人力';
+    const title = document.createElement('span');
+    title.textContent = name;
+    meta.append(status, title);
+    const description = document.createElement('p');
+    description.className = 'mp-footnote';
+    description.textContent = `${station} · 估算人力：約 ${estimate} 人`;
+    item.append(meta, description);
+    return item;
   }
 
   function replaceWorkforce(root) {
     const heading = findByText(root, /^站務人力/);
     const panel = cardFor(heading);
-    if (!heading || !panel || panel.dataset.supervisorWorkforce === 'true') return;
+    if (!panel) return;
 
-    heading.textContent = '站務人力';
-    [...panel.querySelectorAll('article.mp-list-item')].forEach((node) => node.remove());
-    const teams = [
-      ['板橋站務', '板橋站'],
-      ['桃園青埔站務', '桃園青埔站']
-    ];
-    teams.forEach(([name, station]) => {
-      const item = document.createElement('article');
-      item.className = 'mp-list-item';
-      const meta = document.createElement('div');
-      meta.className = 'mp-meta';
-      const status = document.createElement('span');
-      status.className = 'mp-status';
-      status.textContent = '可用';
-      const title = document.createElement('span');
-      title.textContent = name;
-      meta.append(status, title);
-      const description = document.createElement('p');
-      description.className = 'mp-footnote';
-      description.textContent = station;
-      item.append(meta, description);
-      panel.append(item);
-    });
-    panel.dataset.supervisorWorkforce = 'true';
+    [...panel.children].forEach(hideNode);
+    if (panel.querySelector('[data-supervisor-workforce]')) return;
+
+    const content = document.createElement('div');
+    content.className = 'mp-stack';
+    content.dataset.supervisorWorkforce = 'true';
+    const title = document.createElement('h3');
+    title.style.margin = '0';
+    title.textContent = '站務人力';
+    const note = document.createElement('p');
+    note.className = 'mp-footnote';
+    note.textContent = '依公開旅運量與三班輪值基本配置推估，非營運單位正式編制。';
+    content.append(
+      title,
+      note,
+      workforceItem('板橋站務', '板橋站', 36),
+      workforceItem('桃園青埔站務', 'A18 高鐵桃園站', 12)
+    );
+    panel.append(content);
   }
 
   function enhance() {
@@ -157,17 +183,15 @@
     loadTrackedCount();
   }
 
-  let pending = false;
-  function scheduleEnhance() {
-    if (pending) return;
-    pending = true;
-    window.setTimeout(() => {
-      pending = false;
-      enhance();
-    }, 0);
+  function scheduleEnhance(delay) {
+    window.setTimeout(enhance, delay);
   }
 
-  window.addEventListener('load', scheduleEnhance);
-  document.addEventListener('click', scheduleEnhance);
-  scheduleEnhance();
+  window.addEventListener('load', () => {
+    STARTUP_DELAYS.forEach(scheduleEnhance);
+  });
+  document.addEventListener('click', () => {
+    [0, 50, 150].forEach(scheduleEnhance);
+  });
+  STARTUP_DELAYS.forEach(scheduleEnhance);
 })();
