@@ -126,6 +126,10 @@
   }
 
   function friendlyTransferPanel() {
+    const accountId = typeof localStorage === 'undefined' ? null : localStorage.getItem('railagent.mobile.account');
+    if (['ntmetro-staff-banqiao', 'tymetro-staff-qingpu'].includes(accountId)) {
+      return null;
+    }
     return [...document.querySelectorAll('section.mp-stack[aria-label]')].find((page) =>
       page.querySelector(':scope > .mp-hero-block') &&
       page.querySelector(':scope > section.mp-card.mp-stack') &&

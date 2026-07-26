@@ -40,7 +40,7 @@ assert.match(
 );
 assert.match(
   indexHtml,
-  /lost-found-local-api\.js\?v=20260726-passenger-canonical-12/,
+  /lost-found-local-api\.js\?v=20260726-staff-transfer-guard-13/,
   'The entry page should force browsers to fetch the canonical passenger runtime.',
 );
 assert.match(

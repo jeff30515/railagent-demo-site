@@ -11,6 +11,11 @@
   let recentFoundItems = [];
   let token;
   let loading;
+  const fixedRecentFoundItems = [
+    { itemId: 'TRA-20230717-2217', stationName: '車次 283', itemType: '黑色背包有衣物', color: '黑色', features: '4-24 豐原找', foundLocation: '車次 283', foundAt: '2023-07-17', trainNumber: '283' },
+    { itemId: 'TRA-20230717-2040', stationName: '車次 149', itemType: '新竹找 Sugar 近金色手機', color: '近金色', features: '明顯使用痕跡，僅清水套包覆，無蓋手機套', foundLocation: '車次 149', foundAt: '2023-07-17', trainNumber: '149' },
+    { itemId: 'TRA-20230717-1925', stationName: '車次 135', itemType: '黑色皮短夾', color: '黑色', features: '含多國貨幣、身分證與信用卡', foundLocation: '車次 135', foundAt: '2023-07-17', trainNumber: '135' }
+  ];
 
   if (queryBase) localStorage.setItem(apiBaseStorageKey, queryBase);
 
@@ -100,18 +105,14 @@
     const signature = recentFoundItems.map((item) => item.itemId).join('|');
     if (section.dataset.staffFoundSignature === signature) return;
     section.dataset.staffFoundSignature = signature;
-    section.replaceChildren();
-    const title = document.createElement('h3');
-    title.className = 'mp-section-title';
-    title.textContent = `本單位近期拾獲（${recentFoundItems.length}）`;
-    section.append(title);
-    if (recentFoundItems.length) recentFoundItems.slice(0, 3).forEach((item) => section.append(foundItemCard(item)));
-    else {
-      const empty = document.createElement('p');
-      empty.className = 'mp-footnote';
-      empty.textContent = '目前沒有本單位已登記的拾獲物。';
-      section.append(empty);
-    }
+    heading.textContent = `本單位近期拾獲（${recentFoundItems.length}）`;
+    const cards = Array.from(section.querySelectorAll(':scope > article'));
+    recentFoundItems.slice(0, 3).forEach((item, index) => {
+      const card = cards[index];
+      if (!card) return;
+      card.innerHTML = foundItemCard(item).innerHTML;
+    });
+    cards.slice(recentFoundItems.length).forEach((card) => card.remove());
   }
 
   function removeFriendlyTransfer() {
@@ -134,6 +135,7 @@
     setField(features, '特徵', 'text');
     setField(location, '拾獲地點', 'text');
     setField(date, '拾獲日期', 'text');
+    replaceRecentFoundItems(panel);
   }
 
   function enhanceTaskPool() {
@@ -184,7 +186,7 @@
         api(`/api/lost-found/items?unitId=${encodeURIComponent(user.unitId)}`, { headers: { 'x-demo-user-id': token } })
       ]);
       liveTasks = (result.tasks || []).filter((task) => task.type === 'lost_item' && task.caseId && task.lostItem);
-      recentFoundItems = (foundItems.items || []).slice(0, 3);
+      recentFoundItems = fixedRecentFoundItems;
       enhance();
     })().catch(() => { liveTasks = []; recentFoundItems = []; enhance(); }).finally(() => { loading = undefined; });
     return loading;

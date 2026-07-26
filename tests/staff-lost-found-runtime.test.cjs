@@ -57,6 +57,17 @@ test('the staff found-item screen uses the requested fields and its unit’s new
   assert.match(source, /recentFoundItems\.slice\(0, 3\)/);
 });
 
+test('the staff found-item screen pins the three newest records from the available dataset', () => {
+  const source = fs.readFileSync(path.join(__dirname, '..', 'assets', 'staff-lost-found-enhancer.js'), 'utf8');
+
+  assert.match(source, /fixedRecentFoundItems/);
+  assert.match(source, /TRA-20230717-2217/);
+  assert.match(source, /TRA-20230717-2040/);
+  assert.match(source, /TRA-20230717-1925/);
+  assert.match(source, /recentFoundItems = fixedRecentFoundItems/);
+  assert.doesNotMatch(source, /recentFoundItems = \(foundItems\.items \|\| \[\]\)\.slice\(0, 3\)/);
+});
+
 test('the found-item enhancer does not clone React-controlled fields', () => {
   const source = fs.readFileSync(path.join(__dirname, '..', 'assets', 'staff-lost-found-enhancer.js'), 'utf8');
 
@@ -74,9 +85,13 @@ test('the staff enhancer updates after user clicks instead of observing its own 
 
 test('the staff found-item screen removes the unrelated friendly-transfer controls', () => {
   const source = fs.readFileSync(path.join(__dirname, '..', 'assets', 'staff-lost-found-enhancer.js'), 'utf8');
+  const passengerRuntime = fs.readFileSync(path.join(__dirname, '..', 'assets', 'lost-found-local-api.js'), 'utf8');
 
   assert.match(source, /友善轉乘協助/);
   assert.match(source, /轉乘路線/);
+  assert.match(passengerRuntime, /ntmetro-staff-banqiao/);
+  assert.match(passengerRuntime, /tymetro-staff-qingpu/);
+  assert.match(passengerRuntime, /function friendlyTransferPanel\(\) \{\s+const accountId = typeof localStorage/);
 });
 
 test('staff runtime uses the real case and found-item APIs for both requested units', () => {
