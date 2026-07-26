@@ -31,27 +31,27 @@ assert.doesNotMatch(
 );
 assert.match(
   indexHtml,
-  /passenger-runtime-locales\.js\?v=20260726-nine-language-parity-2/,
+  /passenger-runtime-locales\.js\?v=20260726-nine-language-parity-3/,
   'The entry page should force browsers to fetch the shared passenger locale module.',
 );
 assert.match(
   indexHtml,
-  /lost-found-local-api\.js\?v=20260726-nine-language-parity-2/,
+  /lost-found-local-api\.js\?v=20260726-nine-language-parity-3/,
   'The entry page should force browsers to fetch the canonical passenger runtime.',
 );
 assert.match(
   indexHtml,
-  /facility-report-feedback\.js\?v=20260726-nine-language-parity-2/,
+  /facility-report-feedback\.js\?v=20260726-nine-language-parity-3/,
   'The entry page should force browsers to fetch the updated facility feedback runtime.',
 );
 assert.match(
   indexHtml,
-  /passenger-member-auth\.js\?v=20260726-nine-language-parity-2/,
+  /passenger-member-auth\.js\?v=20260726-nine-language-parity-3/,
   'The entry page should force browsers to fetch the updated member auth runtime.',
 );
 assert.match(
   indexHtml,
-  /passenger-case-unfollow\.js\?v=20260726-nine-language-parity-2/,
+  /passenger-case-unfollow\.js\?v=20260726-nine-language-parity-3/,
   'The entry page should force browsers to fetch the updated case action runtime.',
 );
 const localeScriptIndex = indexHtml.indexOf('passenger-runtime-locales.js');
