@@ -47,6 +47,11 @@ assert.match(
   /\.mp-service-list/,
   'Every localized passenger home needs the RailAgent chat card in its stable service-list container.',
 );
+assert.match(
+  enhancer,
+  /\[data-railagent-speech-cue="quick-help"\][\s\S]*?button\.remove\(\)/,
+  'Legacy home actions must be removed, not hidden with a CSS data attribute.',
+);
 assert.ok(
   enhancer.includes(String.raw`\u9ed1\u8272\u80cc\u5305\u907a\u5931\u7269\uff0c\u9700\u8981\u7ad9\u52d9\u5148\u6bd4\u5c0d\u5019\u9078\u62fe\u7372\u7269\u3002`),
   'The legacy backpack case should be explicitly removed.',
@@ -299,7 +304,7 @@ test('local API lost-found search attaches by page structure across non-Chinese 
   }
 });
 
-test('local API service tools attach to facility and transfer pages without Chinese headings', () => {
+test('transfer tools attach without Chinese headings and chat remains only on passenger home', () => {
   const document = createDocument();
   const facility = new Element('section');
   facility.setAttribute('data-service-page', 'facility-report');
@@ -317,6 +322,6 @@ test('local API service tools attach to facility and transfer pages without Chin
   loadLocalApi(document);
   document.dispatchEvent({ type: 'DOMContentLoaded' });
 
-  assert.ok(document.getElementById('railagent-local-chat-launcher'));
+  assert.equal(document.getElementById('railagent-local-chat-launcher'), null);
   assert.ok(document.getElementById('railagent-friendly-transfer-tools'));
 });

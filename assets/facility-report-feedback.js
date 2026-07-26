@@ -24,8 +24,19 @@
     return element;
   }
 
+  function findFacilityReportPage() {
+    const explicit = document.querySelector('[data-service-page="facility-report"]');
+    if (explicit) return explicit;
+    return [...document.querySelectorAll('main .mp-shell > section')].find((section) => {
+      if (section.offsetParent === null) return false;
+      if (section.querySelectorAll('input').length || section.querySelector('.mp-tags, .mp-list')) return false;
+      const card = section.querySelector('.mp-card.mp-stack');
+      return Boolean(card && card.querySelector('button.mp-primary'));
+    }) || null;
+  }
+
   function enhanceFacilityReport() {
-    const page = document.querySelector('[data-service-page="facility-report"]');
+    const page = findFacilityReportPage();
     if (!page || page.querySelector('#facility-issue')) return;
 
     const card = page.querySelector('.mp-card.mp-stack');
