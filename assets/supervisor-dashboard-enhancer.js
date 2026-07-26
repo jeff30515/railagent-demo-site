@@ -4,6 +4,7 @@
   const TOTAL_FOUND_ITEMS = 23919;
   const TRACKED_CASES_KEY = 'railagent-tracked-lost-found-cases';
   const STARTUP_DELAYS = [0, 100, 300, 800];
+  const CLICK_DELAYS = [0, 50, 150, 400, 1000, 2000];
   let trackedCount = null;
   let trackedRequest = null;
 
@@ -212,7 +213,7 @@
     STARTUP_DELAYS.forEach(scheduleEnhance);
   });
   document.addEventListener('click', () => {
-    [0, 50, 150].forEach(scheduleEnhance);
+    CLICK_DELAYS.forEach(scheduleEnhance);
   });
   STARTUP_DELAYS.forEach(scheduleEnhance);
 })();
