@@ -12,3 +12,10 @@ test('staff runtime uses the real case and found-item APIs for both requested un
   assert.match(source, /固定繁體中文/);
   assert.doesNotMatch(source, /friendly-transfer|Demo/);
 });
+
+test('staff runtime only takes over the page when an API endpoint is explicitly configured', () => {
+  const source = fs.readFileSync(path.join(__dirname, '..', 'assets', 'staff-lost-found-runtime.js'), 'utf8');
+  assert.match(source, /get\('apiBaseUrl'\)/);
+  assert.match(source, /if \(!base\) return;/);
+  assert.doesNotMatch(source, /\|\| 'http:\/\/127\.0\.0\.1:7071'/);
+});
