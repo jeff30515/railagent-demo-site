@@ -25,7 +25,7 @@ test('the original staff screens use a live-data enhancer instead of a replaceme
   assert.match(source, /tymetro-staff-qingpu/);
   assert.match(source, /優先任務/);
   assert.match(source, /task\.caseId && task\.lostItem/);
-  assert.doesNotMatch(source, /友善轉乘/);
+  assert.match(source, /removeFriendlyTransfer/);
   for (const field of ['itemType', 'color', 'brand', 'features', 'foundLocation', 'foundAt', 'trainNumber']) {
     assert.match(source, new RegExp(`${field}: fieldValue`));
   }
@@ -34,8 +34,8 @@ test('the original staff screens use a live-data enhancer instead of a replaceme
 test('the original staff found-item form is aligned to the live lost-item fields', () => {
   const source = fs.readFileSync(path.join(__dirname, '..', 'assets', 'staff-lost-found-enhancer.js'), 'utf8');
 
-  assert.match(source, /拾獲時間/);
-  assert.match(source, /車次/);
+  assert.match(source, /拾獲日期/);
+  assert.match(source, /拾獲車次/);
   assert.match(source, /api\('\/api\/lost-found\/items'/);
 });
 
@@ -45,6 +45,23 @@ test('the enhancer removes only the two obsolete staff-home actions', () => {
   assert.match(source, /開啟完整任務池/);
   assert.match(source, /登記拾獲遺失物/);
   assert.match(source, /button\.remove\(\)/);
+});
+
+test('the staff found-item screen uses the requested fields and its unit’s newest three items', () => {
+  const source = fs.readFileSync(path.join(__dirname, '..', 'assets', 'staff-lost-found-enhancer.js'), 'utf8');
+
+  for (const label of ['物品類型', '顏色', '品牌', '特徵', '拾獲日期', '拾獲地點', '拾獲車次']) {
+    assert.match(source, new RegExp(label));
+  }
+  assert.match(source, /\/api\/lost-found\/items\?unitId=/);
+  assert.match(source, /recentFoundItems\.slice\(0, 3\)/);
+});
+
+test('the staff found-item screen removes the unrelated friendly-transfer controls', () => {
+  const source = fs.readFileSync(path.join(__dirname, '..', 'assets', 'staff-lost-found-enhancer.js'), 'utf8');
+
+  assert.match(source, /友善轉乘協助/);
+  assert.match(source, /轉乘路線/);
 });
 
 test('staff runtime uses the real case and found-item APIs for both requested units', () => {

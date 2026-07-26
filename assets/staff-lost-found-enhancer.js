@@ -8,6 +8,7 @@
     'tymetro-staff-qingpu': { unitId: 'station-qingpu', station: '桃園青埔' }
   };
   let liveTasks = [];
+  let recentFoundItems = [];
   let token;
   let loading;
 
@@ -84,18 +85,67 @@
     if (input && type) input.type = type;
   }
 
+  function foundItemCard(item) {
+    const card = document.createElement('article');
+    card.className = 'mp-list-item';
+    const details = [item.features, item.foundLocation, item.trainNumber && `車次 ${item.trainNumber}`].filter(Boolean).join(' · ');
+    card.innerHTML = `<div class="mp-meta"><span class="mp-status">${escape(item.itemId)}</span><span>${escape(item.stationName)}</span></div><h3>${escape([item.color, item.itemType].filter(Boolean).join('') || '拾獲物')}</h3><p class="mp-footnote">${escape(details || item.foundAt || '尚無補充資訊')}</p>`;
+    return card;
+  }
+
+  function replaceRecentFoundItems(panel) {
+    const heading = Array.from(panel.querySelectorAll('h3')).find((node) => node.textContent.trim().startsWith('本單位近期拾獲'));
+    const section = heading?.parentElement;
+    if (!section) return;
+    const signature = recentFoundItems.map((item) => item.itemId).join('|');
+    if (section.dataset.staffFoundSignature === signature) return;
+    section.dataset.staffFoundSignature = signature;
+    section.replaceChildren();
+    const title = document.createElement('h3');
+    title.className = 'mp-section-title';
+    title.textContent = `本單位近期拾獲（${recentFoundItems.length}）`;
+    section.append(title);
+    if (recentFoundItems.length) recentFoundItems.slice(0, 3).forEach((item) => section.append(foundItemCard(item)));
+    else {
+      const empty = document.createElement('p');
+      empty.className = 'mp-footnote';
+      empty.textContent = '目前沒有本單位已登記的拾獲物。';
+      section.append(empty);
+    }
+  }
+
+  function removeFriendlyTransfer() {
+    document.querySelectorAll('button').forEach((button) => {
+      if (button.textContent.trim() === '友善轉乘協助') button.remove();
+    });
+    document.querySelectorAll('h2, h3').forEach((heading) => {
+      if (heading.textContent.trim() === '轉乘路線') heading.closest('.mp-card')?.remove();
+    });
+  }
+
   function enhanceFoundRegister() {
     const panel = document.querySelector('[aria-label="登記拾獲物"]');
     if (!panel) return;
     const fields = Array.from(panel.querySelectorAll('.mp-field'));
-    setField(fields[5], '拾獲時間', 'datetime-local');
-    if (panel.querySelector('[data-staff-train-field]') || !fields[4]) return;
-    const trainField = fields[4].cloneNode(true);
+    const [itemType, color, brand, features, location, date] = fields;
+    setField(itemType, '物品類型', 'text');
+    setField(color, '顏色', 'text');
+    setField(brand, '品牌', 'text');
+    setField(features, '特徵', 'text');
+    setField(location, '拾獲地點', 'text');
+    setField(date, '拾獲日期', 'datetime-local');
+    if (location && date && (location.compareDocumentPosition(date) & Node.DOCUMENT_POSITION_FOLLOWING)) location.before(date);
+    if (panel.querySelector('[data-staff-train-field]') || !location) {
+      replaceRecentFoundItems(panel);
+      return;
+    }
+    const trainField = location.cloneNode(true);
     trainField.dataset.staffTrainField = 'true';
-    setField(trainField, '車次', 'text');
+    setField(trainField, '拾獲車次', 'text');
     const trainInput = trainField.querySelector('input');
     if (trainInput) trainInput.value = '';
-    fields[4].after(trainField);
+    location.after(trainField);
+    replaceRecentFoundItems(panel);
   }
 
   function enhanceTaskPool() {
@@ -121,6 +171,7 @@
     enhanceHome();
     enhanceFoundRegister();
     enhanceTaskPool();
+    removeFriendlyTransfer();
   }
 
   async function refresh(force = false) {
@@ -134,10 +185,14 @@
         body: JSON.stringify({ accountId: localStorage.getItem('railagent.mobile.account') })
       });
       token = login.demoToken;
-      const result = await api('/api/tasks', { headers: { 'x-demo-user-id': token } });
+      const [result, foundItems] = await Promise.all([
+        api('/api/tasks', { headers: { 'x-demo-user-id': token } }),
+        api(`/api/lost-found/items?unitId=${encodeURIComponent(user.unitId)}`, { headers: { 'x-demo-user-id': token } })
+      ]);
       liveTasks = (result.tasks || []).filter((task) => task.type === 'lost_item' && task.caseId && task.lostItem);
+      recentFoundItems = (foundItems.items || []).slice(0, 3);
       enhance();
-    })().catch(() => { liveTasks = []; enhance(); }).finally(() => { loading = undefined; });
+    })().catch(() => { liveTasks = []; recentFoundItems = []; enhance(); }).finally(() => { loading = undefined; });
     return loading;
   }
 
@@ -160,8 +215,8 @@
         headers: { 'Content-Type': 'application/json', 'x-demo-user-id': token },
         body: JSON.stringify({
           itemType: fieldValue(panel, '物品類型'), color: fieldValue(panel, '顏色'), brand: fieldValue(panel, '品牌'),
-          features: fieldValue(panel, '特徵'), foundLocation: fieldValue(panel, '拾獲位置'), foundAt: fieldValue(panel, '拾獲時間'),
-          trainNumber: fieldValue(panel, '車次'), stationName: user.station
+          features: fieldValue(panel, '特徵'), foundLocation: fieldValue(panel, '拾獲地點'), foundAt: fieldValue(panel, '拾獲日期'),
+          trainNumber: fieldValue(panel, '拾獲車次'), stationName: user.station
         })
       });
       await refresh(true);
