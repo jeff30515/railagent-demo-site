@@ -143,6 +143,7 @@
   function renderCalendar(analytics) {
     const lostItems = analytics?.lostItems || {};
     const daily = lostItems.daily || {};
+    const hasAnalytics = !!analytics?.lostItems;
     const calendar = document.createElement('div');
     calendar.className = 'supervisor-calendar';
     calendar.setAttribute('aria-label', '2023 年 7 月拾獲日曆');
@@ -169,7 +170,7 @@
       const dayLabel = document.createElement('em');
       dayLabel.textContent = String(day);
       const dayValue = document.createElement('strong');
-      dayValue.textContent = unavailable ? '—' : String(daily[key] ?? 0);
+      dayValue.textContent = unavailable || !hasAnalytics ? '—' : String(daily[key] ?? 0);
       cell.append(dayLabel, dayValue);
       calendar.append(cell);
     }
@@ -178,7 +179,9 @@
   }
 
   function summaryText(value) {
-    return Number(value || 0).toLocaleString('en-US');
+    if (value === null || value === undefined || value === '') return '—';
+    const number = Number(value);
+    return Number.isFinite(number) ? number.toLocaleString('en-US') : '—';
   }
 
   function historyKpiGroup(totals) {
@@ -211,6 +214,9 @@
   function renderHistory(root, analytics) {
     const legacyHistory = cardByText(root, /歷史服務品質分析/);
     hideNode(legacyHistory);
+    [...root.querySelectorAll('article.mp-card, article, .mp-card')]
+      .filter((node) => node.parentNode === root && !node.closest('[data-supervisor-history]'))
+      .forEach(hideNode);
     [
       /^跨運具交接與遺失物/,
       /^類型／語言／無障礙分布/,
@@ -220,6 +226,7 @@
     ].forEach((matcher) => hideNode(cardFor(findByText(root, matcher))));
 
     const lostItems = analytics?.lostItems || {};
+    const hasAnalytics = !!analytics;
     const existing = root.querySelector(':scope > [data-supervisor-history]');
     const container = existing || document.createElement('section');
     if (existing) {
@@ -231,9 +238,17 @@
       container.setAttribute('aria-label', '主管歷史服務品質四卡');
     }
 
+    if (!hasAnalytics) {
+      const notice = document.createElement('p');
+      notice.className = 'mp-notice';
+      notice.textContent = '統計資料暫時無法讀取';
+      container.append(notice);
+    }
+
     const calendarMeta = document.createElement('p');
     calendarMeta.className = 'mp-footnote';
-    calendarMeta.textContent = `資料範圍至 ${String(lostItems.coverageEnd || '2023-07-17').replaceAll('-', '/')} · 總計 ${summaryText(lostItems.total || totalFor(lostItems.daily))} 件`;
+    const total = hasAnalytics ? (lostItems.total ?? totalFor(lostItems.daily)) : null;
+    calendarMeta.textContent = `資料範圍至 ${String(lostItems.coverageEnd || '2023-07-17').replaceAll('-', '/')} · 總計 ${summaryText(total)} 件`;
 
     container.append(
       card('本月事件量趨勢', [calendarMeta, renderCalendar(analytics)]),
@@ -377,7 +392,7 @@
 
     if (tab === 'history') {
       historyAnalytics().then((analytics) => {
-        if (analytics && activeSupervisorTab(root) === 'history') renderHistory(root, analytics);
+        if (activeSupervisorTab(root) === 'history') renderHistory(root, analytics);
       });
     }
     loadTrackedCount();

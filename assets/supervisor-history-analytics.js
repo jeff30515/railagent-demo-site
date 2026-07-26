@@ -95,10 +95,15 @@
 
   async function loadSnapshot() {
     if (!snapshotPromise) {
-      snapshotPromise = fetch(SNAPSHOT_URL).then((response) => {
-        if (!response.ok) throw new Error(`Unable to load supervisor analytics snapshot: ${response.status}`);
-        return response.json();
-      });
+      snapshotPromise = fetch(SNAPSHOT_URL)
+        .then((response) => {
+          if (!response.ok) throw new Error(`Unable to load supervisor analytics snapshot: ${response.status}`);
+          return response.json();
+        })
+        .catch((error) => {
+          snapshotPromise = null;
+          throw error;
+        });
     }
     return snapshotPromise;
   }

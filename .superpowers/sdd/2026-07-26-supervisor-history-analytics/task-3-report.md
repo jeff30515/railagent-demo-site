@@ -76,3 +76,18 @@
 - Focused verification after fix:
   - `node --test tests\supervisor-history-analytics.test.cjs` -> 9/9 pass.
   - `node --test tests\supervisor-dashboard-runtime.test.cjs` -> 5/5 pass.
+
+## Fix Round 2
+- Review severity: Important.
+- Added regression coverage for fixed snapshot `undefined` and rejected snapshot paths.
+- History fallback now still renders the exact four history cards when analytics cannot load:
+  - `本月事件量趨勢`
+  - `RailAgent 使用次數統計`
+  - `服務設施回報次數`
+  - `服務回饋統計`
+- Fallback values render as `—`, and the history tab shows `統計資料暫時無法讀取`.
+- History fallback hides root-level legacy React history Demo cards before appending enhancer-owned cards, preventing mixed display.
+- `assets/supervisor-history-analytics.js` clears a rejected fixed snapshot request from `snapshotPromise`, so a later snapshot call can retry fetch.
+- TDD evidence:
+  - RED: `node --test tests\supervisor-history-analytics.test.cjs` failed on permanent rejected snapshot cache and missing fallback history container.
+  - GREEN: `node --test tests\supervisor-history-analytics.test.cjs` -> 12/12 pass after implementation.

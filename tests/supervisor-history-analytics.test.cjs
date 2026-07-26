@@ -14,6 +14,153 @@ const functionBody = (source, name) => {
   return source.slice(start, next >= 0 ? next : source.length);
 };
 
+class TestElement {
+  constructor(tagName = 'div') {
+    this.tagName = tagName.toUpperCase();
+    this.children = [];
+    this.parentNode = null;
+    this.attributes = new Map();
+    this.dataset = {};
+    this.style = {};
+    this.hidden = false;
+    this.className = '';
+    this._textContent = '';
+  }
+
+  append(...children) {
+    children.flat().forEach((child) => {
+      child.parentNode = this;
+      this.children.push(child);
+    });
+  }
+
+  removeChild(child) {
+    const index = this.children.indexOf(child);
+    if (index >= 0) {
+      this.children.splice(index, 1);
+      child.parentNode = null;
+    }
+  }
+
+  get firstChild() {
+    return this.children[0] || null;
+  }
+
+  set textContent(value) {
+    this._textContent = String(value);
+    this.children = [];
+  }
+
+  get textContent() {
+    return `${this._textContent}${this.children.map((child) => child.textContent).join('')}`;
+  }
+
+  setAttribute(name, value) {
+    this.attributes.set(name, String(value));
+    if (name === 'class') this.className = String(value);
+    if (name.startsWith('data-')) {
+      const key = name
+        .slice(5)
+        .replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
+      this.dataset[key] = String(value);
+    }
+  }
+
+  getAttribute(name) {
+    return this.attributes.has(name) ? this.attributes.get(name) : null;
+  }
+
+  removeAttribute(name) {
+    this.attributes.delete(name);
+  }
+
+  matches(selector) {
+    return selector
+      .split(',')
+      .map((part) => part.trim())
+      .some((part) => this.matchesSingle(part));
+  }
+
+  matchesSingle(selector) {
+    if (selector === '*') return true;
+    if (/^[a-z]+$/i.test(selector)) return this.tagName.toLowerCase() === selector.toLowerCase();
+    if (selector === '.mp-card') return this.className.split(/\s+/).includes('mp-card');
+    if (selector === 'article.mp-card') {
+      return this.tagName === 'ARTICLE' && this.className.split(/\s+/).includes('mp-card');
+    }
+    if (selector === 'button[aria-pressed]') {
+      return this.tagName === 'BUTTON' && this.attributes.has('aria-pressed');
+    }
+    const dataMatch = selector.match(/^\[data-([a-z-]+)(?:="([^"]+)")?\]$/);
+    if (dataMatch) {
+      const key = dataMatch[1].replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
+      if (!(key in this.dataset)) return false;
+      return dataMatch[2] === undefined || this.dataset[key] === dataMatch[2];
+    }
+    const ariaMatch = selector.match(/^\[aria-label="([^"]+)"\]$/);
+    if (ariaMatch) return this.getAttribute('aria-label') === ariaMatch[1];
+    return false;
+  }
+
+  closest(selector) {
+    let node = this;
+    while (node) {
+      if (node.matches(selector)) return node;
+      node = node.parentNode;
+    }
+    return null;
+  }
+
+  querySelector(selector) {
+    if (selector.startsWith(':scope > ')) {
+      const childSelector = selector.slice(':scope > '.length);
+      return this.children.find((child) => child.matches(childSelector)) || null;
+    }
+    return this.querySelectorAll(selector)[0] || null;
+  }
+
+  querySelectorAll(selector) {
+    const selectors = selector.split(',').map((part) => part.trim());
+    const results = [];
+    const visit = (node) => {
+      node.children.forEach((child) => {
+        if (selectors.some((part) => child.matches(part))) results.push(child);
+        visit(child);
+      });
+    };
+    visit(this);
+    return results;
+  }
+}
+
+function createDocument(rootElement) {
+  const document = new TestElement('document');
+  document.createElement = (tagName) => new TestElement(tagName);
+  document.querySelector = (selector) => {
+    if (selector === '[aria-label="主管營運駕駛艙"]') return rootElement;
+    return TestElement.prototype.querySelector.call(document, selector);
+  };
+  document.addEventListener = () => {};
+  document.append(rootElement);
+  return document;
+}
+
+function appendCard(rootElement, title) {
+  const article = new TestElement('article');
+  article.className = 'mp-card mp-stack';
+  const heading = new TestElement('h3');
+  heading.textContent = title;
+  article.append(heading);
+  rootElement.append(article);
+  return article;
+}
+
+async function flushPromises() {
+  for (let index = 0; index < 10; index += 1) {
+    await Promise.resolve();
+  }
+}
+
 test('history snapshot contains the approved dataset totals', () => {
   const snapshot = JSON.parse(read('data/supervisor-history-analytics.json'));
   assert.equal(snapshot.lostItems.month, '2023-07');
@@ -201,6 +348,162 @@ test('browser analytics module uses newest valid record date instead of browser 
   assert.deepEqual(plain(current.facilityReports.totals), { week: 24, month: 34, year: 75 });
 });
 
+test('browser analytics module retries after a rejected fixed snapshot request', async () => {
+  const source = read('assets/supervisor-history-analytics.js');
+  const snapshot = JSON.parse(read('data/supervisor-history-analytics.json'));
+  let calls = 0;
+  const context = {
+    console,
+    setTimeout,
+    clearTimeout,
+    Promise,
+    Date,
+    CustomEvent: class {
+      constructor(type, init = {}) {
+        this.type = type;
+        this.detail = init.detail;
+      }
+    },
+  };
+  context.window = {
+    localStorage: {
+      getItem: () => null,
+      setItem() {},
+    },
+    dispatchEvent() {},
+  };
+  context.globalThis = context.window;
+  context.fetch = async () => {
+    calls += 1;
+    if (calls === 1) throw new Error('snapshot unavailable');
+    return {
+      ok: true,
+      json: async () => snapshot,
+    };
+  };
+
+  vm.runInNewContext(source, context);
+
+  let rejected = false;
+  try {
+    await context.window.RailAgentSupervisorHistory.snapshot();
+  } catch (error) {
+    rejected = /snapshot unavailable/.test(error.message);
+  }
+  assert.equal(rejected, true);
+  const retried = await context.window.RailAgentSupervisorHistory.snapshot();
+
+  assert.equal(calls, 2);
+  assert.deepEqual(plain(retried.railAgent.totals), { week: 119, month: 144, year: 261 });
+});
+
+test('supervisor history fallback renders exact cards when snapshot is unavailable', async () => {
+  const source = read('assets/supervisor-dashboard-enhancer.js');
+  const rootElement = new TestElement('section');
+  rootElement.setAttribute('aria-label', '主管營運駕駛艙');
+  const realtimeTab = new TestElement('button');
+  realtimeTab.setAttribute('aria-pressed', 'false');
+  realtimeTab.textContent = '即時營運監控';
+  const historyTab = new TestElement('button');
+  historyTab.setAttribute('aria-pressed', 'true');
+  historyTab.textContent = '歷史服務品質分析';
+  rootElement.append(realtimeTab, historyTab);
+  appendCard(rootElement, '歷史服務品質分析 Demo');
+  appendCard(rootElement, '跨運具交接與遺失物／AI 品質');
+  appendCard(rootElement, '類型／語言／無障礙分布');
+  appendCard(rootElement, 'SLA 違約主因');
+  appendCard(rootElement, '近 30 日事件量趨勢');
+  appendCard(rootElement, '分析方法與 metadata 價值');
+  const oldCards = rootElement.children.slice(3);
+  const callbacks = [];
+  const context = {
+    console,
+    Promise,
+    document: createDocument(rootElement),
+    setTimeout: (callback) => callbacks.push(callback),
+    clearTimeout,
+    URLSearchParams,
+    window: {
+      addEventListener() {},
+      location: { search: '' },
+      localStorage: { getItem: () => null },
+      RailAgentSupervisorHistory: {
+        snapshot: async () => undefined,
+      },
+    },
+  };
+  context.window.setTimeout = context.setTimeout;
+  context.globalThis = context.window;
+
+  vm.runInNewContext(source, context);
+  callbacks.splice(0).forEach((callback) => callback());
+  await flushPromises();
+
+  const visibleText = rootElement.children
+    .filter((child) => !child.hidden)
+    .map((child) => child.textContent)
+    .join(' ');
+  const historyContainer = rootElement.querySelector(':scope > [data-supervisor-history]');
+
+  assert.ok(historyContainer);
+  assert.match(visibleText, /本月事件量趨勢/);
+  assert.match(visibleText, /RailAgent 使用次數統計/);
+  assert.match(visibleText, /服務設施回報次數/);
+  assert.match(visibleText, /服務回饋統計/);
+  assert.match(visibleText, /統計資料暫時無法讀取/);
+  assert.equal((visibleText.match(/—/g) || []).length >= 4, true);
+  oldCards.forEach((card) => assert.equal(card.hidden, true, card.textContent));
+  assert.doesNotMatch(visibleText, /Demo/);
+});
+
+test('supervisor history fallback renders after a rejected snapshot', async () => {
+  const source = read('assets/supervisor-dashboard-enhancer.js');
+  const rootElement = new TestElement('section');
+  rootElement.setAttribute('aria-label', '主管營運駕駛艙');
+  const realtimeTab = new TestElement('button');
+  realtimeTab.setAttribute('aria-pressed', 'false');
+  realtimeTab.textContent = '即時營運監控';
+  const historyTab = new TestElement('button');
+  historyTab.setAttribute('aria-pressed', 'true');
+  historyTab.textContent = '歷史服務品質分析';
+  rootElement.append(realtimeTab, historyTab);
+  appendCard(rootElement, '歷史服務品質分析 Demo');
+  const callbacks = [];
+  const context = {
+    console,
+    Promise,
+    document: createDocument(rootElement),
+    setTimeout: (callback) => callbacks.push(callback),
+    clearTimeout,
+    URLSearchParams,
+    window: {
+      addEventListener() {},
+      location: { search: '' },
+      localStorage: { getItem: () => null },
+      RailAgentSupervisorHistory: {
+        snapshot: async () => {
+          throw new Error('snapshot unavailable');
+        },
+      },
+    },
+  };
+  context.window.setTimeout = context.setTimeout;
+  context.globalThis = context.window;
+
+  vm.runInNewContext(source, context);
+  callbacks.splice(0).forEach((callback) => callback());
+  await flushPromises();
+
+  const visibleText = rootElement.children
+    .filter((child) => !child.hidden)
+    .map((child) => child.textContent)
+    .join(' ');
+
+  assert.match(visibleText, /本月事件量趨勢/);
+  assert.match(visibleText, /統計資料暫時無法讀取/);
+  assert.doesNotMatch(visibleText, /Demo/);
+});
+
 test('supervisor history renderer declares the approved four card dataset output', () => {
   const source = read('assets/supervisor-dashboard-enhancer.js');
   const renderHistory = functionBody(source, 'renderHistory');
@@ -225,7 +528,7 @@ test('supervisor history renderer declares the approved four card dataset output
   assert.match(renderHistory, /cardByText\(root, \/歷史服務品質分析\/\)/);
   assert.match(renderHistory, /clearEnhancerNode\(container\)/);
   assert.match(source, /const unavailable = day >= 18/);
-  assert.match(source, /dayValue\.textContent = unavailable \? '—'/);
+  assert.match(source, /dayValue\.textContent = unavailable \|\| !hasAnalytics \? '—'/);
   assert.doesNotMatch(renderHistory, /data-supervisor-metrics|dataset\.supervisorMetrics/);
   assert.doesNotMatch(renderHistory, /data-supervisor-workforce|dataset\.supervisorWorkforce/);
 });
