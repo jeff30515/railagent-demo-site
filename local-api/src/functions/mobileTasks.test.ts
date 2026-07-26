@@ -2,13 +2,16 @@ import type { HttpRequest, InvocationContext } from '@azure/functions';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   claimTask,
+  createFoundItem,
   createTask,
   demoLogin,
   getMobileHome,
   getTask,
   getTaskEvents,
+  listFoundItems,
   listTasks,
   resetMobileTaskRepository,
+  trackLostItemCase,
   transitionTask
 } from './mobileTasks.js';
 
@@ -37,25 +40,68 @@ describe('Mobile task API handlers', () => {
     });
   });
 
-  it('GET /api/tasks only returns tasks inside a staff user unit scope', async () => {
+  it('GET /api/tasks has no seeded demo task data for a staff user', async () => {
     const response = await listTasks(authenticatedRequest('demo-staff-banqiao'), context());
 
     expect(response.status).toBe(200);
-    const taskIds = response.jsonBody.tasks.map((task: { taskId: string }) => task.taskId);
-    expect(taskIds).toEqual(expect.arrayContaining(['task-lost-bag-banqiao', 'task-door-banqiao']));
-    expect(taskIds).not.toContain('task-hvac-tymetro');
-    expect(response.jsonBody.tasks.every((task: { companyId: string; unitId: string }) => {
-      return task.companyId === 'ntmetro' && task.unitId === 'station-banqiao';
-    })).toBe(true);
+    expect(response.jsonBody.tasks).toEqual([]);
   });
 
-  it('GET /api/tasks allows a supervisor to see all allowed units but not other companies', async () => {
+  it('POST then GET /api/lost-found/items persists a staff found item only for its unit', async () => {
+    const created = await createFoundItem(
+      authenticatedRequest('demo-staff-banqiao', {
+        itemType: '背包',
+        color: '黑色',
+        brand: 'Rail',
+        features: '有拉鍊',
+        foundLocation: '月台 2',
+        foundAt: '2026-07-26T09:30',
+        trainNumber: '1234',
+        stationName: '板橋站'
+      }),
+      context()
+    );
+
+    expect(created.status).toBe(201);
+    expect(created.jsonBody.item).toMatchObject({
+      unitId: 'station-banqiao',
+      stationName: '板橋站',
+      itemType: '背包',
+      foundLocation: '月台 2',
+      createdByUserId: 'demo-staff-banqiao'
+    });
+
+    const banqiaoItems = await listFoundItems(
+      authenticatedRequest('demo-staff-banqiao', undefined, undefined, { unitId: 'station-banqiao' }),
+      context()
+    );
+    expect(banqiaoItems.status).toBe(200);
+    expect(banqiaoItems.jsonBody.items).toHaveLength(1);
+
+    const qingpuItems = await listFoundItems(
+      authenticatedRequest('demo-staff-tymetro', undefined, undefined, { unitId: 'station-qingpu' }),
+      context()
+    );
+    expect(qingpuItems.status).toBe(200);
+    expect(qingpuItems.jsonBody.items).toEqual([]);
+  });
+
+  it('creates one passenger-tracked case visible to both Banqiao and Qingpu staff', async () => {
+    const response = await trackLostItemCase(authenticatedRequest('demo-public-ntmetro', {
+      candidateId: 'candidate-api-1', title: '黑色後背包', stationName: '板橋', pickupDate: '2026-07-26'
+    }), context());
+    expect(response.status).toBe(201);
+    const qingpu = await listTasks(authenticatedRequest('demo-staff-tymetro'), context());
+    expect(qingpu.jsonBody.tasks).toEqual(expect.arrayContaining([
+      expect.objectContaining({ taskId: response.jsonBody.task.taskId, caseId: 'lost-found-candidate-api-1' })
+    ]));
+  });
+
+  it('GET /api/tasks has no seeded demo task data for a supervisor', async () => {
     const response = await listTasks(authenticatedRequest('demo-supervisor-ntmetro'), context());
 
     expect(response.status).toBe(200);
-    const taskIds = response.jsonBody.tasks.map((task: { taskId: string }) => task.taskId);
-    expect(taskIds).toEqual(expect.arrayContaining(['task-lost-bag-banqiao', 'task-assist-tamsui']));
-    expect(taskIds).not.toContain('task-hvac-tymetro');
+    expect(response.jsonBody.tasks).toEqual([]);
   });
 
   it('GET /api/mobile/home returns role-specific tile counts', async () => {
@@ -101,20 +147,24 @@ describe('Mobile task API handlers', () => {
   });
 
   it('POST /api/tasks/{taskId}/claim assigns an open task and records an event', async () => {
+    const created = await createTask(authenticatedRequest('demo-public-ntmetro', {
+      type: 'lost_item', stationName: '板橋', description: '待認領的遺失物'
+    }), context());
+    const taskId = created.jsonBody.task.taskId as string;
     const claimResponse = await claimTask(
-      authenticatedRequest('demo-staff-banqiao', undefined, { taskId: 'task-lost-bag-banqiao' }),
+      authenticatedRequest('demo-staff-banqiao', undefined, { taskId }),
       context()
     );
 
     expect(claimResponse.status).toBe(200);
     expect(claimResponse.jsonBody.task).toMatchObject({
-      taskId: 'task-lost-bag-banqiao',
+      taskId,
       status: 'claimed',
       assignedToUserId: 'demo-staff-banqiao'
     });
 
     const eventsResponse = await getTaskEvents(
-      authenticatedRequest('demo-staff-banqiao', undefined, { taskId: 'task-lost-bag-banqiao' }),
+      authenticatedRequest('demo-staff-banqiao', undefined, { taskId }),
       context()
     );
     expect(eventsResponse.status).toBe(200);
@@ -156,21 +206,24 @@ describe('Mobile task API handlers', () => {
 function authenticatedRequest(
   userId: string,
   body?: unknown,
-  params?: Record<string, string>
+  params?: Record<string, string>,
+  query?: Record<string, string>
 ): HttpRequest {
-  return jsonRequest(body, params, { 'x-demo-user-id': userId });
+  return jsonRequest(body, params, { 'x-demo-user-id': userId }, query);
 }
 
 function jsonRequest(
   body?: unknown,
   params?: Record<string, string>,
-  headers: Record<string, string> = {}
+  headers: Record<string, string> = {},
+  query?: Record<string, string>
 ): HttpRequest {
   const headerMap = new Map(Object.entries(headers));
   return {
     method: body === undefined ? 'GET' : 'POST',
     url: 'http://localhost/api/test',
     params,
+    query: new URLSearchParams(query),
     headers: {
       get: (key: string) => headerMap.get(key.toLowerCase()) ?? null
     },
