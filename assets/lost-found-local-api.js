@@ -1,21 +1,22 @@
 (() => {
   'use strict';
 
-  const apiBaseUrl = new URLSearchParams(window.location.search).get('apiBaseUrl');
-  if (!apiBaseUrl) return;
+  const DEFAULT_API_BASE_URL = 'http://127.0.0.1:7071';
 
-  let lostFoundEndpoint;
-  let chatEndpoint;
-  let stationEndpoint;
-  let routeEndpoint;
-  try {
-    lostFoundEndpoint = new URL('/api/lost-found/match', apiBaseUrl).toString();
-    chatEndpoint = new URL('/api/passenger-chat', apiBaseUrl).toString();
-    stationEndpoint = new URL('/api/friendly-transfer/station', apiBaseUrl).toString();
-    routeEndpoint = new URL('/api/friendly-transfer/route', apiBaseUrl).toString();
-  } catch {
-    return;
+  function resolveApiBaseUrl(search) {
+    const configured = new URLSearchParams(search).get('apiBaseUrl');
+    try {
+      return new URL(configured || DEFAULT_API_BASE_URL).toString();
+    } catch {
+      return new URL(DEFAULT_API_BASE_URL).toString();
+    }
   }
+
+  const apiBaseUrl = resolveApiBaseUrl(window.location.search);
+  const lostFoundEndpoint = new URL('/api/lost-found/match', apiBaseUrl).toString();
+  const chatEndpoint = new URL('/api/passenger-chat', apiBaseUrl).toString();
+  const stationEndpoint = new URL('/api/friendly-transfer/station', apiBaseUrl).toString();
+  const routeEndpoint = new URL('/api/friendly-transfer/route', apiBaseUrl).toString();
 
   const copy = {
     askRailAgent: '\u554f RailAgent',
