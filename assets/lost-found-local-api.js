@@ -116,10 +116,10 @@
     );
     if (!facilityButton) return;
 
-    serviceButtons.forEach((button) => {
-      const text = button.textContent.trim();
-      if (text === pageLabels.quickHelp || text === pageLabels.moreServices) {
-        button.dataset.railagentLocalHidden = 'true';
+    const passengerHome = facilityButton.closest('section.mp-stack');
+    [...(passengerHome?.children || [])].forEach((element) => {
+      if (element.matches('button.mp-primary') || element.matches('button.mp-secondary')) {
+        element.remove();
       }
     });
 
