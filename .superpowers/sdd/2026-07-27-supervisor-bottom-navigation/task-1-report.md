@@ -73,3 +73,27 @@
 ### Remaining Notes
 
 - Public deployment was still not exercised in this local fix round.
+
+## Final Review Fix Round 1
+
+### Review Fix Scope
+
+- Preserved React-owned bottom navigation icon/child nodes by updating only the label node/text for `待辦` -> `歷史`.
+- Added home cleanup for the original React `站點熱點` card.
+- Extended DOM regression with icon + label nav structure and repeated `首頁 -> 歷史 -> 帳戶 -> 首頁 -> 歷史` switching.
+- Kept `.mobile-app-supervisor` scoping, sibling shell/nav behavior, four-card history rendering, and fallback history behavior.
+
+### Red Evidence
+
+- `node --test tests\supervisor-history-analytics.test.cjs` failed because direct `button.textContent = '歷史'` removed the `.mp-nav-ico` child in the regression fixture.
+- The same regression initially showed `站點熱點` remained visible on Home until the cleanup path was extended.
+
+### Green Evidence
+
+- `node --test tests\supervisor-dashboard-runtime.test.cjs` -> 6 pass, 0 fail
+- `node --test tests\supervisor-history-analytics.test.cjs` -> 14 pass, 0 fail
+- `node --check assets\supervisor-dashboard-enhancer.js` -> exit 0
+
+### Remaining Notes
+
+- Public deployment was still not exercised in this local fix round.

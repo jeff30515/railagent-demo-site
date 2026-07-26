@@ -41,9 +41,32 @@
     return 'realtime';
   }
 
+  function setNavigationButtonLabel(button, label) {
+    const labelElement = [...(button?.children || [])]
+      .find((child) => !child.matches?.('.mp-nav-ico,[aria-hidden="true"]'));
+    if (labelElement) {
+      labelElement.textContent = label;
+      return;
+    }
+
+    const labelText = [...(button?.childNodes || [])]
+      .find((node) => node.nodeType === 3 && text(node));
+    if (labelText) {
+      labelText.nodeValue = label;
+      return;
+    }
+
+    if (button?.childNodes?.length && document.createTextNode) {
+      button.append(document.createTextNode(label));
+      return;
+    }
+
+    if (button) button.textContent = label;
+  }
+
   function renameHistoryNavigation(app) {
     const button = supervisorNavButtons(app).find((item) => /待辦|任務|歷史|敺齒|甇瑕/.test(text(item)));
-    if (button) button.textContent = '歷史';
+    setNavigationButtonLabel(button, '歷史');
   }
 
   function cardFor(node) {
@@ -403,6 +426,11 @@
     [/^狀態佇列/, /^時段熱點$/].forEach((matcher) => {
       hideNode(cardFor(findByText(root, matcher)));
     });
+
+    hideNode(cardFor(findByText(root, /^站點熱點$/)));
+    directCards(root)
+      .filter((node) => /站點熱點/.test(text(node)))
+      .forEach(hideNode);
 
     const queue = root.querySelector('section[aria-label="即時佇列"]');
     hideNode(queue);

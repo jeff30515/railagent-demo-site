@@ -171,7 +171,13 @@ function appendCard(rootElement, title) {
 
 function navButton(label, active) {
   const button = new TestElement('button');
-  button.textContent = label;
+  const icon = new TestElement('span');
+  icon.className = 'mp-nav-ico';
+  icon.setAttribute('aria-hidden', 'true');
+  const textLabel = new TestElement('span');
+  textLabel.className = 'mp-nav-label';
+  textLabel.textContent = label;
+  button.append(icon, textLabel);
   button.setAttribute('aria-pressed', active ? 'true' : 'false');
   return button;
 }
@@ -603,6 +609,7 @@ test('supervisor bottom navigation renders isolated realtime, history, and accou
   appendCard(rootElement, '頝券??瑟???隞嗅?????');
   appendCard(rootElement, '蝡?鈭箏?');
   appendCard(rootElement, '?詨?撌桃嚗楊憭抒?撓鞈?');
+  const stationHotspot = appendCard(rootElement, '站點熱點');
   const realtimeQueue = new TestElement('section');
   realtimeQueue.setAttribute('aria-label', '?單?雿?');
   realtimeQueue.textContent = 'old realtime task queue';
@@ -678,10 +685,12 @@ test('supervisor bottom navigation renders isolated realtime, history, and accou
 
   await runEnhance('首頁');
   assert.deepEqual(buttons.map((button) => button.textContent), ['首頁', '歷史', '帳戶']);
+  assert.equal(tasks.querySelector(':scope > .mp-nav-ico'), tasks.children[0]);
   const activePageText = rootElement.querySelector(':scope > [data-supervisor-home-title]').textContent;
   assert.equal(activePageText, '即時營運監控');
   assert.equal(topTabList.hidden, true);
   assert.equal(originalHero.hidden, true);
+  assert.equal(stationHotspot.hidden, true);
 
   await runEnhance('歷史');
   await runEnhance('帳戶');
@@ -689,7 +698,9 @@ test('supervisor bottom navigation renders isolated realtime, history, and accou
   assert.equal(account.textContent, 'supervisor account content');
   await runEnhance('首頁');
   await runEnhance('歷史');
+  assert.equal(tasks.querySelector(':scope > .mp-nav-ico'), tasks.children[0]);
   await runEnhance('首頁');
+  assert.equal(tasks.querySelector(':scope > .mp-nav-ico'), tasks.children[0]);
 
   assert.equal(app.querySelectorAll('[data-supervisor-home-title]').length, 1);
   assert.equal(app.querySelectorAll('[data-supervisor-history-page]').length, 1);
@@ -699,8 +710,10 @@ test('supervisor bottom navigation renders isolated realtime, history, and accou
   assert.equal(rootElement.querySelector('[data-supervisor-metrics]').hidden, false);
   assert.equal(rootElement.querySelector('[data-supervisor-workforce]').hidden, false);
   assert.equal(homeText.includes('RailAgent 使用次數統計'), false);
+  assert.equal(homeText.includes('站點熱點'), false);
 
   await runEnhance('歷史');
+  assert.equal(tasks.querySelector(':scope > .mp-nav-ico'), tasks.children[0]);
   const historyText = shell.children.filter((child) => !child.hidden).map((child) => child.textContent).join(' ');
   assert.equal(shell.querySelectorAll('article.mp-card').filter((card) => !card.hidden).length, 4);
   assert.ok(historyText.includes('本月事件量趨勢'));
