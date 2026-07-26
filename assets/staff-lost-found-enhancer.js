@@ -11,7 +11,6 @@
   let recentFoundItems = [];
   let token;
   let loading;
-  let enhancing = false;
 
   if (queryBase) localStorage.setItem(apiBaseStorageKey, queryBase);
 
@@ -167,17 +166,18 @@
   }
 
   function enhance() {
-    if (!staff() || enhancing) return;
-    enhancing = true;
-    try {
-      document.documentElement.lang = 'zh-TW';
-      enhanceHome();
-      enhanceFoundRegister();
-      enhanceTaskPool();
-      removeFriendlyTransfer();
-    } finally {
-      setTimeout(() => { enhancing = false; }, 0);
-    }
+    if (!staff()) return;
+    document.documentElement.lang = 'zh-TW';
+    enhanceHome();
+    enhanceFoundRegister();
+    enhanceTaskPool();
+    removeFriendlyTransfer();
+  }
+
+  let enhanceTimer;
+  function scheduleEnhance() {
+    clearTimeout(enhanceTimer);
+    enhanceTimer = setTimeout(enhance, 0);
   }
 
   async function refresh(force = false) {
@@ -234,9 +234,9 @@
     }
   }, true);
 
-  const observer = new MutationObserver(() => enhance());
+  document.addEventListener('click', scheduleEnhance);
   addEventListener('load', () => {
-    observer.observe(document.getElementById('root'), { childList: true, subtree: true });
+    scheduleEnhance();
     refresh();
   });
 })();
