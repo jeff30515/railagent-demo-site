@@ -30,6 +30,26 @@ test('the isolated staff workspace uses live cases, found items, and repository-
   }
 });
 
+test('the staff found-item form keeps each Traditional Chinese label above its input', () => {
+  const source = fs.readFileSync(path.join(__dirname, '..', 'assets', 'staff-lost-found-workspace.js'), 'utf8');
+  const stylesheet = fs.readFileSync(path.join(__dirname, '..', 'assets', 'staff-lost-found-workspace.css'), 'utf8');
+
+  assert.match(source, /class="mp-staff-field"/);
+  assert.match(stylesheet, /\.mp-staff-field\{display:grid;gap:\.4rem/);
+  assert.match(stylesheet, /\.mp-staff-field input\{[^}]*width:100%/);
+});
+
+test('the staff workspace keeps the original navigation pattern with two work tabs', () => {
+  const source = fs.readFileSync(path.join(__dirname, '..', 'assets', 'staff-lost-found-workspace.js'), 'utf8');
+
+  assert.match(source, /data-staff-tab="priority"/);
+  assert.match(source, /data-staff-tab="register"/);
+  assert.match(source, /mp-bottom-nav/);
+  assert.match(source, /data-staff-nav="home"/);
+  assert.match(source, /data-staff-nav="tasks"/);
+  assert.match(source, /data-staff-nav="account"/);
+});
+
 test('staff runtime uses the real case and found-item APIs for both requested units', () => {
   const source = fs.readFileSync(path.join(__dirname, '..', 'assets', 'staff-lost-found-runtime.js'), 'utf8');
   assert.match(source, /ntmetro-staff-banqiao/);
