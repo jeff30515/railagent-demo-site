@@ -51,7 +51,9 @@ export function createLocalLostFoundServer() {
       route !== '/api/friendly-transfer/station' &&
       route !== '/api/friendly-transfer/route' &&
       route !== '/api/lost-found/cases/track' &&
-      route !== '/api/lost-found/items'
+      route !== '/api/lost-found/items' &&
+      route !== '/api/auth/demo-login' &&
+      route !== '/api/tasks'
     ) {
       respond(response, 404, { error: 'Not found.' });
       return;
@@ -65,7 +67,8 @@ export function createLocalLostFoundServer() {
     }
 
     const isFoundItemList = route === '/api/lost-found/items' && request.method === 'GET';
-    if (request.method !== 'POST' && !isFoundItemList) {
+    const isTaskList = route === '/api/tasks' && request.method === 'GET';
+    if (request.method !== 'POST' && !isFoundItemList && !isTaskList) {
       respond(response, 405, { error: 'Method not allowed.' }, cors);
       return;
     }
@@ -81,6 +84,33 @@ export function createLocalLostFoundServer() {
     }
 
     try {
+      if (route === '/api/auth/demo-login') {
+        const accountId = textField(await readJson(request), 'accountId');
+        const user = accountId ? await mobileTasks.getDemoUserByAccount(accountId) : null;
+        if (!user) {
+          respond(response, 401, { error: 'invalid_demo_account' }, cors);
+          return;
+        }
+        respond(response, 200, { user, demoToken: user.userId }, cors);
+        return;
+      }
+
+      if (isTaskList) {
+        const userId = request.headers['x-demo-user-id'];
+        const user = typeof userId === 'string' ? await mobileTasks.getDemoUserById(userId) : null;
+        if (!user) {
+          respond(response, 401, { error: 'missing_demo_user' }, cors);
+          return;
+        }
+        const tasks = await mobileTasks.listTasksForUser(user);
+        const counts = tasks.reduce<Record<string, number>>((all, task) => {
+          all[task.status] = (all[task.status] ?? 0) + 1;
+          return all;
+        }, {});
+        respond(response, 200, { user, tasks, counts }, cors);
+        return;
+      }
+
       if (route === '/api/lost-found/items') {
         const userId = request.headers['x-demo-user-id'];
         const user = typeof userId === 'string' ? await mobileTasks.getDemoUserById(userId) : null;
@@ -276,7 +306,7 @@ function corsHeaders(origin: string | undefined): Record<string, string> {
     return {};
   }
 
-  const allowed = (process.env.RAILAGENT_ALLOWED_ORIGIN ?? 'http://127.0.0.1:5173')
+  const allowed = (process.env.RAILAGENT_ALLOWED_ORIGIN ?? 'http://127.0.0.1:5173,https://jeff30515.github.io')
     .split(',')
     .map((value) => value.trim())
     .filter(Boolean);

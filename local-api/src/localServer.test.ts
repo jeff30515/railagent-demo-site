@@ -31,6 +31,38 @@ afterEach(async () => {
 });
 
 describe('local friendly-transfer API', () => {
+  it('logs a station staff account in and returns its visible cases', async () => {
+    const login = await request('/api/auth/demo-login', {
+      accountId: 'ntmetro-staff-banqiao'
+    });
+
+    expect(login.status).toBe(200);
+    expect(login.body).toMatchObject({
+      demoToken: 'demo-staff-banqiao',
+      user: { unitId: 'station-banqiao', role: 'staff' }
+    });
+
+    const tasks = await request('/api/tasks', undefined, {
+      'x-demo-user-id': String(login.body.demoToken)
+    }, 'GET');
+
+    expect(tasks.status).toBe(200);
+    expect(tasks.body).toMatchObject({
+      user: { unitId: 'station-banqiao' },
+      tasks: expect.any(Array),
+      counts: expect.any(Object)
+    });
+  });
+
+  it('allows GitHub Pages to call the staff login route', async () => {
+    const login = await request('/api/auth/demo-login', {
+      accountId: 'tymetro-staff-qingpu'
+    }, { origin: 'https://jeff30515.github.io' });
+
+    expect(login.status).toBe(200);
+    expect(login.headers.get('access-control-allow-origin')).toBe('https://jeff30515.github.io');
+  });
+
   it('stores and lists found items for the authenticated staff unit', async () => {
     const created = await request('/api/lost-found/items', {
       itemType: '雨傘', foundLocation: '出口 1', foundAt: '2026-07-26T10:00', stationName: '板橋站'
@@ -44,6 +76,30 @@ describe('local friendly-transfer API', () => {
     expect(listed.status).toBe(200);
     expect(listed.body.items).toEqual(expect.arrayContaining([
       expect.objectContaining({ itemType: '雨傘', unitId: 'station-banqiao' })
+    ]));
+  });
+
+  it('keeps Qingpu found items separate from Banqiao found items', async () => {
+    const created = await request('/api/lost-found/items', {
+      itemType: 'umbrella', foundLocation: 'exit 2', foundAt: '2026-07-26T10:00', stationName: 'Qingpu'
+    }, { 'x-demo-user-id': 'demo-staff-tymetro' });
+
+    expect(created.status).toBe(201);
+    expect(created.body.item).toMatchObject({ unitId: 'station-qingpu', itemType: 'umbrella' });
+
+    const qingpu = await request('/api/lost-found/items?unitId=station-qingpu', undefined, {
+      'x-demo-user-id': 'demo-staff-tymetro'
+    }, 'GET');
+    expect(qingpu.status).toBe(200);
+    expect(qingpu.body.items).toEqual(expect.arrayContaining([
+      expect.objectContaining({ unitId: 'station-qingpu', itemType: 'umbrella' })
+    ]));
+
+    const banqiao = await request('/api/lost-found/items?unitId=station-banqiao', undefined, {
+      'x-demo-user-id': 'demo-staff-banqiao'
+    }, 'GET');
+    expect(banqiao.body.items).not.toEqual(expect.arrayContaining([
+      expect.objectContaining({ unitId: 'station-qingpu', itemType: 'umbrella' })
     ]));
   });
 
@@ -154,7 +210,7 @@ async function request(
   body: unknown,
   headers: Record<string, string> = {},
   method = 'POST'
-): Promise<{ status: number; body: Record<string, any> }> {
+): Promise<{ status: number; headers: Headers; body: Record<string, any> }> {
   const server = createLocalLostFoundServer();
   servers.push(server);
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
@@ -166,7 +222,7 @@ async function request(
     body: body === undefined ? undefined : JSON.stringify(body)
   });
 
-  return { status: response.status, body: await response.json() as Record<string, unknown> };
+  return { status: response.status, headers: response.headers, body: await response.json() as Record<string, unknown> };
 }
 
 async function useTransportKnowledge(document: {
