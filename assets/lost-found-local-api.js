@@ -18,63 +18,16 @@
   const stationEndpoint = new URL('/api/friendly-transfer/station', apiBaseUrl).toString();
   const routeEndpoint = new URL('/api/friendly-transfer/route', apiBaseUrl).toString();
 
-  const copy = {
-    askRailAgent: '\u554f RailAgent',
-    chatSubtitle: '\u672c\u6a5f AI \u5c0d\u8a71\u5354\u52a9',
-    close: '\u95dc\u9589',
-    chatPlaceholder: '\u8f38\u5165\u60a8\u7684\u554f\u984c\u2026',
-    send: '\u50b3\u9001',
-    thinking: 'RailAgent \u6b63\u5728\u601d\u8003\u2026',
-    chatError: '\u76ee\u524d\u7121\u6cd5\u9023\u7dda\u81f3\u672c\u6a5f AI\uff0c\u8acb\u78ba\u8a8d API \u8207 Ollama \u6b63\u5728\u57f7\u884c\u5f8c\u518d\u8a66\u4e00\u6b21\u3002',
-    missingInput: '\u8acb\u81f3\u5c11\u586b\u5beb\u7269\u54c1\u985e\u578b\u6216\u7279\u5fb5\u95dc\u9375\u5b57\u3002',
-    searching: '\u6b63\u5728\u4ee5\u672c\u6a5f Ollama \u641c\u5c0b\u53ef\u80fd\u76f8\u7b26\u7684\u907a\u5931\u7269\u2026',
-    searchError: '\u672c\u6a5f AI \u641c\u5c0b\u5931\u6557\uff1a',
-    searchTitle: '\u672c\u6a5f AI \u641c\u5c0b\u7d50\u679c',
-    noMatch: '\u672a\u627e\u5230\u53ef\u80fd\u76f8\u7b26\u7684\u907a\u5931\u7269\u3002',
-    snapshot: '\u672c\u6a5f\u8cc7\u6599\u5feb\u7167\u81f3',
-    mode: '\u6a21\u5f0f',
-    similar: '\u76f8\u4f3c',
-    pickupDate: '\u62fe\u7372\u65e5\u671f',
-    unknown: '\u672a\u77e5',
-    unknownItem: '\u672a\u77e5\u7269\u54c1',
-    contact: '\u806f\u7d61\u65b9\u5f0f',
-    trackItem: '\u8ffd\u8e64\u6b64\u7269\u4ef6',
-    tracked: '\u5df2\u8ffd\u8e64',
-    tracking: '\u8ffd\u8e64\u4e2d',
-    feedback: '\u670d\u52d9\u56de\u994b',
-    thankYou: '\u611f\u8b1d\u60a8\u7684\u56de\u994b!'
-    ,transferHelp: '\u8f49\u4e58\u5354\u52a9'
-    ,transferRoute: '\u8f49\u4e58\u8def\u7dda\u5efa\u8b70'
-    ,transferRouteLead: '\u8f38\u5165\u73fe\u5728\u5730\u9ede\u8207\u76ee\u7684\u5730\uff0c\u7531\u672c\u6a5f AI \u63d0\u4f9b\u53c3\u8003\u3002'
-    ,callTitle: '\u547c\u53eb\u7ad9\u52d9\u4eba\u54e1\u5354\u52a9'
-    ,callLead: '\u8acb\u8aaa\u51fa\u6216\u8f38\u5165\u60a8\u76ee\u524d\u6240\u5728\u7684\u8eca\u7ad9\u3002'
-    ,stationPlaceholder: '\u4f8b\u5982\uff1a\u6211\u5728\u53f0\u5317\u8eca\u7ad9'
-    ,startVoice: '\u958b\u59cb\u8a9e\u97f3\u8f38\u5165'
-    ,findStation: '\u78ba\u8a8d\u8eca\u7ad9'
-    ,calling: '\u64a5\u6253\u7ad9\u52d9\u4eba\u54e1\u96fb\u8a71'
-    ,stationError: '\u7121\u6cd5\u8fa8\u8b58\u8eca\u7ad9\uff0c\u8acb\u91cd\u65b0\u8aaa\u51fa\u6216\u8f38\u5165\u7ad9\u540d\u3002'
-    ,voiceUnavailable: '\u6b64\u700f\u89bd\u5668\u7121\u6cd5\u4f7f\u7528\u8a9e\u97f3\u8f38\u5165\uff0c\u8acb\u76f4\u63a5\u8f38\u5165\u7ad9\u540d\u3002'
-    ,routeOrigin: '\u73fe\u5728\u5730\u9ede'
-    ,routeDestination: '\u8981\u524d\u5f80\u7684\u5730\u9ede'
-    ,routePlaceholderOrigin: '\u4f8b\u5982\uff1a\u81fa\u5317\u8eca\u7ad9'
-    ,routePlaceholderDestination: '\u4f8b\u5982\uff1a\u5357\u6e2f\u8eca\u7ad9'
-    ,routeSubmit: '\u53d6\u5f97\u8f49\u4e58\u5efa\u8b70'
-    ,routeThinking: '\u6b63\u5728\u5411\u672c\u6a5f AI \u8a62\u554f\u8f49\u4e58\u5efa\u8b70\u2026'
-    ,routeError: '\u672c\u6a5f AI \u76ee\u524d\u7121\u6cd5\u63d0\u4f9b\u8f49\u4e58\u5efa\u8b70\uff0c\u8acb\u7a0d\u5f8c\u518d\u8a66\u3002'
-    ,transferPageGuide: '\u53cb\u5584\u8f49\u4e58\u5354\u52a9\u3002\u5982\u9700\u7ad9\u52d9\u4eba\u54e1\u5354\u52a9\uff0c\u8acb\u9078\u64c7\u8f49\u4e58\u5354\u52a9\u3002\u5982\u8981\u67e5\u8a62\u8def\u7dda\uff0c\u8acb\u5148\u8f38\u5165\u73fe\u5728\u5730\u9ede\uff0c\u518d\u8f38\u5165\u8981\u524d\u5f80\u7684\u5730\u9ede\u3002'
-    ,routeOriginGuide: '\u73fe\u5728\u5730\u9ede\u3002\u8acb\u8f38\u5165\u60a8\u73fe\u5728\u6240\u5728\u7684\u8eca\u7ad9\u6216\u5730\u9ede\u3002'
-    ,routeDestinationGuide: '\u8981\u524d\u5f80\u7684\u5730\u9ede\u3002\u8acb\u8f38\u5165\u60a8\u7684\u76ee\u7684\u5730\u3002'
-    ,voicePrompt: '\u8acb\u8aaa\u51fa\u60a8\u76ee\u524d\u6240\u5728\u7684\u8eca\u7ad9\u3002'
-    ,voiceRecognized: '\u5df2\u8fa8\u8b58\uff1a'
-    ,stationThinking: '\u6b63\u5728\u78ba\u8a8d\u8eca\u7ad9\u8207\u7ad9\u52d9\u96fb\u8a71\u3002'
-  };
+  const localeApi = window.RailAgentPassengerRuntimeLocales;
 
-  const searchLabels = [
-    '\u641c\u5c0b\u53ef\u80fd\u76f8\u7b26\u7269\u54c1',
-    '\u641c\u5c0b\u53ef\u80fd\u76f8\u7b26\u7684\u907a\u5931\u7269',
-    '\u641c\u5c0b\u53ef\u80fd\u76f8\u7b26\u907a\u5931\u7269',
-    'Search for possible matches'
-  ];
+  function currentLocale() {
+    const language = document.documentElement.lang;
+    return {
+      language: localeApi.normalizeLanguage(language),
+      copy: localeApi.getRuntimeCopy(language),
+      pageLabels: localeApi.getPageLabels(language),
+    };
+  }
 
   function installStyles() {
     if (document.getElementById('railagent-local-api-style')) return;
@@ -144,28 +97,37 @@
         element.dataset.railagentLocalHidden = 'true';
       }
     });
-    document.querySelectorAll('p').forEach((element) => {
-      const text = element.textContent || '';
-      if (text.includes('\u793a\u7bc4\u8cc7\u6599\u4f9d\u7167') || text.includes('Demo records follow')) {
-        element.dataset.railagentLocalHidden = 'true';
-      }
-    });
   }
 
-  function installChatLauncher() {
-    const facilityButton = [...document.querySelectorAll('button')].find((button) =>
-      button.offsetParent !== null && button.textContent.trim().includes('\u670d\u52d9\u8a2d\u65bd\u56de\u5831')
+  function removeLostItemSourceNotice() {
+    const page = document.querySelector('[data-service-page="lost-item"]');
+    if (!page) return;
+
+    const sourceLink = [...page.querySelectorAll('a')].find((link) =>
+      /railway\.gov\.tw\/tra-tip-web\/tip\/tip00E\/tipE11\/query/i.test(link.href)
+    );
+    if (sourceLink) sourceLink.closest('p')?.remove();
+  }
+
+  function installChatLauncher(copy, pageLabels) {
+    const serviceButtons = [...document.querySelectorAll('.mp-service-list button.mp-service')];
+    const facilityButton = serviceButtons.find((button) =>
+      button.textContent.trim().includes(pageLabels.facilityTitle)
     );
     if (!facilityButton) return;
 
-    [...document.querySelectorAll('button')].forEach((button) => {
+    serviceButtons.forEach((button) => {
       const text = button.textContent.trim();
-      if (text === '\u5feb\u901f\u6c42\u52a9' || text === '\u66f4\u591a\u670d\u52d9') {
+      if (text === pageLabels.quickHelp || text === pageLabels.moreServices) {
         button.dataset.railagentLocalHidden = 'true';
       }
     });
 
-    if (document.getElementById('railagent-local-chat-launcher')) return;
+    const existing = document.getElementById('railagent-local-chat-launcher');
+    if (existing) {
+      existing.innerHTML = `<span><strong>${copy.askRailAgent}</strong><small>${copy.chatSubtitle}</small></span>`;
+      return;
+    }
     const launcher = document.createElement('button');
     launcher.id = 'railagent-local-chat-launcher';
     launcher.type = 'button';
@@ -173,11 +135,16 @@
     facilityButton.insertAdjacentElement('afterend', launcher);
   }
 
-  function installFriendlyTransferTools() {
-    const heading = [...document.querySelectorAll('h2')].find((element) =>
-      element.offsetParent !== null && element.textContent.trim() === '\u53cb\u5584\u8f49\u4e58\u5354\u52a9'
+  function friendlyTransferPanel(pageLabels) {
+    const heading = [...document.querySelectorAll('.mp-hero-block h2')].find(
+      (element) => element.textContent.trim() === pageLabels.friendlyTitle,
     );
-    const panel = heading?.closest('section');
+    const page = heading?.closest('section.mp-stack');
+    return page?.querySelector(':scope > section.mp-card.mp-stack') ? page : null;
+  }
+
+  function installFriendlyTransferTools(copy, pageLabels, language) {
+    const panel = friendlyTransferPanel(pageLabels);
     if (!panel) return;
 
     [...panel.querySelectorAll('button')].forEach((button) => {
@@ -216,10 +183,13 @@
         tagList.closest('.mp-card')?.setAttribute('data-railagent-local-hidden', 'true');
       }
     });
-    if (document.getElementById('railagent-friendly-transfer-tools')) return;
+    const existing = document.getElementById('railagent-friendly-transfer-tools');
+    if (existing?.dataset.locale === language) return;
+    existing?.remove();
 
     const tools = document.createElement('section');
     tools.id = 'railagent-friendly-transfer-tools';
+    tools.dataset.locale = language;
     tools.setAttribute('aria-label', copy.transferHelp);
     tools.innerHTML = `
       <button type="button" class="railagent-transfer-help" id="railagent-transfer-help-button" data-railagent-transfer-control="transfer-help" data-railagent-speech-text="${copy.transferHelp}\uff0c\u9078\u64c7\u5f8c\u53ef\u4ee5\u8aaa\u51fa\u6240\u5728\u8eca\u7ad9\uff0c\u78ba\u8a8d\u5f8c\u986f\u793a\u7ad9\u52d9\u96fb\u8a71\u3002">${copy.transferHelp}</button>
@@ -244,8 +214,9 @@
       if (!origin || !destination || submit.disabled) return;
       submit.disabled = true;
       answer.hidden = false;
-      answer.textContent = copy.routeThinking;
-      announceTransfer(copy.routeThinking, 'route-thinking');
+      const activeCopy = currentLocale().copy;
+      answer.textContent = activeCopy.routeThinking;
+      announceTransfer(activeCopy.routeThinking, 'route-thinking');
       try {
         const response = await fetch(routeEndpoint, {
           method: 'POST',
@@ -254,10 +225,10 @@
         });
         const body = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(body.error || `HTTP ${response.status}`);
-        answer.textContent = body.answer || copy.routeError;
+        answer.textContent = body.answer || activeCopy.routeError;
         announceTransfer(answer.textContent, 'route-answer');
       } catch (error) {
-        answer.textContent = `${copy.routeError}\n${error.message}`;
+        answer.textContent = `${activeCopy.routeError}\n${error.message}`;
         announceTransfer(answer.textContent, 'route-error');
       } finally {
         submit.disabled = false;
@@ -265,11 +236,16 @@
     });
   }
 
-  function openFriendlyTransferDialog() {
+  function openFriendlyTransferDialog(copy, language) {
     let overlay = document.getElementById('railagent-transfer-dialog');
+    if (overlay?.dataset.locale !== language) {
+      overlay?.remove();
+      overlay = null;
+    }
     if (!overlay) {
       overlay = document.createElement('div');
       overlay.id = 'railagent-transfer-dialog';
+      overlay.dataset.locale = language;
       overlay.hidden = true;
       overlay.innerHTML = `
         <section class="railagent-transfer-dialog" role="dialog" aria-modal="true" aria-labelledby="railagent-transfer-title">
@@ -304,13 +280,14 @@
         voice.hidden = true;
         status.textContent = copy.voiceUnavailable;
       }
-      voice.addEventListener('click', () => startSpeechRecognition(input, status));
+      voice.addEventListener('click', () => startSpeechRecognition(input, status, currentLocale().copy));
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
         const spokenStation = input.value.trim();
         if (!spokenStation) return;
-        status.textContent = copy.stationThinking;
-        announceTransfer(copy.stationThinking, 'station-thinking');
+        const activeCopy = currentLocale().copy;
+        status.textContent = activeCopy.stationThinking;
+        announceTransfer(activeCopy.stationThinking, 'station-thinking');
         callResult.replaceChildren();
         try {
           const response = await fetch(stationEndpoint, {
@@ -325,12 +302,12 @@
           const call = document.createElement('a');
           call.className = 'railagent-transfer-call';
           call.href = `tel:${String(body.phone || '').replace(/[^+\\d]/g, '')}`;
-          call.textContent = `${copy.calling} ${body.phone || ''}`;
+          call.textContent = `${activeCopy.calling} ${body.phone || ''}`;
           call.setAttribute('data-railagent-transfer-control', 'call-staff');
-          call.setAttribute('data-railagent-speech-text', `${copy.calling} ${body.phone || ''}`);
+          call.setAttribute('data-railagent-speech-text', `${activeCopy.calling} ${body.phone || ''}`);
           callResult.appendChild(call);
         } catch (error) {
-          status.textContent = `${copy.stationError}\n${error.message}`;
+          status.textContent = `${activeCopy.stationError}\n${error.message}`;
           announceTransfer(status.textContent, 'station-error');
         }
       });
@@ -346,7 +323,7 @@
 
   let activeSpeechRecognition = null;
 
-  function startSpeechRecognition(input, status) {
+  function startSpeechRecognition(input, status, copy) {
     const Recognition = speechRecognitionConstructor();
     if (!Recognition) {
       status.textContent = copy.voiceUnavailable;
@@ -411,8 +388,7 @@
   }
 
   const TRACKED_CASES_KEY = 'railagent-tracked-lost-found-cases';
-  const LEGACY_BACKPACK_SUMMARY = '\u9ed1\u8272\u80cc\u5305\u907a\u5931\u7269\uff0c\u9700\u8981\u7ad9\u52d9\u5148\u6bd4\u5c0d\u5019\u9078\u62fe\u7372\u7269\u3002';
-  const LEGACY_FEEDBACK_NOTE = '\u7d50\u6848\u5f8c\u56de\u994b\u6703\u5beb\u5165\u672c\u6a5f\u4e8b\u4ef6\u76ee\u9304\uff0c\u4f9b\u6b77\u53f2\u54c1\u8cea\u5206\u6790\u3002';
+  const LEGACY_BACKPACK_EVENT_ID = 'EVT-2026-BQ-0187';
 
   function readTrackedCases() {
     try {
@@ -431,23 +407,34 @@
   }
 
   function removeLegacyBackpackCase() {
-    [...document.querySelectorAll('article')].forEach((article) => {
-      if ((article.textContent || '').includes(LEGACY_BACKPACK_SUMMARY)) article.remove();
+    const page = document.querySelector('[aria-label="public own case list"]');
+    page?.querySelectorAll('article').forEach((article) => {
+      if ((article.textContent || '').includes(LEGACY_BACKPACK_EVENT_ID)) {
+        article.remove();
+      }
     });
   }
 
-  function syncPublicFeedbackCopy() {
-    const feedback = document.querySelector('article[aria-label="\u670d\u52d9\u56de\u994b"]');
-    if (!feedback) return;
-    const heading = feedback.querySelector('h3');
+  function syncPublicFeedbackCopy(copy) {
+    const page = document.querySelector('[aria-label="public own case list"]');
+    const feedbackArticle = [...(page?.querySelectorAll('article') ?? [])].find((article) =>
+      article.querySelector('input') && article.querySelector('button.mp-primary')
+    );
+    if (!feedbackArticle) return;
+    const heading = feedbackArticle.querySelector('h3');
     if (heading && heading.textContent !== copy.feedback) heading.textContent = copy.feedback;
-    [...feedback.querySelectorAll('p')].forEach((paragraph) => {
-      if ((paragraph.textContent || '').includes(LEGACY_FEEDBACK_NOTE)) paragraph.remove();
-      if ((paragraph.textContent || '').startsWith('\u5df2\u8a18\u9304\u56de\u994b\u65bc')) paragraph.textContent = copy.thankYou;
+    const feedbackLead = feedbackArticle.querySelector('p');
+    if (feedbackLead && !feedbackLead.className.split(/\s+/).includes('mp-status')) {
+      feedbackArticle.querySelector('p')?.remove();
+    }
+    [...feedbackArticle.querySelectorAll('p')].forEach((paragraph) => {
+      if ((paragraph.textContent || '').startsWith('\u5df2\u8a18\u9304\u56de\u994b\u65bc')) {
+        paragraph.textContent = copy.thankYou;
+      }
     });
   }
 
-  function renderTrackedCases() {
+  function renderTrackedCases(copy) {
     const page = document.querySelector('[aria-label="public own case list"]');
     if (!page) return;
     const records = readTrackedCases();
@@ -470,27 +457,37 @@
   }
 
   function syncLocalModeUi() {
+    const { copy, pageLabels, language } = currentLocale();
     installStyles();
     markDemoContent();
-    installChatLauncher();
-    installFriendlyTransferTools();
+    installChatLauncher(copy, pageLabels);
+    installFriendlyTransferTools(copy, pageLabels, language);
     clearStaleLostFoundResult();
     removeLegacyBackpackCase();
-    renderTrackedCases();
-    syncPublicFeedbackCopy();
-    const hasFriendlyTransfer = [...document.querySelectorAll('h2')].some((element) =>
-      element.offsetParent !== null && element.textContent.trim() === '\u53cb\u5584\u8f49\u4e58\u5354\u52a9'
-    );
+    removeLostItemSourceNotice();
+    renderTrackedCases(copy);
+    syncPublicFeedbackCopy(copy);
+    const hasFriendlyTransfer = Boolean(friendlyTransferPanel(pageLabels));
     if (!hasFriendlyTransfer) clearFriendlyTransferUi();
   }
 
   function clearStaleLostFoundResult() {
-    const hasVisibleLostFoundSearch = [...document.querySelectorAll('button')].some((button) =>
-      button.offsetParent !== null && searchLabels.includes(button.textContent.trim())
+    const hasVisibleLostFoundSearch = Boolean(
+      document.querySelector('[data-service-page="lost-item"] button.mp-primary')
     );
     if (!hasVisibleLostFoundSearch) {
       document.getElementById('railagent-local-lost-found-result')?.remove();
     }
+  }
+
+  function lostItemSearchPanel(button, page) {
+    let panel = button.parentElement;
+    while (panel && panel !== page) {
+      const visibleInputs = [...panel.querySelectorAll('input')].filter((input) => input.offsetParent !== null);
+      if (visibleInputs.length >= 7) return panel;
+      panel = panel.parentElement;
+    }
+    return null;
   }
 
   function addChatMessage(messages, kind, text) {
@@ -502,11 +499,16 @@
     return message;
   }
 
-  function openChat() {
+  function openChat(copy, language) {
     let overlay = document.getElementById('railagent-local-chat');
+    if (overlay?.dataset.locale !== language) {
+      overlay?.remove();
+      overlay = null;
+    }
     if (!overlay) {
       overlay = document.createElement('div');
       overlay.id = 'railagent-local-chat';
+      overlay.dataset.locale = language;
       overlay.hidden = true;
       overlay.innerHTML = `
         <section class="railagent-chat-panel" role="dialog" aria-modal="true" aria-labelledby="railagent-chat-title">
@@ -532,7 +534,8 @@
         addChatMessage(messages, 'user', question);
         input.value = '';
         send.disabled = true;
-        const status = addChatMessage(messages, 'status', copy.thinking);
+        const activeCopy = currentLocale().copy;
+        const status = addChatMessage(messages, 'status', activeCopy.thinking);
         try {
           const response = await fetch(chatEndpoint, {
             method: 'POST',
@@ -542,10 +545,10 @@
           const body = await response.json().catch(() => ({}));
           if (!response.ok) throw new Error(body.error || `HTTP ${response.status}`);
           status.remove();
-          addChatMessage(messages, 'assistant', body.answer || copy.chatError);
+          addChatMessage(messages, 'assistant', body.answer || activeCopy.chatError);
         } catch (error) {
           status.remove();
-          addChatMessage(messages, 'assistant', `${copy.chatError}\n${error.message}`);
+          addChatMessage(messages, 'assistant', `${activeCopy.chatError}\n${error.message}`);
         } finally {
           send.disabled = false;
           input.focus();
@@ -565,6 +568,7 @@
     const button = event.target.closest('button');
     if (!button) return;
     const buttonText = button.textContent.trim();
+    const { copy, language } = currentLocale();
     if (buttonText === '\u2190 \u8fd4\u56de' || buttonText === '\u9996\u9801') {
       document.getElementById('railagent-local-lost-found-result')?.remove();
       clearFriendlyTransferUi();
@@ -572,13 +576,13 @@
     if (button.id === 'railagent-transfer-help-button') {
       event.preventDefault();
       event.stopImmediatePropagation();
-      openFriendlyTransferDialog();
+      openFriendlyTransferDialog(copy, language);
       return;
     }
     if (button.id === 'railagent-local-chat-launcher') {
       event.preventDefault();
       event.stopImmediatePropagation();
-      openChat();
+      openChat(copy, language);
       return;
     }
     if (button.matches('.railagent-track-lost-found')) {
@@ -590,40 +594,48 @@
       syncLocalModeUi();
       return;
     }
-    if (!searchLabels.includes(buttonText)) return;
+    const lostItemPage = button.closest('[data-service-page="lost-item"]');
+    const searchPanel = lostItemPage ? lostItemSearchPanel(button, lostItemPage) : null;
+    const isLostItemSearch =
+      lostItemPage &&
+      button.matches('button.mp-primary') &&
+      searchPanel &&
+      !button.matches('.railagent-track-lost-found');
+
+    if (!isLostItemSearch) return;
     event.preventDefault();
     event.stopImmediatePropagation();
-    void search(button);
+    void search(button, copy);
   }, true);
 
-  async function search(button) {
+  async function search(button, copy) {
     const panel = button.closest('section');
     const inputs = [...(panel?.querySelectorAll('input') ?? [])].filter((input) => input.offsetParent !== null);
     if (inputs.length < 7) {
-      render(button, null, copy.missingInput);
+      render(button, null, copy.missingInput, copy);
       return;
     }
     const [itemType, color, brand, features, lostDate, stationName, trainNumber] = inputs;
     const request = { itemType: itemType.value.trim(), color: color.value.trim(), brand: brand.value.trim(), features: features.value.trim(), lostDate: lostDate.value.trim(), stationName: stationName.value.trim(), trainNumber: trainNumber.value.trim() };
     if (!request.itemType && !request.features) {
-      render(button, null, copy.missingInput);
+      render(button, null, copy.missingInput, copy);
       return;
     }
     button.disabled = true;
-    render(button, null, copy.searching);
+    render(button, null, copy.searching, copy);
     try {
       const response = await fetch(lostFoundEndpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(request) });
       const body = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(body.error || `HTTP ${response.status}`);
-      render(button, body, null);
+      render(button, body, null, copy);
     } catch (error) {
-      render(button, null, `${copy.searchError}${error.message}`);
+      render(button, null, `${copy.searchError}${error.message}`, copy);
     } finally {
       button.disabled = false;
     }
   }
 
-  function render(button, response, error) {
+  function render(button, response, error, copy) {
     let result = document.getElementById('railagent-local-lost-found-result');
     if (!result) {
       result = document.createElement('section');
@@ -637,19 +649,19 @@
       return;
     }
     const candidates = Array.isArray(response.candidates) ? response.candidates : [];
-    const metadata = `${copy.snapshot} ${formatDate(response.sourceMaxPickupDate)} · ${copy.mode}：${escapeHtml(response.aiMode || 'unknown')}`;
-    const cards = candidates.length ? candidates.map(trackedCandidateCard).join('') : `<article class="mp-card"><p>${copy.noMatch}</p></article>`;
+    const metadata = `${copy.snapshot} ${formatDate(response.sourceMaxPickupDate, copy)} · ${copy.mode}：${escapeHtml(response.aiMode || 'unknown')}`;
+    const cards = candidates.length ? candidates.map((candidate) => trackedCandidateCard(candidate, copy)).join('') : `<article class="mp-card"><p>${copy.noMatch}</p></article>`;
     result.innerHTML = `<h3 class="mp-section-title">${copy.searchTitle}（${candidates.length}）</h3><p class="mp-footnote">${metadata}</p>${cards}`;
   }
 
-  function trackedCandidateCard(candidate) {
+  function trackedCandidateCard(candidate, copy) {
     const item = candidate.item || {};
     const location = item.stationName || item.pickupLocation || copy.unknown;
     const record = {
       id: item.itemId || [item.propertyName || copy.unknownItem, location, item.pickupDate || ''].join('|'),
       title: item.propertyName || copy.unknownItem,
       stationName: location,
-      pickupDate: formatDate(item.pickupDate),
+      pickupDate: formatDate(item.pickupDate, copy),
       contactPhone: item.keepStationTel || copy.unknown,
       status: copy.tracking,
     };
@@ -658,13 +670,13 @@
     return `<article class="mp-list-item"><div class="mp-meta"><span class="mp-status">${escapeHtml(String(candidate.similarity ?? 0))}% ${copy.similar}</span><span>${escapeHtml(location)}</span></div><h3>${escapeHtml(record.title)}</h3><p class="mp-footnote">${copy.pickupDate}\uff1a${escapeHtml(record.pickupDate)}</p><p class="mp-footnote">${escapeHtml(candidate.reason || '')}</p><p class="mp-meta">${copy.contact}\uff1a${escapeHtml(item.keepStationTel || copy.unknown)}</p><button type="button" class="railagent-track-lost-found" data-railagent-tracked-case="${data}" ${tracked ? 'disabled' : ''}>${tracked ? copy.tracked : copy.trackItem}</button></article>`;
   }
 
-  function candidateCard(candidate) {
+  function candidateCard(candidate, copy) {
     const item = candidate.item || {};
     const location = item.stationName || item.pickupLocation || copy.unknown;
     const detail = [item.propertyFeature, item.trainNumber ? `\u8eca\u6b21 ${item.trainNumber}` : ''].filter(Boolean).join(' · ');
-    return `<article class="mp-list-item"><div class="mp-meta"><span class="mp-status">${escapeHtml(String(candidate.similarity ?? 0))}% ${copy.similar}</span><span>${escapeHtml(location)}</span></div><h3>${escapeHtml(item.propertyName || copy.unknownItem)}</h3><p class="mp-footnote">${copy.pickupDate}：${escapeHtml(formatDate(item.pickupDate))}${detail ? ` · ${escapeHtml(detail)}` : ''}</p><p class="mp-footnote">${escapeHtml(candidate.reason || '')}</p><p class="mp-meta">${copy.contact}：${escapeHtml(item.keepStationTel || copy.unknown)}${item.keepStationAddr ? ` · ${escapeHtml(item.keepStationAddr)}` : ''}</p></article>`;
+    return `<article class="mp-list-item"><div class="mp-meta"><span class="mp-status">${escapeHtml(String(candidate.similarity ?? 0))}% ${copy.similar}</span><span>${escapeHtml(location)}</span></div><h3>${escapeHtml(item.propertyName || copy.unknownItem)}</h3><p class="mp-footnote">${copy.pickupDate}：${escapeHtml(formatDate(item.pickupDate, copy))}${detail ? ` · ${escapeHtml(detail)}` : ''}</p><p class="mp-footnote">${escapeHtml(candidate.reason || '')}</p><p class="mp-meta">${copy.contact}：${escapeHtml(item.keepStationTel || copy.unknown)}${item.keepStationAddr ? ` · ${escapeHtml(item.keepStationAddr)}` : ''}</p></article>`;
   }
 
-  function formatDate(value) { return value ? String(value).slice(0, 10) : copy.unknown; }
+  function formatDate(value, copy) { return value ? String(value).slice(0, 10) : copy.unknown; }
   function escapeHtml(value) { return String(value).replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[character]); }
 })();

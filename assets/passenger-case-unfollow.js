@@ -33,7 +33,14 @@
     return labels[1] ? labels[1].textContent.trim() : '';
   }
 
+  function currentCopy() {
+    return window.RailAgentPassengerRuntimeLocales.getRuntimeCopy(
+      document.documentElement.lang,
+    );
+  }
+
   function renderStatus(section, eventId) {
+    const copy = currentCopy();
     let status = section.querySelector('[data-passenger-unfollow-status]');
     if (!status) {
       status = document.createElement('p');
@@ -41,13 +48,14 @@
       status.setAttribute('data-passenger-unfollow-status', '');
       section.append(status);
     }
-    status.textContent = '已取消追蹤 ' + eventId;
+    status.textContent = `${copy.caseUnfollowStatus}${eventId}`;
   }
 
   function enhancePassengerCases(root) {
     const scope = root || document;
     const section = scope.querySelector('section[aria-label="public own case list"]');
     if (!section) return false;
+    const copy = currentCopy();
 
     const list =
       section.querySelector('#railagent-tracked-lost-found-cases') ||
@@ -58,12 +66,16 @@
       const eventId = caseId(article);
       if (!eventId) return;
       const recordId = recordIdForArticle(list, article);
-      if (article.querySelector('[data-passenger-unfollow]')) return;
+      const existingButton = article.querySelector('[data-passenger-unfollow]');
+      if (existingButton) {
+        existingButton.textContent = copy.caseUnfollow;
+        return;
+      }
 
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'mp-secondary';
-      button.textContent = '取消追蹤';
+      button.textContent = copy.caseUnfollow;
       button.setAttribute('data-passenger-unfollow', '');
       button.addEventListener('click', (event) => {
         event.preventDefault();
