@@ -109,14 +109,12 @@
     if (sourceLink) sourceLink.closest('p')?.remove();
   }
 
-  function installChatLauncher(copy, pageLabels, language) {
-    const serviceButtons = [...document.querySelectorAll('.mp-service-list button.mp-service')];
-    const facilityButton = serviceButtons.find((button) =>
-      button.textContent.trim().includes(pageLabels.facilityTitle)
-    );
-    if (!facilityButton) return;
+  function installChatLauncher(copy, language) {
+    const serviceList = document.querySelector('.mp-service-list');
+    const serviceButtons = serviceList?.querySelectorAll('button.mp-service');
+    if (!serviceList || serviceButtons?.length !== 3) return;
 
-    const passengerHome = facilityButton.closest('section.mp-stack');
+    const passengerHome = serviceList.closest('section.mp-stack');
     [...(passengerHome?.children || [])].forEach((element) => {
       if (element.matches('button.mp-primary') || element.matches('button.mp-secondary')) {
         element.remove();
@@ -136,7 +134,7 @@
     launcher.type = 'button';
     launcher.dataset.locale = language;
     launcher.innerHTML = `<span><strong>${copy.askRailAgent}</strong><small>${copy.chatSubtitle}</small></span>`;
-    facilityButton.insertAdjacentElement('afterend', launcher);
+    serviceList.insertAdjacentElement('afterend', launcher);
   }
 
   function friendlyTransferPanel(pageLabels) {
@@ -464,7 +462,7 @@
     const { copy, pageLabels, language } = currentLocale();
     installStyles();
     markDemoContent();
-    installChatLauncher(copy, pageLabels, language);
+    installChatLauncher(copy, language);
     installFriendlyTransferTools(copy, pageLabels, language);
     clearStaleLostFoundResult();
     removeLegacyBackpackCase();
