@@ -51,6 +51,9 @@ export interface RailTask {
   description: string;
   aiSummary: string;
   nextAction: string;
+  caseId?: string;
+  recipientUnitIds?: string[];
+  lostItem?: { candidateId: string; title: string; stationName: string; pickupDate: string };
   createdAt: string;
   updatedAt: string;
 }
@@ -80,6 +83,40 @@ export interface TaskTransitionInput {
   note?: string;
 }
 
+export interface TrackLostItemCaseInput {
+  candidateId: string;
+  title: string;
+  stationName: string;
+  pickupDate: string;
+}
+
+export interface FoundItem {
+  itemId: string;
+  companyId: string;
+  unitId: string;
+  stationName: string;
+  itemType: string;
+  color?: string;
+  brand?: string;
+  features?: string;
+  foundLocation: string;
+  foundAt: string;
+  trainNumber?: string;
+  createdByUserId: string;
+  createdAt: string;
+}
+
+export interface CreateFoundItemInput {
+  stationName: string;
+  itemType: string;
+  color?: string;
+  brand?: string;
+  features?: string;
+  foundLocation: string;
+  foundAt: string;
+  trainNumber?: string;
+}
+
 export interface TaskRepository {
   mode: 'fallback' | 'azure-table';
   getDemoUserByAccount(accountId: string): Promise<DemoUser | null>;
@@ -87,6 +124,9 @@ export interface TaskRepository {
   listTasksForUser(user: DemoUser): Promise<RailTask[]>;
   getVisibleTask(user: DemoUser, taskId: string): Promise<RailTask | null>;
   createTask(user: DemoUser, input: CreateTaskInput): Promise<RailTask>;
+  trackLostItemCase(user: DemoUser, input: TrackLostItemCaseInput): Promise<RailTask>;
+  listFoundItems(user: DemoUser, unitId?: string): Promise<FoundItem[]>;
+  createFoundItem(user: DemoUser, input: CreateFoundItemInput): Promise<FoundItem | null>;
   claimTask(user: DemoUser, taskId: string): Promise<RailTask | null>;
   transitionTask(user: DemoUser, taskId: string, input: TaskTransitionInput): Promise<RailTask | null>;
   listEventsForTask(user: DemoUser, taskId: string): Promise<TaskEvent[] | null>;
@@ -97,6 +137,7 @@ interface AzureTableRepositoryOptions {
   usersTableName: string;
   tasksTableName: string;
   eventsTableName: string;
+  foundItemsTableName: string;
 }
 
 const seedUsers: DemoUser[] = [
@@ -150,7 +191,7 @@ const seedUsers: DemoUser[] = [
   }
 ];
 
-const seedTasks: RailTask[] = [
+const legacySeedTasks: RailTask[] = [
   {
     taskId: 'task-lost-bag-banqiao',
     companyId: 'ntmetro',
@@ -221,6 +262,8 @@ const seedTasks: RailTask[] = [
   }
 ];
 
+const seedTasks: RailTask[] = [];
+
 const stationDirectory: Record<string, { companyId: string; unitId: string }> = {
   板橋: { companyId: 'ntmetro', unitId: 'station-banqiao' },
   淡水: { companyId: 'ntmetro', unitId: 'station-tamsui' },
@@ -241,7 +284,8 @@ export function createTaskRepositoryFromEnvironment(): TaskRepository {
     connectionString,
     usersTableName: process.env.AZURE_STORAGE_DEMO_USERS_TABLE?.trim() || 'RailAgentDemoUsers',
     tasksTableName: process.env.AZURE_STORAGE_TASKS_TABLE?.trim() || 'RailAgentTasks',
-    eventsTableName: process.env.AZURE_STORAGE_TASK_EVENTS_TABLE?.trim() || 'RailAgentTaskEvents'
+    eventsTableName: process.env.AZURE_STORAGE_TASK_EVENTS_TABLE?.trim() || 'RailAgentTaskEvents',
+    foundItemsTableName: process.env.AZURE_STORAGE_FOUND_ITEMS_TABLE?.trim() || 'RailAgentFoundItems'
   });
 }
 
@@ -261,6 +305,7 @@ class FallbackTaskRepository implements TaskRepository {
     note: '任務建立',
     createdAt: task.createdAt
   }));
+  private readonly foundItems: FoundItem[] = [];
 
   async getDemoUserByAccount(accountId: string): Promise<DemoUser | null> {
     return cloneOrNull(this.users.find((user) => user.accountId === accountId) ?? null);
@@ -305,6 +350,50 @@ class FallbackTaskRepository implements TaskRepository {
     this.tasks.push(task);
     this.events.push(makeEvent(task, user, 'created', '手機 App 建立任務', now));
     return clone(task);
+  }
+
+  async trackLostItemCase(user: DemoUser, input: TrackLostItemCaseInput): Promise<RailTask> {
+    const caseId = trackedCaseId(input.candidateId);
+    const existing = this.tasks.find((task) => task.caseId === caseId && task.createdByUserId === user.userId);
+    if (existing) return clone(existing);
+    const task = makeTrackedLostItemTask(user, input);
+    this.tasks.push(task);
+    this.events.push(makeEvent(task, user, 'created', '旅客已追蹤遺失物案件', task.createdAt));
+    return clone(task);
+  }
+
+  async listFoundItems(user: DemoUser, unitId?: string): Promise<FoundItem[]> {
+    if (user.role === 'public') return [];
+    const scopedUnitId = resolveFoundItemUnit(user, unitId);
+    if (!scopedUnitId) return [];
+    return this.foundItems
+      .filter((item) => item.companyId === user.companyId && item.unitId === scopedUnitId)
+      .sort((left, right) => right.foundAt.localeCompare(left.foundAt))
+      .map(clone);
+  }
+
+  async createFoundItem(user: DemoUser, input: CreateFoundItemInput): Promise<FoundItem | null> {
+    if (user.role === 'public') return null;
+    const unitId = resolveFoundItemUnit(user);
+    if (!unitId) return null;
+    const now = new Date().toISOString();
+    const item: FoundItem = {
+      itemId: `found-${hashText(`${user.userId}:${input.itemType}:${input.foundAt}:${now}`)}`,
+      companyId: user.companyId,
+      unitId,
+      stationName: input.stationName.trim(),
+      itemType: input.itemType.trim(),
+      color: optionalText(input.color),
+      brand: optionalText(input.brand),
+      features: optionalText(input.features),
+      foundLocation: input.foundLocation.trim(),
+      foundAt: input.foundAt.trim(),
+      trainNumber: optionalText(input.trainNumber),
+      createdByUserId: user.userId,
+      createdAt: now
+    };
+    this.foundItems.push(item);
+    return clone(item);
   }
 
   async claimTask(user: DemoUser, taskId: string): Promise<RailTask | null> {
@@ -354,12 +443,14 @@ class AzureTableTaskRepository implements TaskRepository {
   private readonly usersClient: TableClient;
   private readonly tasksClient: TableClient;
   private readonly eventsClient: TableClient;
+  private readonly foundItemsClient: TableClient;
   private ready: Promise<void> | null = null;
 
   constructor(options: AzureTableRepositoryOptions) {
     this.usersClient = TableClient.fromConnectionString(options.connectionString, options.usersTableName);
     this.tasksClient = TableClient.fromConnectionString(options.connectionString, options.tasksTableName);
     this.eventsClient = TableClient.fromConnectionString(options.connectionString, options.eventsTableName);
+    this.foundItemsClient = TableClient.fromConnectionString(options.connectionString, options.foundItemsTableName);
   }
 
   async getDemoUserByAccount(accountId: string): Promise<DemoUser | null> {
@@ -387,13 +478,13 @@ class AzureTableTaskRepository implements TaskRepository {
 
   async listTasksForUser(user: DemoUser): Promise<RailTask[]> {
     await this.ensureReady();
-    const tasks = await this.listCompanyTasks(user.companyId);
+    const tasks = await this.listAllTasks();
     return tasks.filter((task) => canSeeTask(user, task));
   }
 
   async getVisibleTask(user: DemoUser, taskId: string): Promise<RailTask | null> {
     await this.ensureReady();
-    const task = await this.getTaskById(user.companyId, taskId);
+    const task = await this.getTaskForUser(user, taskId);
     return task && canSeeTask(user, task) ? task : null;
   }
 
@@ -406,9 +497,54 @@ class AzureTableTaskRepository implements TaskRepository {
     return task;
   }
 
+  async trackLostItemCase(user: DemoUser, input: TrackLostItemCaseInput): Promise<RailTask> {
+    await this.ensureReady();
+    const caseId = trackedCaseId(input.candidateId);
+    const existing = (await this.listAllTasks()).find((task) => task.caseId === caseId && task.createdByUserId === user.userId);
+    if (existing) return existing;
+    const task = makeTrackedLostItemTask(user, input);
+    await this.tasksClient.upsertEntity(taskToEntity(task), 'Replace');
+    await this.eventsClient.upsertEntity(eventToEntity(makeEvent(task, user, 'created', '旅客已追蹤遺失物案件', task.createdAt)), 'Replace');
+    return task;
+  }
+
+  async listFoundItems(user: DemoUser, unitId?: string): Promise<FoundItem[]> {
+    await this.ensureReady();
+    if (user.role === 'public') return [];
+    const scopedUnitId = resolveFoundItemUnit(user, unitId);
+    if (!scopedUnitId) return [];
+    const items: FoundItem[] = [];
+    for await (const entity of this.foundItemsClient.listEntities<FoundItemEntity>({
+      queryOptions: { filter: `PartitionKey eq '${escapeOData(user.companyId)}' and unitId eq '${escapeOData(scopedUnitId)}'` }
+    })) {
+      items.push(foundItemFromEntity(entity));
+    }
+    return items.sort((left, right) => right.foundAt.localeCompare(left.foundAt));
+  }
+
+  async createFoundItem(user: DemoUser, input: CreateFoundItemInput): Promise<FoundItem | null> {
+    await this.ensureReady();
+    if (user.role === 'public') return null;
+    const unitId = resolveFoundItemUnit(user);
+    if (!unitId) return null;
+    const now = new Date().toISOString();
+    const item: FoundItem = {
+      itemId: `found-${hashText(`${user.userId}:${input.itemType}:${input.foundAt}:${now}`)}`,
+      companyId: user.companyId,
+      unitId,
+      stationName: input.stationName.trim(),
+      itemType: input.itemType.trim(),
+      color: optionalText(input.color), brand: optionalText(input.brand), features: optionalText(input.features),
+      foundLocation: input.foundLocation.trim(), foundAt: input.foundAt.trim(), trainNumber: optionalText(input.trainNumber),
+      createdByUserId: user.userId, createdAt: now
+    };
+    await this.foundItemsClient.upsertEntity(foundItemToEntity(item), 'Replace');
+    return item;
+  }
+
   async claimTask(user: DemoUser, taskId: string): Promise<RailTask | null> {
     await this.ensureReady();
-    const task = await this.getTaskById(user.companyId, taskId);
+    const task = await this.getTaskForUser(user, taskId);
     if (!task || !canSeeTask(user, task) || !canOperateTask(user, task) || !['new', 'open'].includes(task.status)) {
       return null;
     }
@@ -422,7 +558,7 @@ class AzureTableTaskRepository implements TaskRepository {
 
   async transitionTask(user: DemoUser, taskId: string, input: TaskTransitionInput): Promise<RailTask | null> {
     await this.ensureReady();
-    const task = await this.getTaskById(user.companyId, taskId);
+    const task = await this.getTaskForUser(user, taskId);
     if (!task || !canSeeTask(user, task) || !canOperateTask(user, task) || !isAllowedTransition(task.status, input.status)) {
       return null;
     }
@@ -460,7 +596,7 @@ class AzureTableTaskRepository implements TaskRepository {
   }
 
   private async initialize(): Promise<void> {
-    await Promise.all([createTableIfMissing(this.usersClient), createTableIfMissing(this.tasksClient), createTableIfMissing(this.eventsClient)]);
+    await Promise.all([createTableIfMissing(this.usersClient), createTableIfMissing(this.tasksClient), createTableIfMissing(this.eventsClient), createTableIfMissing(this.foundItemsClient)]);
 
     if (!(await hasAnyEntity(this.usersClient))) {
       await Promise.all(seedUsers.map((user) => this.usersClient.upsertEntity(userToEntity(user), 'Replace')));
@@ -492,6 +628,19 @@ class AzureTableTaskRepository implements TaskRepository {
     return tasks;
   }
 
+  private async listAllTasks(): Promise<RailTask[]> {
+    const tasks: RailTask[] = [];
+    for await (const entity of this.tasksClient.listEntities<RailTaskEntity>()) {
+      tasks.push(taskFromEntity(entity));
+    }
+    return tasks;
+  }
+
+  private async getTaskForUser(user: DemoUser, taskId: string): Promise<RailTask | null> {
+    const task = (await this.listAllTasks()).find((candidate) => candidate.taskId === taskId) ?? null;
+    return task && canSeeTask(user, task) ? task : null;
+  }
+
   private async getTaskById(companyId: string, taskId: string): Promise<RailTask | null> {
     try {
       return taskFromEntity(await this.tasksClient.getEntity<RailTaskEntity>(companyId, taskId));
@@ -509,8 +658,9 @@ type DemoUserEntity = Omit<DemoUser, 'allowedUnitIds' | 'stationScope'> & {
   stationScopeJson: string;
 };
 
-type RailTaskEntity = RailTask;
+type RailTaskEntity = Omit<RailTask, 'recipientUnitIds' | 'lostItem'> & { recipientUnitIdsJson?: string; lostItemJson?: string };
 type TaskEventEntity = TaskEvent;
+type FoundItemEntity = FoundItem;
 
 function userToEntity(user: DemoUser): TableEntity<DemoUserEntity> {
   const { allowedUnitIds, stationScope, ...entityUser } = user;
@@ -537,10 +687,13 @@ function userFromEntity(entity: DemoUserEntity): DemoUser {
 }
 
 function taskToEntity(task: RailTask): TableEntity<RailTaskEntity> {
+  const { recipientUnitIds, lostItem, ...entityTask } = task;
   return {
     partitionKey: task.companyId,
     rowKey: task.taskId,
-    ...task
+    ...entityTask,
+    recipientUnitIdsJson: recipientUnitIds ? JSON.stringify(recipientUnitIds) : undefined,
+    lostItemJson: lostItem ? JSON.stringify(lostItem) : undefined
   };
 }
 
@@ -560,6 +713,9 @@ function taskFromEntity(entity: RailTaskEntity): RailTask {
     description: entity.description,
     aiSummary: entity.aiSummary,
     nextAction: entity.nextAction,
+    caseId: entity.caseId,
+    recipientUnitIds: entity.recipientUnitIdsJson ? parseJsonArray(entity.recipientUnitIdsJson) : undefined,
+    lostItem: entity.lostItemJson ? parseLostItem(entity.lostItemJson) : undefined,
     createdAt: entity.createdAt,
     updatedAt: entity.updatedAt
   };
@@ -608,6 +764,7 @@ function canSeeTask(user: DemoUser, task: RailTask): boolean {
   if (user.role === 'public') {
     return task.createdByUserId === user.userId;
   }
+  if (task.recipientUnitIds?.some((unitId) => user.allowedUnitIds.includes(unitId))) return true;
   if (task.companyId !== user.companyId) {
     return false;
   }
@@ -618,7 +775,63 @@ function canOperateTask(user: DemoUser, task: RailTask): boolean {
   if (user.role === 'public') {
     return task.createdByUserId === user.userId && ['cancelled'].includes(task.status);
   }
-  return task.companyId === user.companyId && user.allowedUnitIds.includes(task.unitId);
+  return (task.companyId === user.companyId && user.allowedUnitIds.includes(task.unitId)) ||
+    Boolean(task.recipientUnitIds?.some((unitId) => user.allowedUnitIds.includes(unitId)));
+}
+
+function resolveFoundItemUnit(user: DemoUser, requestedUnitId?: string): string | null {
+  const unitId = requestedUnitId?.trim() || user.unitId || user.allowedUnitIds[0];
+  if (!unitId || !user.allowedUnitIds.includes(unitId)) return null;
+  return unitId;
+}
+
+function optionalText(value: string | undefined): string | undefined {
+  const normalized = value?.trim();
+  return normalized || undefined;
+}
+
+function trackedCaseId(candidateId: string): string {
+  return `lost-found-${candidateId.trim()}`;
+}
+
+function makeTrackedLostItemTask(user: DemoUser, input: TrackLostItemCaseInput): RailTask {
+  const now = new Date().toISOString();
+  const candidateId = input.candidateId.trim();
+  const title = input.title.trim();
+  const stationName = input.stationName.trim();
+  const pickupDate = input.pickupDate.trim();
+  return {
+    taskId: `task-${hashText(`${user.userId}:${candidateId}`)}`,
+    companyId: 'railagent', unitId: 'shared-lost-found', recipientUnitIds: ['station-banqiao', 'station-qingpu'],
+    stationName, type: 'lost_item', status: 'open', priority: 'high',
+    createdByUserId: user.userId, createdByRole: user.role, sourceAgent: 'lost-found',
+    caseId: trackedCaseId(candidateId), lostItem: { candidateId, title, stationName, pickupDate },
+    description: `旅客追蹤遺失物：${title}`,
+    aiSummary: '旅客已追蹤此遺失物候選，請由板橋與桃園青埔站務共同確認。',
+    nextAction: '確認拾獲物資訊，必要時聯繫旅客並更新案件狀態。', createdAt: now, updatedAt: now
+  };
+}
+
+function foundItemToEntity(item: FoundItem): TableEntity<FoundItemEntity> {
+  return { partitionKey: item.companyId, rowKey: item.itemId, ...item };
+}
+
+function foundItemFromEntity(entity: FoundItemEntity): FoundItem {
+  return {
+    itemId: entity.itemId, companyId: entity.companyId, unitId: entity.unitId,
+    stationName: entity.stationName, itemType: entity.itemType, color: entity.color,
+    brand: entity.brand, features: entity.features, foundLocation: entity.foundLocation,
+    foundAt: entity.foundAt, trainNumber: entity.trainNumber,
+    createdByUserId: entity.createdByUserId, createdAt: entity.createdAt
+  };
+}
+
+function parseLostItem(value: string): RailTask['lostItem'] | undefined {
+  try {
+    const parsed = JSON.parse(value) as Partial<NonNullable<RailTask['lostItem']>>;
+    if (typeof parsed.candidateId !== 'string' || typeof parsed.title !== 'string' || typeof parsed.stationName !== 'string' || typeof parsed.pickupDate !== 'string') return undefined;
+    return { candidateId: parsed.candidateId, title: parsed.title, stationName: parsed.stationName, pickupDate: parsed.pickupDate };
+  } catch { return undefined; }
 }
 
 function isAllowedTransition(from: RailTaskStatus, to: RailTaskStatus): boolean {

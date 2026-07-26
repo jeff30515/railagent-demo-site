@@ -3,10 +3,12 @@ import {
   createFallbackTaskRepository,
   createTaskRepositoryFromEnvironment,
   type CreateTaskInput,
+  type CreateFoundItemInput,
   type DemoUser,
   type RailTask,
   type RailTaskStatus,
   type TaskRepository,
+  type TrackLostItemCaseInput,
   type TaskTransitionInput
 } from '../shared/mobileTaskRepository.js';
 
@@ -95,6 +97,42 @@ export async function createTask(request: HttpRequest, _context: InvocationConte
     sourceAgent: body.sourceAgent
   });
   return json(201, { task });
+}
+
+export async function trackLostItemCase(request: HttpRequest, _context: InvocationContext): Promise<HttpResponseInit> {
+  const user = await requireUser(request);
+  if (!user) return unauthorized();
+  const body = await readJson<Partial<TrackLostItemCaseInput>>(request);
+  if (!body.candidateId?.trim() || !body.title?.trim() || !body.stationName?.trim() || !body.pickupDate?.trim()) {
+    return json(400, { error: 'invalid_lost_found_case_payload' });
+  }
+  const task = await taskRepository.trackLostItemCase(user, {
+    candidateId: body.candidateId.trim(), title: body.title.trim(),
+    stationName: body.stationName.trim(), pickupDate: body.pickupDate.trim()
+  });
+  return json(201, { task });
+}
+
+export async function listFoundItems(request: HttpRequest, _context: InvocationContext): Promise<HttpResponseInit> {
+  const user = await requireUser(request);
+  if (!user) return unauthorized();
+  if (user.role === 'public') return json(403, { error: 'staff_access_required' });
+  const unitId = request.query.get('unitId') ?? undefined;
+  if (unitId && !user.allowedUnitIds.includes(unitId)) return json(403, { error: 'unit_access_denied' });
+  return json(200, { items: await taskRepository.listFoundItems(user, unitId) });
+}
+
+export async function createFoundItem(request: HttpRequest, _context: InvocationContext): Promise<HttpResponseInit> {
+  const user = await requireUser(request);
+  if (!user) return unauthorized();
+  if (user.role === 'public') return json(403, { error: 'staff_access_required' });
+  const body = await readJson<Partial<CreateFoundItemInput>>(request);
+  if (!body.itemType?.trim() || !body.foundLocation?.trim() || !body.foundAt?.trim() || !body.stationName?.trim()) {
+    return json(400, { error: 'invalid_found_item_payload' });
+  }
+  const item = await taskRepository.createFoundItem(user, body as CreateFoundItemInput);
+  if (!item) return json(403, { error: 'unit_access_denied' });
+  return json(201, { item });
 }
 
 export async function claimTask(request: HttpRequest, _context: InvocationContext): Promise<HttpResponseInit> {
@@ -246,6 +284,27 @@ app.http('createTask', {
   authLevel: 'anonymous',
   route: 'tasks',
   handler: createTask
+});
+
+app.http('trackLostItemCase', {
+  methods: ['POST'],
+  authLevel: 'anonymous',
+  route: 'lost-found/cases/track',
+  handler: trackLostItemCase
+});
+
+app.http('listFoundItems', {
+  methods: ['GET'],
+  authLevel: 'anonymous',
+  route: 'lost-found/items',
+  handler: listFoundItems
+});
+
+app.http('createFoundItem', {
+  methods: ['POST'],
+  authLevel: 'anonymous',
+  route: 'lost-found/items',
+  handler: createFoundItem
 });
 
 app.http('getTask', {

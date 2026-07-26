@@ -580,6 +580,16 @@
       saveTrackedCase(record);
       button.textContent = copy.tracked;
       button.disabled = true;
+      void fetch(new URL('/api/lost-found/cases/track', apiBaseUrl), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          candidateId: record.id,
+          title: record.title,
+          stationName: record.stationName,
+          pickupDate: record.pickupDate
+        })
+      }).catch(() => undefined);
       syncLocalModeUi();
       return;
     }

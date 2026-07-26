@@ -6,6 +6,7 @@ import { createOllamaClient } from './lostFound/ollamaClient.js';
 import { loadLostItemStore } from './lostFound/repository.js';
 import { createLostFoundSearchService } from './lostFound/searchService.js';
 import { InvalidLostFoundRequest, normalizeLostFoundRequest } from './lostFound/validation.js';
+import { createFallbackTaskRepository } from './shared/mobileTaskRepository.js';
 import { createFriendlyTransferService } from './friendlyTransfer/service.js';
 import {
   retrieveTransportKnowledge,
@@ -19,6 +20,7 @@ const service = createLostFoundSearchService({
   ollama: createOllamaClient()
 });
 const friendlyTransfer = createFriendlyTransferService({ chat: (message) => createOllamaClient().chat(message) });
+const mobileTasks = createFallbackTaskRepository();
 const MAX_REQUEST_BYTES = 16 * 1024;
 const MAX_CHAT_MESSAGE_LENGTH = 2000;
 const MAX_FRIENDLY_TRANSFER_INPUT_LENGTH = 200;
@@ -41,12 +43,15 @@ function loadLocalSettings() {
 
 export function createLocalLostFoundServer() {
   return createServer(async (request, response) => {
-    const route = request.url?.split('?')[0];
+    const parsedUrl = new URL(request.url ?? '/', 'http://localhost');
+    const route = parsedUrl.pathname;
     if (
       route !== '/api/lost-found/match' &&
       route !== '/api/passenger-chat' &&
       route !== '/api/friendly-transfer/station' &&
-      route !== '/api/friendly-transfer/route'
+      route !== '/api/friendly-transfer/route' &&
+      route !== '/api/lost-found/cases/track' &&
+      route !== '/api/lost-found/items'
     ) {
       respond(response, 404, { error: 'Not found.' });
       return;
@@ -59,7 +64,8 @@ export function createLocalLostFoundServer() {
       return;
     }
 
-    if (request.method !== 'POST') {
+    const isFoundItemList = route === '/api/lost-found/items' && request.method === 'GET';
+    if (request.method !== 'POST' && !isFoundItemList) {
       respond(response, 405, { error: 'Method not allowed.' }, cors);
       return;
     }
@@ -75,6 +81,61 @@ export function createLocalLostFoundServer() {
     }
 
     try {
+      if (route === '/api/lost-found/items') {
+        const userId = request.headers['x-demo-user-id'];
+        const user = typeof userId === 'string' ? await mobileTasks.getDemoUserById(userId) : null;
+        if (!user) {
+          respond(response, 401, { error: 'missing_demo_user' }, cors);
+          return;
+        }
+        if (user.role === 'public') {
+          respond(response, 403, { error: 'staff_access_required' }, cors);
+          return;
+        }
+        const unitId = parsedUrl.searchParams.get('unitId')?.trim() || undefined;
+        if (unitId && !user.allowedUnitIds.includes(unitId)) {
+          respond(response, 403, { error: 'unit_access_denied' }, cors);
+          return;
+        }
+        if (isFoundItemList) {
+          respond(response, 200, { items: await mobileTasks.listFoundItems(user, unitId) }, cors);
+          return;
+        }
+        const body = await readJson(request) as Record<string, unknown>;
+        const itemType = textField(body, 'itemType');
+        const foundLocation = textField(body, 'foundLocation');
+        const foundAt = textField(body, 'foundAt');
+        const stationName = textField(body, 'stationName');
+        if (!itemType || !foundLocation || !foundAt || !stationName) {
+          respond(response, 400, { error: 'invalid_found_item_payload' }, cors);
+          return;
+        }
+        const item = await mobileTasks.createFoundItem(user, {
+          itemType, foundLocation, foundAt, stationName,
+          color: textField(body, 'color'), brand: textField(body, 'brand'),
+          features: textField(body, 'features'), trainNumber: textField(body, 'trainNumber')
+        });
+        respond(response, 201, { item }, cors);
+        return;
+      }
+
+      if (route === '/api/lost-found/cases/track') {
+        const body = await readJson(request) as Record<string, unknown>;
+        const candidateId = textField(body, 'candidateId');
+        const title = textField(body, 'title');
+        const stationName = textField(body, 'stationName');
+        const pickupDate = textField(body, 'pickupDate');
+        if (!candidateId || !title || !stationName || !pickupDate) {
+          respond(response, 400, { error: 'invalid_lost_found_case_payload' }, cors);
+          return;
+        }
+        const passenger = await mobileTasks.getDemoUserByAccount('ntmetro-public');
+        if (!passenger) throw new Error('Local passenger account is unavailable.');
+        const task = await mobileTasks.trackLostItemCase(passenger, { candidateId, title, stationName, pickupDate });
+        respond(response, 201, { task }, cors);
+        return;
+      }
+
       if (route === '/api/friendly-transfer/station') {
         const spokenStation = textField(await readJson(request), 'spokenStation');
         if (!spokenStation) {
@@ -225,8 +286,8 @@ function corsHeaders(origin: string | undefined): Record<string, string> {
 
   return {
     'Access-Control-Allow-Origin': origin,
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, x-demo-user-id',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     Vary: 'Origin'
   };
 }

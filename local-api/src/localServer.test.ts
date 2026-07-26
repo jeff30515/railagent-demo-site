@@ -31,6 +31,22 @@ afterEach(async () => {
 });
 
 describe('local friendly-transfer API', () => {
+  it('stores and lists found items for the authenticated staff unit', async () => {
+    const created = await request('/api/lost-found/items', {
+      itemType: '雨傘', foundLocation: '出口 1', foundAt: '2026-07-26T10:00', stationName: '板橋站'
+    }, { 'x-demo-user-id': 'demo-staff-banqiao' });
+    expect(created.status).toBe(201);
+    expect(created.body.item).toMatchObject({ unitId: 'station-banqiao', itemType: '雨傘' });
+
+    const listed = await request('/api/lost-found/items?unitId=station-banqiao', undefined, {
+      'x-demo-user-id': 'demo-staff-banqiao'
+    }, 'GET');
+    expect(listed.status).toBe(200);
+    expect(listed.body.items).toEqual(expect.arrayContaining([
+      expect.objectContaining({ itemType: '雨傘', unitId: 'station-banqiao' })
+    ]));
+  });
+
   it('returns a local station phone for the station endpoint', async () => {
     const response = await request('/api/friendly-transfer/station', { spokenStation: '\u53f0\u5317\u8eca\u7ad9' });
 
@@ -133,16 +149,21 @@ describe('local friendly-transfer API', () => {
   });
 });
 
-async function request(path: string, body: unknown): Promise<{ status: number; body: Record<string, unknown> }> {
+async function request(
+  path: string,
+  body: unknown,
+  headers: Record<string, string> = {},
+  method = 'POST'
+): Promise<{ status: number; body: Record<string, any> }> {
   const server = createLocalLostFoundServer();
   servers.push(server);
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
   const address = server.address();
   if (!address || typeof address === 'string') throw new Error('Server address is unavailable.');
   const response = await fetch(`http://127.0.0.1:${address.port}${path}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
+    method,
+    headers: { ...(body === undefined ? {} : { 'Content-Type': 'application/json' }), ...headers },
+    body: body === undefined ? undefined : JSON.stringify(body)
   });
 
   return { status: response.status, body: await response.json() as Record<string, unknown> };
