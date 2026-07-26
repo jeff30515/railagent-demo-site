@@ -537,6 +537,65 @@ test('supervisor history fallback renders after a rejected snapshot', async () =
   assert.doesNotMatch(visibleText, /Demo/);
 });
 
+test('supervisor history enhancements are removed when switching identity to the main gate', async () => {
+  const source = read('assets/supervisor-dashboard-enhancer.js');
+  const app = new TestElement('main');
+  app.className = 'mobile-app-supervisor';
+  const rootElement = new TestElement('section');
+  rootElement.setAttribute('aria-label', '銝餌恣??擏???');
+  const navigation = new TestElement('nav');
+  navigation.className = 'mp-bottom-nav';
+  const historyTab = navButton('甇瑕', true);
+  navigation.append(historyTab);
+  app.append(rootElement, navigation);
+
+  const callbacks = [];
+  let clickHandler = null;
+  const document = createDocument(app);
+  document.addEventListener = (type, callback) => {
+    if (type === 'click') clickHandler = callback;
+  };
+  document.querySelector = (selector) => {
+    if (selector === 'main.mobile-app.mobile-product.mp-phase-gate') {
+      return app.className.includes('mp-phase-gate') ? app : null;
+    }
+    if (selector === '.mobile-app-supervisor') {
+      return app.className.includes('mobile-app-supervisor') ? app : null;
+    }
+    if (selector === '[aria-label="銝餌恣??擏???]') return rootElement;
+    return TestElement.prototype.querySelector.call(document, selector);
+  };
+  const context = {
+    console,
+    Promise,
+    document,
+    setTimeout: (callback) => callbacks.push(callback),
+    clearTimeout,
+    URLSearchParams,
+    window: {
+      addEventListener() {},
+      location: { search: '' },
+      localStorage: { getItem: () => null },
+      RailAgentSupervisorHistory: { snapshot: async () => undefined },
+    },
+  };
+  context.window.setTimeout = context.setTimeout;
+  context.globalThis = context.window;
+
+  vm.runInNewContext(source, context);
+  callbacks.splice(0).forEach((callback) => callback());
+  await flushPromises();
+  assert.equal(app.querySelectorAll('[data-supervisor-history]').length, 1);
+
+  app.className = 'mobile-app mobile-product mp-phase-gate';
+  clickHandler();
+  callbacks.splice(0).forEach((callback) => callback());
+
+  assert.equal(app.querySelectorAll('[data-supervisor-history]').length, 0);
+  assert.equal(app.querySelectorAll('[data-supervisor-history-page]').length, 0);
+  assert.equal(app.querySelectorAll('[data-supervisor-home-title]').length, 0);
+});
+
 test('supervisor history keeps the core difference notice hidden after tab restore', async () => {
   const source = read('assets/supervisor-dashboard-enhancer.js');
   const rootElement = new TestElement('section');
@@ -781,6 +840,6 @@ test('supervisor history calendar styles are scoped and phone-width safe', () =>
 test('cache versions are bumped for the supervisor bottom navigation layer', () => {
   const html = read('index.html');
 
-  assert.match(html, /supervisor-dashboard-enhancer\.js\?v=20260727-supervisor-headings-hotspots-1/);
+  assert.match(html, /supervisor-dashboard-enhancer\.js\?v=20260727-identity-cleanup-1/);
   assert.match(html, /index-lostitem-v1\.css\?v=20260727-supervisor-headings-hotspots-1/);
 });

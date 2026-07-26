@@ -3,6 +3,13 @@
 
   const TOTAL_FOUND_ITEMS = 23919;
   const TRACKED_CASES_KEY = 'railagent-tracked-lost-found-cases';
+  const ENHANCER_NODE_SELECTOR = [
+    '[data-supervisor-metrics]',
+    '[data-supervisor-workforce]',
+    '[data-supervisor-history]',
+    '[data-supervisor-home-title]',
+    '[data-supervisor-history-page]',
+  ].join(',');
   const STARTUP_DELAYS = [0, 100, 300, 800];
   const CLICK_DELAYS = [0, 50, 150, 400, 1000, 2000];
   let trackedCount = null;
@@ -18,7 +25,12 @@
     return document.querySelector('[aria-label="主管營運駕駛艙"]');
   }
 
+  function isAtIdentityGate() {
+    return Boolean(document.querySelector('main.mobile-app.mobile-product.mp-phase-gate'));
+  }
+
   function supervisorApp() {
+    if (isAtIdentityGate()) return null;
     return document.querySelector('.mobile-app-supervisor') || dashboard();
   }
 
@@ -111,8 +123,15 @@
 
   function restoreReactNodes(root) {
     root.querySelectorAll('[data-supervisor-hidden="true"]').forEach(showNode);
-    root.querySelectorAll('[data-supervisor-metrics],[data-supervisor-workforce],[data-supervisor-history],[data-supervisor-home-title],[data-supervisor-history-page]')
+    root.querySelectorAll(ENHANCER_NODE_SELECTOR)
       .forEach(hideNode);
+  }
+
+  function clearSupervisorEnhancements() {
+    document.querySelectorAll('[data-supervisor-hidden="true"]').forEach(showNode);
+    document.querySelectorAll(ENHANCER_NODE_SELECTOR).forEach((node) => {
+      node.parentNode?.removeChild(node);
+    });
   }
 
   function restoreSupervisorNodes(app) {
@@ -531,7 +550,10 @@
 
   function enhance() {
     const app = supervisorApp();
-    if (!app) return;
+    if (!app) {
+      clearSupervisorEnhancements();
+      return;
+    }
 
     restoreSupervisorNodes(app);
     renameHistoryNavigation(app);
@@ -558,7 +580,9 @@
           .forEach(hideNode);
       }
       historyAnalytics().then((analytics) => {
-        if (activeSupervisorPage(app) === 'history') renderHistoryPage(app, analytics);
+        if (supervisorApp() === app && activeSupervisorPage(app) === 'history') {
+          renderHistoryPage(app, analytics);
+        }
       });
     }
   }
