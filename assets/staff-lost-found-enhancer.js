@@ -133,14 +133,29 @@
   function enhanceFoundRegister() {
     const panel = document.querySelector('[aria-label="登記拾獲物"]');
     if (!panel) return;
-    const fields = Array.from(panel.querySelectorAll('.mp-field')).filter((field) => !field.dataset.staffTrainField);
-    const [itemType, color, brand, features, location, date] = fields;
+    const fields = Array.from(panel.querySelectorAll('.mp-field')).filter((field) => !field.dataset.staffFoundDate);
+    const [itemType, color, brand, features, location, train] = fields;
     setField(itemType, '物品類型', 'text');
     setField(color, '顏色', 'text');
     setField(brand, '品牌', 'text');
     setField(features, '特徵', 'text');
     setField(location, '拾獲地點', 'text');
-    setField(date, '拾獲日期', 'text');
+    setField(train, '拾獲車次', 'text');
+    if (!panel.querySelector('[data-staff-found-date]') && location) {
+      const dateField = document.createElement('div');
+      dateField.className = 'mp-field';
+      dateField.dataset.staffFoundDate = 'true';
+      const dateLabel = document.createElement('span');
+      dateLabel.textContent = '拾獲日期';
+      const dateInputWrap = document.createElement('div');
+      dateInputWrap.className = 'mp-input';
+      const dateInput = document.createElement('input');
+      dateInput.type = 'date';
+      dateInput.setAttribute('aria-label', '拾獲日期');
+      dateInputWrap.append(dateInput);
+      dateField.append(dateLabel, dateInputWrap);
+      location.before(dateField);
+    }
     replaceRecentFoundItems(panel);
   }
 

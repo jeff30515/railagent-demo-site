@@ -35,6 +35,8 @@ test('the original staff found-item form is aligned to the live lost-item fields
   const source = fs.readFileSync(path.join(__dirname, '..', 'assets', 'staff-lost-found-enhancer.js'), 'utf8');
 
   assert.match(source, /拾獲日期/);
+  assert.match(source, /data-staff-found-date/);
+  assert.match(source, /dateInput\.type = 'date'/);
   assert.match(source, /拾獲車次/);
   assert.match(source, /api\('\/api\/lost-found\/items'/);
 });
@@ -69,11 +71,12 @@ test('the staff found-item screen pins the three newest records from the availab
   assert.doesNotMatch(source, /recentFoundItems = \(foundItems\.items \|\| \[\]\)\.slice\(0, 3\)/);
 });
 
-test('the found-item enhancer does not clone React-controlled fields', () => {
+test('the found-item enhancer adds a standalone date field instead of cloning React-controlled fields', () => {
   const source = fs.readFileSync(path.join(__dirname, '..', 'assets', 'staff-lost-found-enhancer.js'), 'utf8');
 
   assert.doesNotMatch(source, /cloneNode\(true\)/);
-  assert.doesNotMatch(source, /data-staff-train-field/);
+  assert.match(source, /document\.createElement\('input'\)/);
+  assert.match(source, /dateField\.dataset\.staffFoundDate = 'true'/);
 });
 
 test('the staff enhancer updates after user clicks instead of observing its own DOM mutations', () => {
