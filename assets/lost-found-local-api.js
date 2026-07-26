@@ -169,15 +169,15 @@
   }
 
   function markDemoContent() {
-    document.querySelectorAll('article[aria-label]').forEach((element) => {
-      if ((element.getAttribute('aria-label') || '').includes('\u65e2\u6709\u5354\u5c0b\u6848\u4ef6')) {
-        element.dataset.railagentLocalHidden = 'true';
-      }
-    });
-    document.querySelectorAll('p').forEach((element) => {
-      const text = element.textContent || '';
-      if (text.includes('\u793a\u7bc4\u8cc7\u6599\u4f9d\u7167') || text.includes('Demo records follow')) {
-        element.dataset.railagentLocalHidden = 'true';
+    const lostPage = findLostItemPage();
+    if (!lostPage) return;
+    // The original notice and seeded case are part of the old lost-item UI.
+    // Remove them instead of hiding them, so React redraws cannot make them
+    // reappear in Taiwanese, Hakka, or any other language.
+    lostPage.querySelectorAll('.mp-notice').forEach((element) => element.remove());
+    lostPage.querySelectorAll('article').forEach((element) => {
+      if (element.querySelector('h3') && !element.querySelector('input, textarea, button.railagent-track-lost-found')) {
+        element.remove();
       }
     });
   }
@@ -190,80 +190,51 @@
     return Boolean(element && element.offsetParent !== null);
   }
 
+  function visibleWorkspaceSections() {
+    return [...document.querySelectorAll('main .mp-shell > section')].filter(isVisible);
+  }
+
+  function findLostItemPage() {
+    return servicePage('lost-item') || visibleWorkspaceSections().find((section) =>
+      section.querySelectorAll('input').length >= 7
+    ) || null;
+  }
+
+  function findFriendlyTransferPage() {
+    return servicePage('friendly-transfer') || visibleWorkspaceSections().find((section) => {
+      const tags = section.querySelectorAll('.mp-tags .mp-tag').length;
+      return tags >= 4 && Boolean(section.querySelector('button.mp-primary'));
+    }) || null;
+  }
+
   function installChatLauncher() {
-    const facilityPage = servicePage('facility-report');
-    const facilityButton =
-      facilityPage?.querySelector('button.mp-primary') ||
-      [...document.querySelectorAll('button')].find((button) =>
-        isVisible(button) && button.textContent.trim().includes('\u670d\u52d9\u8a2d\u65bd\u56de\u5831')
-      );
     const homeServiceList = document.querySelector('.mp-service-list');
-    if (!facilityButton && !homeServiceList) return;
+    if (!homeServiceList) {
+      document.getElementById('railagent-local-chat-launcher')?.remove();
+      return;
+    }
 
     // These two legacy actions are only present on the old three-card home.
     // Use the React speech cue rather than a translated visible label so every
     // language gets the same four-card home layout.
     document
       .querySelectorAll('[data-railagent-speech-cue="quick-help"], [data-railagent-speech-cue="more-services"]')
-      .forEach((button) => {
-        button.dataset.railagentLocalHidden = 'true';
-      });
+      .forEach((button) => button.remove());
 
     if (document.getElementById('railagent-local-chat-launcher')) return;
     const launcher = document.createElement('button');
     launcher.id = 'railagent-local-chat-launcher';
     launcher.type = 'button';
     launcher.innerHTML = `<span><strong>${copy.askRailAgent}</strong><small>${copy.chatSubtitle}</small></span>`;
-    if (homeServiceList) {
-      homeServiceList.appendChild(launcher);
-    } else {
-      facilityButton.insertAdjacentElement('afterend', launcher);
-    }
+    homeServiceList.appendChild(launcher);
   }
 
   function installFriendlyTransferTools() {
-    const panel =
-      servicePage('friendly-transfer') ||
-      [...document.querySelectorAll('h2')]
-        .find((element) => isVisible(element) && element.textContent.trim() === '\u53cb\u5584\u8f49\u4e58\u5354\u52a9')
-        ?.closest('section');
+    const panel = findFriendlyTransferPage();
     if (!panel) return;
 
-    [...panel.querySelectorAll('button')].forEach((button) => {
-      if (button.textContent.trim() === '\u5efa\u7acb\u5354\u52a9') button.dataset.railagentLocalHidden = 'true';
-    });
-    [...panel.querySelectorAll('p')].forEach((paragraph) => {
-      if ((paragraph.textContent || '').includes('Demo')) paragraph.dataset.railagentLocalHidden = 'true';
-    });
-    [...panel.querySelectorAll('.mp-card')].forEach((card) => {
-      if (card.querySelector('.mp-tags')) card.dataset.railagentLocalHidden = 'true';
-    });
-    [...panel.querySelectorAll('button')].forEach((button) => {
-      if (['\u7e41\u9ad4\u4e2d\u6587', '\u8f2a\u6905', '\u907f\u958b\u6a13\u68af', '\u8f49\u4e58\u9ad8\u9435'].includes(button.textContent.trim())) {
-        button.parentElement?.setAttribute('data-railagent-local-hidden', 'true');
-      }
-    });
-    [...panel.querySelectorAll('.mp-tags')].forEach((tagList) => {
-      const labels = [...tagList.querySelectorAll('.mp-tag')].map((tag) => tag.textContent.trim());
-      if (labels.length === 4 && labels.includes('繁體中文') && labels.includes('輪椅') && labels.includes('避開樓梯') && labels.includes('轉乘高鐵')) {
-        tagList.setAttribute('data-railagent-local-hidden', 'true');
-        const wrapper = tagList.parentElement;
-        if (wrapper && [...wrapper.children].length === 1) {
-          wrapper.setAttribute('data-railagent-local-hidden', 'true');
-        }
-      }
-    });
-    const legacyTransferTags = [
-      String.fromCharCode(0x7e41, 0x9ad4, 0x4e2d, 0x6587),
-      String.fromCharCode(0x8f2a, 0x6905),
-      String.fromCharCode(0x907f, 0x958b, 0x6a13, 0x68af),
-      String.fromCharCode(0x8f49, 0x4e58, 0x9ad8, 0x9435)
-    ];
-    [...document.querySelectorAll('.mp-tags')].forEach((tagList) => {
-      const labels = [...tagList.querySelectorAll('.mp-tag')].map((tag) => tag.textContent.trim());
-      if (labels.length === legacyTransferTags.length && legacyTransferTags.every((label) => labels.includes(label))) {
-        tagList.closest('.mp-card')?.setAttribute('data-railagent-local-hidden', 'true');
-      }
+    panel.querySelectorAll('.mp-card').forEach((card) => {
+      if (card.querySelector('.mp-tags')) card.remove();
     });
     if (document.getElementById('railagent-friendly-transfer-tools')) return;
 
@@ -538,11 +509,7 @@
     removeLegacyBackpackCase();
     renderTrackedCases();
     syncPublicFeedbackCopy();
-    const hasFriendlyTransfer = [...document.querySelectorAll('h2')].some((element) =>
-      isVisible(element) && element.textContent.trim() === '\u53cb\u5584\u8f49\u4e58\u5354\u52a9'
-    );
-    const hasFriendlyTransferPage = Boolean(servicePage('friendly-transfer'));
-    if (!hasFriendlyTransfer && !hasFriendlyTransferPage) clearFriendlyTransferUi();
+    if (!findFriendlyTransferPage()) clearFriendlyTransferUi();
   }
 
   function clearStaleLostFoundResult() {
@@ -557,8 +524,13 @@
   function isLostFoundSearchButton(button) {
     if (!button || !isVisible(button)) return false;
     if (searchLabels.includes(button.textContent.trim())) return true;
-    const panel = button.closest('[data-service-page="lost-item"]');
-    return Boolean(panel && button.matches('button.mp-primary') && panel.querySelectorAll('input').length >= 7);
+    const panel = findLostItemPage();
+    return Boolean(
+      panel &&
+      [...panel.querySelectorAll('button')].includes(button) &&
+      button.matches('button.mp-primary') &&
+      panel.querySelectorAll('input').length >= 7
+    );
   }
 
   function addChatMessage(messages, kind, text) {
@@ -669,7 +641,7 @@
   }, true);
 
   async function search(button) {
-    const panel = button.closest('[data-service-page="lost-item"]') || button.closest('section');
+    const panel = findLostItemPage() || button.closest('section');
     const inputs = [...(panel?.querySelectorAll('input') ?? [])].filter((input) => input.offsetParent !== null);
     if (inputs.length < 7) {
       render(button, null, copy.missingInput);
