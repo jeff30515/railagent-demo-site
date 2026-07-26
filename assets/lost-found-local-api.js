@@ -117,10 +117,10 @@
     if (!facilityButton) return;
 
     const passengerHome = facilityButton.closest('section.mp-stack');
-    ['quick-help', 'more-services'].forEach((speechCue) => {
-      passengerHome
-        ?.querySelector(`[data-railagent-speech-cue="${speechCue}"]`)
-        ?.remove();
+    [...(passengerHome?.children || [])].forEach((element) => {
+      if (element.matches('button.mp-primary') || element.matches('button.mp-secondary')) {
+        element.remove();
+      }
     });
 
     const existing = document.getElementById('railagent-local-chat-launcher');

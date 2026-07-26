@@ -139,8 +139,8 @@ assert.match(
 );
 assert.match(
   enhancer,
-  /\['quick-help', 'more-services'\].*data-railagent-speech-cue.*remove\(\)/s,
-  'Obsolete home actions should be removed by stable speech cues rather than localized text.',
+  /passengerHome\?\.children.*button\.mp-primary.*button\.mp-secondary.*remove\(\)/s,
+  'Obsolete direct home actions should be removed structurally without waiting for accessibility attributes.',
 );
 
 class Element {
@@ -465,11 +465,9 @@ function appendPassengerPages(document, labels) {
   services.append(facilityButton);
   const quick = document.createElement('button');
   quick.className = 'mp-primary';
-  quick.setAttribute('data-railagent-speech-cue', 'quick-help');
   quick.textContent = labels.quickHelp;
   const more = document.createElement('button');
   more.className = 'mp-secondary';
-  more.setAttribute('data-railagent-speech-cue', 'more-services');
   more.textContent = labels.moreServices;
   home.append(services, quick, more);
   document.body.append(home);
