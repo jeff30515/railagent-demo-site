@@ -8,6 +8,7 @@ const enhancer = fs.readFileSync(
   path.join(__dirname, '..', 'assets', 'lost-found-local-api.js'),
   'utf8',
 );
+const indexHtml = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 
 assert.ok(
   enhancer.includes(String.raw`\u8ffd\u8e64\u6b64\u7269\u4ef6`),
@@ -32,6 +33,11 @@ assert.match(
   /contactPhone: item\.keepStationTel/,
   'Tracking should preserve the candidate contact telephone.',
 );
+
+test('React-owned passenger pages do not load DOM-mutating enhancement scripts', () => {
+  assert.doesNotMatch(indexHtml, /lost-found-local-api\.js/);
+  assert.doesNotMatch(indexHtml, /facility-report-feedback\.js/);
+});
 assert.match(
   enhancer,
   /copy\.contact.*record\.contactPhone/,
