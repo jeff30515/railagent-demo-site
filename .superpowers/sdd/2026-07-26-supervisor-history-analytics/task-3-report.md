@@ -91,3 +91,16 @@
 - TDD evidence:
   - RED: `node --test tests\supervisor-history-analytics.test.cjs` failed on permanent rejected snapshot cache and missing fallback history container.
   - GREEN: `node --test tests\supervisor-history-analytics.test.cjs` -> 12/12 pass after implementation.
+
+## Fix Round 3
+- Review severity: Important.
+- Public GitHub Pages verification found the legacy orange core-difference notice visible on the history tab:
+  `核心差異：跨大眾運輸資訊 × 服務事件（捷運／臺鐵／高鐵交接），不是單一運具票務 App。`
+- Root cause: `enhance()` restored React-owned hidden nodes on every pass, but obsolete panel hiding only ran in the realtime branch.
+- Added regression coverage for the realtime -> history tab transition so the core-difference notice remains hidden after restore.
+- Minimal fix: `removeObsoletePanels(root)` now runs immediately after restore for both realtime and history; tab-specific enhancer content still stays isolated.
+- Preserved React node ownership: no `.remove()`, `.replaceChildren()`, or mutation observer was introduced.
+- Bumped supervisor history render cache query from `20260726-supervisor-history-render-1` to `20260726-supervisor-history-render-2`.
+- TDD evidence:
+  - RED: `node --test tests\supervisor-history-analytics.test.cjs` failed because the core-difference notice became visible after switching to history.
+  - GREEN: `node --test tests\supervisor-history-analytics.test.cjs` -> 13/13 pass after implementation.

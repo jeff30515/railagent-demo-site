@@ -504,6 +504,59 @@ test('supervisor history fallback renders after a rejected snapshot', async () =
   assert.doesNotMatch(visibleText, /Demo/);
 });
 
+test('supervisor history keeps the core difference notice hidden after tab restore', async () => {
+  const source = read('assets/supervisor-dashboard-enhancer.js');
+  const rootElement = new TestElement('section');
+  rootElement.setAttribute('aria-label', '主管營運駕駛艙');
+  const realtimeTab = new TestElement('button');
+  realtimeTab.setAttribute('aria-pressed', 'true');
+  realtimeTab.textContent = '即時營運監控';
+  const historyTab = new TestElement('button');
+  historyTab.setAttribute('aria-pressed', 'false');
+  historyTab.textContent = '歷史服務品質分析';
+  const coreNotice = new TestElement('p');
+  coreNotice.className = 'mp-notice';
+  coreNotice.textContent = '核心差異：跨大眾運輸資訊 × 服務事件（捷運／臺鐵／高鐵交接），不是單一運具票務 App。';
+  rootElement.append(realtimeTab, historyTab, coreNotice);
+  const callbacks = [];
+  const context = {
+    console,
+    Promise,
+    document: createDocument(rootElement),
+    setTimeout: (callback) => callbacks.push(callback),
+    clearTimeout,
+    URLSearchParams,
+    window: {
+      addEventListener() {},
+      location: { search: '' },
+      localStorage: { getItem: () => null },
+      RailAgentSupervisorHistory: {
+        snapshot: async () => undefined,
+      },
+    },
+  };
+  context.window.setTimeout = context.setTimeout;
+  context.globalThis = context.window;
+
+  vm.runInNewContext(source, context);
+  callbacks.shift()();
+  assert.equal(coreNotice.hidden, true);
+
+  realtimeTab.setAttribute('aria-pressed', 'false');
+  historyTab.setAttribute('aria-pressed', 'true');
+  callbacks.shift()();
+  await flushPromises();
+
+  const visibleText = rootElement.children
+    .filter((child) => !child.hidden)
+    .map((child) => child.textContent)
+    .join(' ');
+
+  assert.equal(coreNotice.hidden, true);
+  assert.doesNotMatch(visibleText, /核心差異：跨大眾運輸資訊/);
+  assert.match(visibleText, /本月事件量趨勢/);
+});
+
 test('supervisor history renderer declares the approved four card dataset output', () => {
   const source = read('assets/supervisor-dashboard-enhancer.js');
   const renderHistory = functionBody(source, 'renderHistory');
@@ -546,6 +599,6 @@ test('supervisor history calendar styles are scoped and phone-width safe', () =>
 test('cache versions are bumped for the supervisor history rendering layer', () => {
   const html = read('index.html');
 
-  assert.match(html, /supervisor-dashboard-enhancer\.js\?v=20260726-supervisor-history-render-1/);
-  assert.match(html, /index-lostitem-v1\.css\?v=20260726-supervisor-history-render-1/);
+  assert.match(html, /supervisor-dashboard-enhancer\.js\?v=20260726-supervisor-history-render-2/);
+  assert.match(html, /index-lostitem-v1\.css\?v=20260726-supervisor-history-render-2/);
 });

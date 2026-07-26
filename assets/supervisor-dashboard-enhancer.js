@@ -383,9 +383,9 @@
     if (!root) return;
     restoreReactNodes(root);
     const tab = activeSupervisorTab(root);
+    removeObsoletePanels(root);
 
     if (tab === 'realtime') {
-      removeObsoletePanels(root);
       replaceKpis(root);
       replaceWorkforce(root);
     }
