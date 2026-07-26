@@ -206,12 +206,20 @@ test('supervisor history renderer declares the approved four card dataset output
   const renderHistory = functionBody(source, 'renderHistory');
 
   assert.match(source, /data-supervisor-history/);
-  assert.match(source, /2023 年 7 月拾獲日曆/);
+  assert.match(source, /本月事件量趨勢/);
   assert.match(source, /資料範圍至/);
   assert.match(source, /總計/);
-  assert.match(source, /RailAgent 使用次數趨勢/);
-  assert.match(source, /設施回報累計次數/);
-  assert.match(source, /服務回饋分數/);
+  assert.match(source, /RailAgent 使用次數統計/);
+  assert.match(source, /服務設施回報次數/);
+  assert.match(source, /服務回饋統計/);
+  assert.match(source, /metric\('本週', summaryText\(totals\?\.week\), false\)/);
+  assert.match(source, /metric\('本月', summaryText\(totals\?\.month\), false\)/);
+  assert.match(source, /metric\('本年', summaryText\(totals\?\.year\), false\)/);
+  assert.doesNotMatch(source, /card\('2023 年 7 月拾獲日曆'/);
+  assert.doesNotMatch(source, /RailAgent 使用次數趨勢/);
+  assert.doesNotMatch(source, /設施回報累計次數/);
+  assert.doesNotMatch(source, /服務回饋分數/);
+  assert.doesNotMatch(source, /metric\('近 7 日'/);
   assert.match(source, /function cardByText\(root, matcher\)/);
   assert.match(source, /function clearEnhancerNode\(node\)/);
   assert.match(renderHistory, /cardByText\(root, \/歷史服務品質分析\/\)/);

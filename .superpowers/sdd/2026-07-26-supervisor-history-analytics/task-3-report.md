@@ -62,3 +62,17 @@
 ## Concerns
 - Public GitHub Pages verification was not run because this task explicitly must not push.
 - Visual smoke used local Playwright route mapping for `/railagent-demo-site/*`, not the public deployed URL.
+
+## Fix Round 1
+- Review severity: Important.
+- Fixed visible history card titles to the approved exact strings:
+  - `本月事件量趨勢`
+  - `RailAgent 使用次數統計`
+  - `服務設施回報次數`
+  - `服務回饋統計`
+- Updated period labels from `近 7 日` to `本週`; kept `本月` and `本年`.
+- First card still preserves `2023 年 7 月` in the calendar aria label and keeps the data coverage/total metadata.
+- Updated `tests/supervisor-history-analytics.test.cjs` to require the approved strings and reject the previous visible labels.
+- Focused verification after fix:
+  - `node --test tests\supervisor-history-analytics.test.cjs` -> 9/9 pass.
+  - `node --test tests\supervisor-dashboard-runtime.test.cjs` -> 5/5 pass.

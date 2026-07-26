@@ -185,7 +185,7 @@
     const row = document.createElement('div');
     row.className = 'mp-kpi-row';
     row.append(
-      metric('近 7 日', summaryText(totals?.week), false),
+      metric('本週', summaryText(totals?.week), false),
       metric('本月', summaryText(totals?.month), false),
       metric('本年', summaryText(totals?.year), false)
     );
@@ -236,10 +236,10 @@
     calendarMeta.textContent = `資料範圍至 ${String(lostItems.coverageEnd || '2023-07-17').replaceAll('-', '/')} · 總計 ${summaryText(lostItems.total || totalFor(lostItems.daily))} 件`;
 
     container.append(
-      card('2023 年 7 月拾獲日曆', [calendarMeta, renderCalendar(analytics)]),
-      card('RailAgent 使用次數趨勢', [historyKpiGroup(analytics?.railAgent?.totals)]),
-      card('設施回報累計次數', [historyKpiGroup(analytics?.facilityReports?.totals)]),
-      card('服務回饋分數', [feedbackGrid(analytics?.feedback?.totals)])
+      card('本月事件量趨勢', [calendarMeta, renderCalendar(analytics)]),
+      card('RailAgent 使用次數統計', [historyKpiGroup(analytics?.railAgent?.totals)]),
+      card('服務設施回報次數', [historyKpiGroup(analytics?.facilityReports?.totals)]),
+      card('服務回饋統計', [feedbackGrid(analytics?.feedback?.totals)])
     );
 
     if (!existing) root.append(container);
