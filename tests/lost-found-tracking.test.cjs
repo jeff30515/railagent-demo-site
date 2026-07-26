@@ -77,3 +77,33 @@ assert.ok(
   enhancer.includes(String.raw`\u7d50\u6848\u5f8c\u56de\u994b\u6703\u5beb\u5165\u672c\u6a5f\u4e8b\u4ef6\u76ee\u9304\uff0c\u4f9b\u6b77\u53f2\u54c1\u8cea\u5206\u6790\u3002`) && enhancer.includes('paragraph.remove()'),
   'The obsolete event-directory note should be removed from the rendered feedback card.',
 );
+assert.match(
+  enhancer,
+  /RailAgentPassengerRuntimeLocales/,
+  'The canonical runtime should obtain copy from the shared nine-language locale module.',
+);
+assert.match(
+  enhancer,
+  /\[data-service-page="lost-item"\]/,
+  'Lost-item search should be identified by its stable page marker.',
+);
+assert.match(
+  enhancer,
+  /sourceLink\.closest\('p'\)\?\.remove\(\)/,
+  'The localized TRA source notice should be removed by structure.',
+);
+assert.doesNotMatch(
+  enhancer,
+  /text\.includes\('\\u793a\\u7bc4\\u8cc7\\u6599\\u4f9d\\u7167'\)/,
+  'Source-notice removal must not depend on Traditional Chinese text.',
+);
+assert.match(
+  enhancer,
+  /pageLabels\.friendlyTitle/,
+  'Friendly-transfer page discovery should use the current locale labels.',
+);
+assert.match(
+  enhancer,
+  /pageLabels\.quickHelp.*pageLabels\.moreServices/s,
+  'Obsolete home actions should be removed for the current locale.',
+);
