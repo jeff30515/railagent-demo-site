@@ -11,6 +11,7 @@
   let recentFoundItems = [];
   let token;
   let loading;
+  let enhancing = false;
 
   if (queryBase) localStorage.setItem(apiBaseStorageKey, queryBase);
 
@@ -166,12 +167,17 @@
   }
 
   function enhance() {
-    if (!staff()) return;
-    document.documentElement.lang = 'zh-TW';
-    enhanceHome();
-    enhanceFoundRegister();
-    enhanceTaskPool();
-    removeFriendlyTransfer();
+    if (!staff() || enhancing) return;
+    enhancing = true;
+    try {
+      document.documentElement.lang = 'zh-TW';
+      enhanceHome();
+      enhanceFoundRegister();
+      enhanceTaskPool();
+      removeFriendlyTransfer();
+    } finally {
+      setTimeout(() => { enhancing = false; }, 0);
+    }
   }
 
   async function refresh(force = false) {

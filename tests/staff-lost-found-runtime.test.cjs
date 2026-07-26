@@ -63,6 +63,14 @@ test('the found-item field order ignores the enhancer’s added train field on l
   assert.match(source, /querySelectorAll\('\.mp-field'\)\)\.filter\(\(field\) => !field\.dataset\.staffTrainField\)/);
 });
 
+test('the staff enhancer ignores DOM mutations made by its own render pass', () => {
+  const source = fs.readFileSync(path.join(__dirname, '..', 'assets', 'staff-lost-found-enhancer.js'), 'utf8');
+
+  assert.match(source, /let enhancing = false/);
+  assert.match(source, /enhancing\) return/);
+  assert.match(source, /setTimeout\(\(\) => \{ enhancing = false; \}, 0\)/);
+});
+
 test('the staff found-item screen removes the unrelated friendly-transfer controls', () => {
   const source = fs.readFileSync(path.join(__dirname, '..', 'assets', 'staff-lost-found-enhancer.js'), 'utf8');
 
