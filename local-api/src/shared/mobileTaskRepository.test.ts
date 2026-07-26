@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { createTaskRepositoryFromEnvironment } from './mobileTaskRepository.js';
+import { createFallbackTaskRepository, createTaskRepositoryFromEnvironment } from './mobileTaskRepository.js';
 
 describe('mobile task repository factory', () => {
   const originalConnectionString = process.env.AZURE_STORAGE_CONNECTION_STRING;
@@ -37,6 +37,36 @@ describe('mobile task repository factory', () => {
     const repository = createTaskRepositoryFromEnvironment();
 
     expect(repository.mode).toBe('azure-table');
+  });
+
+  it('creates one tracked lost-item case that is visible to both Banqiao and Qingpu staff', async () => {
+    const repository = createFallbackTaskRepository();
+    const passenger = await repository.getDemoUserByAccount('ntmetro-public');
+    const banqiao = await repository.getDemoUserByAccount('ntmetro-staff-banqiao');
+    const qingpu = await repository.getDemoUserByAccount('tymetro-staff-qingpu');
+
+    expect(passenger).not.toBeNull();
+    expect(banqiao).not.toBeNull();
+    expect(qingpu).not.toBeNull();
+    const task = await repository.trackLostItemCase(passenger!, {
+      candidateId: 'official-item-42',
+      title: '黑色後背包',
+      stationName: '板橋',
+      pickupDate: '2026-07-26'
+    });
+
+    expect(task).toMatchObject({
+      type: 'lost_item',
+      sourceAgent: 'lost-found',
+      caseId: 'lost-found-official-item-42',
+      recipientUnitIds: ['station-banqiao', 'station-qingpu']
+    });
+    await expect(repository.listTasksForUser(banqiao!)).resolves.toEqual(expect.arrayContaining([
+      expect.objectContaining({ taskId: task.taskId })
+    ]));
+    await expect(repository.listTasksForUser(qingpu!)).resolves.toEqual(expect.arrayContaining([
+      expect.objectContaining({ taskId: task.taskId })
+    ]));
   });
 });
 

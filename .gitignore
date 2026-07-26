@@ -6,4 +6,9 @@ local-api/*.log
 local-api/data/*.json
 local-api/data/*.xml
 local-api/data/*.log
+# Downloaded transport snapshots and derived local retrieval documents are regenerated locally.
+local-api/data/transport-raw/**
+!local-api/data/transport-raw/.gitkeep
+local-api/data/transport-knowledge/**
+!local-api/data/transport-knowledge/.gitkeep
 .worktrees/
