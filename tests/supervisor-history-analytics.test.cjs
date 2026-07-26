@@ -116,3 +116,59 @@ test('browser analytics module merges only valid local records newer than anchor
   assert.deepEqual(plain(updated.facilityReports.totals), { week: 26, month: 36, year: 77 });
   assert.equal(events.filter((event) => event.type === 'railagent:analytics-updated').length, 2);
 });
+
+test('browser analytics module uses newest valid record date instead of browser now for windows', async () => {
+  const source = read('assets/supervisor-history-analytics.js');
+  const snapshot = JSON.parse(read('data/supervisor-history-analytics.json'));
+  const stored = new Map([
+    [
+      'railagent.analytics.chat-uses.v1',
+      JSON.stringify([
+        { createdAt: '2026-07-25T09:00:00+08:00' },
+        { createdAt: '2026-07-20T09:00:00+08:00' },
+      ]),
+    ],
+    ['railagent.analytics.facility-reports.v1', '[]'],
+  ]);
+  const FixedDate = class extends Date {
+    constructor(...args) {
+      super(...(args.length ? args : ['2026-08-15T12:00:00+08:00']));
+    }
+
+    static now() {
+      return new Date('2026-08-15T12:00:00+08:00').getTime();
+    }
+  };
+  const context = {
+    console,
+    setTimeout,
+    clearTimeout,
+    Promise,
+    Date: FixedDate,
+    CustomEvent: class {
+      constructor(type, init = {}) {
+        this.type = type;
+        this.detail = init.detail;
+      }
+    },
+  };
+  context.window = {
+    localStorage: {
+      getItem: (key) => (stored.has(key) ? stored.get(key) : null),
+      setItem: (key, value) => stored.set(key, value),
+    },
+    dispatchEvent() {},
+  };
+  context.globalThis = context.window;
+  context.fetch = async () => ({
+    ok: true,
+    json: async () => snapshot,
+  });
+
+  vm.runInNewContext(source, context);
+
+  const current = await context.window.RailAgentSupervisorHistory.snapshot();
+
+  assert.deepEqual(plain(current.railAgent.totals), { week: 121, month: 146, year: 263 });
+  assert.deepEqual(plain(current.facilityReports.totals), { week: 24, month: 34, year: 75 });
+});

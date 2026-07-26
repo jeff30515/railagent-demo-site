@@ -53,14 +53,20 @@
 
   function countsForWindows(records, anchor) {
     const anchorDate = parseDate(anchor);
-    const now = new Date();
-    const weekStart = startOfMondayWeek(now);
+    const additions = records
+      .map((record) => parseDate(record.createdAt))
+      .filter((createdAt) => createdAt && (!anchorDate || createdAt > anchorDate));
+    const windowAnchor = additions.reduce(
+      (latest, createdAt) => (createdAt > latest ? createdAt : latest),
+      anchorDate || new Date(0),
+    );
+    const weekStart = startOfMondayWeek(windowAnchor);
     return records.reduce(
       (totals, record) => {
         const createdAt = parseDate(record.createdAt);
         if (!createdAt || (anchorDate && createdAt <= anchorDate)) return totals;
-        if (createdAt.getFullYear() === now.getFullYear()) totals.year += 1;
-        if (isSameMonth(createdAt, now)) totals.month += 1;
+        if (createdAt.getFullYear() === windowAnchor.getFullYear()) totals.year += 1;
+        if (isSameMonth(createdAt, windowAnchor)) totals.month += 1;
         if (createdAt >= weekStart) totals.week += 1;
         return totals;
       },
