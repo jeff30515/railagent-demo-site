@@ -57,7 +57,7 @@ test('tracked-case changes refresh supervisor totals and invalidate stale staff 
   assert.match(unfollow, /railagent:tracked-cases-changed/);
   assert.doesNotMatch(supervisor, /if \(trackedRequest\) return trackedRequest/);
   assert.match(supervisor, /railagent:tracked-cases-changed/);
-  assert.match(html, /staff-lost-found-enhancer\.js\?v=20260727-live-tasks-1/);
+  assert.match(html, /staff-lost-found-enhancer\.js\?v=20260727-live-tasks-2/);
 });
 
 test('the local API permits the ngrok warning bypass header from GitHub Pages', () => {

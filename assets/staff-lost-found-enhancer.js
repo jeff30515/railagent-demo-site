@@ -16,6 +16,7 @@
   let recentFoundItems = fixedRecentFoundItems;
   let token;
   let loading;
+  let loadedAccountId;
 
   const escape = (value) => String(value ?? '').replace(/[&<>"']/g, (character) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
@@ -75,7 +76,7 @@
     originalCard.replaceChildren();
     originalCard.classList.add('staff-live-priority');
     const title = document.createElement('h3');
-    title.textContent = '優先任務';
+    title.textContent = '最新任務';
     originalCard.append(title);
     if (liveTasks.length) liveTasks.forEach((task) => originalCard.append(taskCard(task)));
     else {
@@ -177,7 +178,12 @@
   }
 
   function enhance() {
+    const accountId = localStorage.getItem('railagent.mobile.account');
     if (!staff() && !staffPage()) return;
+    if (staff() && loadedAccountId !== accountId) {
+      void refresh();
+      return;
+    }
     document.documentElement.lang = 'zh-TW';
     enhanceHome();
     enhanceFoundRegister();
@@ -192,7 +198,8 @@
   }
 
   async function refresh(force = false) {
-    if (loading && !force) return loading;
+    if (loading) return loading;
+    const accountId = localStorage.getItem('railagent.mobile.account');
     const user = staff();
     if (!user) return;
     loading = (async () => {
@@ -206,10 +213,18 @@
         api('/api/tasks', { headers: { 'x-demo-user-id': token } }),
         api(`/api/lost-found/items?unitId=${encodeURIComponent(user.unitId)}`, { headers: { 'x-demo-user-id': token } })
       ]);
+      if (accountId !== localStorage.getItem('railagent.mobile.account')) return;
       liveTasks = (result.tasks || []).filter((task) => task.type === 'lost_item' && task.caseId && task.lostItem);
       recentFoundItems = fixedRecentFoundItems;
+      loadedAccountId = accountId;
       enhance();
-    })().catch(() => { liveTasks = []; recentFoundItems = []; enhance(); }).finally(() => { loading = undefined; });
+    })().catch(() => {
+      if (accountId !== localStorage.getItem('railagent.mobile.account')) return;
+      liveTasks = [];
+      recentFoundItems = [];
+      loadedAccountId = accountId;
+      enhance();
+    }).finally(() => { loading = undefined; });
     return loading;
   }
 
@@ -246,8 +261,13 @@
   }, true);
 
   document.addEventListener('click', scheduleEnhance);
+  window.addEventListener('railagent:tracked-cases-changed', () => {
+    loadedAccountId = undefined;
+    if (staff()) void refresh(true);
+  });
   addEventListener('load', () => {
     scheduleEnhance();
     refresh();
   });
+  new MutationObserver(scheduleEnhance).observe(document.body, { childList: true, subtree: true });
 })();

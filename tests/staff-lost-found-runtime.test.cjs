@@ -23,8 +23,9 @@ test('the original staff screens use a live-data enhancer instead of a replaceme
   assert.doesNotMatch(source, /root\.innerHTML/);
   assert.match(source, /ntmetro-staff-banqiao/);
   assert.match(source, /tymetro-staff-qingpu/);
-  assert.match(source, /優先任務/);
+  assert.match(source, /最新任務/);
   assert.match(source, /task\.caseId && task\.lostItem/);
+  assert.match(source, /最新任務/);
   assert.match(source, /removeFriendlyTransfer/);
   for (const field of ['itemType', 'color', 'brand', 'features', 'foundLocation', 'foundAt', 'trainNumber']) {
     assert.match(source, new RegExp(`${field}: fieldValue`));
@@ -79,10 +80,13 @@ test('the found-item enhancer adds a standalone date field instead of cloning Re
   assert.match(source, /dateField\.dataset\.staffFoundDate = 'true'/);
 });
 
-test('the staff enhancer updates after user clicks instead of observing its own DOM mutations', () => {
+test('the staff enhancer refreshes after an identity switch or tracked-case change', () => {
   const source = fs.readFileSync(path.join(__dirname, '..', 'assets', 'staff-lost-found-enhancer.js'), 'utf8');
 
-  assert.doesNotMatch(source, /new MutationObserver/);
+  assert.match(source, /let loadedAccountId/);
+  assert.match(source, /new MutationObserver/);
+  assert.match(source, /railagent:tracked-cases-changed/);
+  assert.match(source, /refresh\(true\)/);
   assert.match(source, /function scheduleEnhance\(\)/);
   assert.match(source, /document\.addEventListener\('click', scheduleEnhance\)/);
 });
