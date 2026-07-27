@@ -100,8 +100,10 @@ test('non-passenger account pages show only the unit staff identity, account, an
   for (const accountId of ['ntmetro-staff-banqiao', 'ntmetro-supervisor', 'tymetro-staff-qingpu']) {
     assert.match(source, new RegExp(accountId));
   }
+  assert.match(source, /mp-hero-block/);
+  assert.match(source, /textContent = '帳戶'/);
   assert.match(source, /帳號：/);
-  assert.match(source, /replaceChildren\(card, returnButton\)/);
+  assert.match(source, /replaceChildren\(header, card, returnButton\)/);
   assert.doesNotMatch(source, /重設友善轉乘示範/);
 });
 

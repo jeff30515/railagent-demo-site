@@ -24,6 +24,14 @@
     );
     if (!returnButton) return;
 
+    const header = document.createElement('div');
+    header.className = 'mp-hero-block';
+    const heading = document.createElement('h2');
+    heading.textContent = '帳戶';
+    const lead = document.createElement('p');
+    lead.textContent = '單位人員與帳號資訊';
+    header.append(heading, lead);
+
     const card = document.createElement('article');
     card.className = 'mp-card mp-stack';
     const unit = document.createElement('h3');
@@ -34,7 +42,7 @@
     card.append(unit, account);
 
     section.dataset.roleAccountProfile = profile.account;
-    section.replaceChildren(card, returnButton);
+    section.replaceChildren(header, card, returnButton);
   }
 
   const scheduleEnhance = () => window.setTimeout(enhanceAccount, 0);
