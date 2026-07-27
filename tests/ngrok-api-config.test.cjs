@@ -2,6 +2,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
+const vm = require('node:vm');
 
 const root = path.resolve(__dirname, '..');
 const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
@@ -14,6 +15,20 @@ test('public app defaults to the assigned ngrok development domain', () => {
   assert.match(config, /function resolveApiBaseUrl\(search\)/);
   assert.match(html, /railagent-api-config\.js\?v=20260727-ngrok-default-1/);
   assert.ok(html.indexOf('railagent-api-config.js') < html.indexOf('lost-found-local-api.js'));
+});
+
+test('stale public tunnel overrides cannot replace the fixed competition API', () => {
+  const context = { URL, URLSearchParams, window: {} };
+  vm.runInNewContext(read('assets/railagent-api-config.js'), context);
+
+  assert.equal(
+    context.window.RailAgentApiConfig.resolveApiBaseUrl('?apiBaseUrl=https%3A%2F%2Fexpired-demo.trycloudflare.com'),
+    'https://detergent-mower-squirt.ngrok-free.dev/',
+  );
+  assert.equal(
+    context.window.RailAgentApiConfig.resolveApiBaseUrl('?apiBaseUrl=http%3A%2F%2F127.0.0.1%3A7071'),
+    'http://127.0.0.1:7071/',
+  );
 });
 
 test('all browser API clients use the shared endpoint resolver and ngrok warning bypass header', () => {

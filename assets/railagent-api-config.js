@@ -6,7 +6,11 @@
   function resolveApiBaseUrl(search) {
     const configured = new URLSearchParams(search).get('apiBaseUrl');
     try {
-      return new URL(configured || DEFAULT_API_BASE_URL).toString();
+      const candidate = new URL(configured || DEFAULT_API_BASE_URL);
+      if (!configured || ['127.0.0.1', 'localhost'].includes(candidate.hostname)) {
+        return candidate.toString();
+      }
+      return new URL(DEFAULT_API_BASE_URL).toString();
     } catch {
       return new URL(DEFAULT_API_BASE_URL).toString();
     }
