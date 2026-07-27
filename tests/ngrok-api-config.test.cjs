@@ -13,7 +13,7 @@ test('public app defaults to the assigned ngrok development domain', () => {
 
   assert.match(config, /https:\/\/detergent-mower-squirt\.ngrok-free\.dev/);
   assert.match(config, /function resolveApiBaseUrl\(search\)/);
-  assert.match(html, /railagent-api-config\.js\?v=20260727-ngrok-default-1/);
+  assert.match(html, /railagent-api-config\.js\?v=20260727-ngrok-default-2/);
   assert.ok(html.indexOf('railagent-api-config.js') < html.indexOf('lost-found-local-api.js'));
 });
 
