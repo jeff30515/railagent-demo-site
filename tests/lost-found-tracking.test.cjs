@@ -17,16 +17,25 @@ const applicationBundle = fs.readFileSync(
   path.join(__dirname, '..', 'assets', 'index-lostitem-talkback.js'),
   'utf8',
 );
+const apiConfig = fs.readFileSync(
+  path.join(__dirname, '..', 'assets', 'railagent-api-config.js'),
+  'utf8',
+);
 
 assert.match(
-  enhancer,
-  /const DEFAULT_API_BASE_URL = 'http:\/\/127\.0\.0\.1:7071'/,
-  'The completed passenger runtime should load from the bare URL with the local API default.',
+  apiConfig,
+  /const DEFAULT_API_BASE_URL = 'https:\/\/detergent-mower-squirt\.ngrok-free\.dev'/,
+  'The bare public page should use the assigned fixed ngrok development domain.',
+);
+assert.match(
+  apiConfig,
+  /function resolveApiBaseUrl\(search\)/,
+  'Configured local API URLs should remain available through one shared resolver.',
 );
 assert.match(
   enhancer,
-  /function resolveApiBaseUrl\(search\)/,
-  'The passenger runtime should resolve configured and default local API URLs through one path.',
+  /RailAgentApiConfig/,
+  'The passenger runtime should use the shared public API configuration.',
 );
 assert.doesNotMatch(
   enhancer,
@@ -40,7 +49,7 @@ assert.match(
 );
 assert.match(
   indexHtml,
-  /lost-found-local-api\.js\?v=20260726-staff-transfer-page-guard-14/,
+  /lost-found-local-api\.js\?v=20260727-ngrok-default-1/,
   'The entry page should force browsers to fetch the canonical passenger runtime.',
 );
 assert.match(
@@ -490,6 +499,10 @@ function loadPassengerRuntime(document, fetchImpl = async () => ({ ok: true, jso
       observe() {}
     },
   };
+  vm.runInNewContext(
+    fs.readFileSync(path.join(__dirname, '..', 'assets', 'railagent-api-config.js'), 'utf8'),
+    context,
+  );
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, '..', 'assets', 'passenger-runtime-locales.js'), 'utf8'), context);
   vm.runInNewContext(enhancer, context);
 }

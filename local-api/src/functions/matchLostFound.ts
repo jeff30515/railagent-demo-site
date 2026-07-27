@@ -67,7 +67,7 @@ function corsHeaders(request: HttpRequest): Record<string, string> {
 
   return {
     'Access-Control-Allow-Origin': origin,
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, ngrok-skip-browser-warning',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     Vary: 'Origin'
   };

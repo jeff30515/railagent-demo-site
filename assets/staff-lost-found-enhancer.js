@@ -1,8 +1,8 @@
 (() => {
   'use strict';
 
-  const apiBaseStorageKey = 'railagent.api-base-url';
-  const queryBase = new URLSearchParams(location.search).get('apiBaseUrl');
+  const apiConfig = window.RailAgentApiConfig;
+  const apiBaseUrl = apiConfig.resolveApiBaseUrl(location.search);
   const accounts = {
     'ntmetro-staff-banqiao': { unitId: 'station-banqiao', station: '板橋' },
     'tymetro-staff-qingpu': { unitId: 'station-qingpu', station: '桃園青埔' }
@@ -17,8 +17,6 @@
   let token;
   let loading;
 
-  if (queryBase) localStorage.setItem(apiBaseStorageKey, queryBase);
-
   const escape = (value) => String(value ?? '').replace(/[&<>"']/g, (character) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   }[character]));
@@ -32,9 +30,11 @@
   }
 
   async function api(path, init = {}) {
-    const base = queryBase || localStorage.getItem(apiBaseStorageKey);
-    if (!base) throw new Error('尚未連接遺失物系統');
-    const response = await fetch(new URL(path, base), init);
+    const url = new URL(path, apiBaseUrl);
+    const response = await fetch(url, {
+      ...init,
+      headers: apiConfig.withApiHeaders(url, init.headers),
+    });
     const body = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(body.error || `HTTP ${response.status}`);
     return body;

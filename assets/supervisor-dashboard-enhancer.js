@@ -184,8 +184,7 @@
   }
 
   function apiBaseUrl() {
-    const queryValue = new URLSearchParams(window.location.search).get('apiBaseUrl');
-    return (queryValue || window.localStorage.getItem('railagent.api-base-url') || '').replace(/\/$/, '');
+    return window.RailAgentApiConfig.resolveApiBaseUrl(window.location.search).replace(/\/$/, '');
   }
 
   async function loadTrackedCount() {
@@ -195,15 +194,17 @@
 
     trackedRequest = (async () => {
       try {
-        const loginResponse = await fetch(`${baseUrl}/api/auth/demo-login`, {
+        const loginUrl = `${baseUrl}/api/auth/demo-login`;
+        const loginResponse = await fetch(loginUrl, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: window.RailAgentApiConfig.withApiHeaders(loginUrl, { 'Content-Type': 'application/json' }),
           body: JSON.stringify({ accountId: 'ntmetro-supervisor' })
         });
         if (!loginResponse.ok) throw new Error('Unable to open the supervisor task feed.');
         const login = await loginResponse.json();
-        const tasksResponse = await fetch(`${baseUrl}/api/tasks`, {
-          headers: { 'x-demo-user-id': login.demoToken }
+        const tasksUrl = `${baseUrl}/api/tasks`;
+        const tasksResponse = await fetch(tasksUrl, {
+          headers: window.RailAgentApiConfig.withApiHeaders(tasksUrl, { 'x-demo-user-id': login.demoToken })
         });
         if (!tasksResponse.ok) throw new Error('Unable to read the supervisor task feed.');
         const result = await tasksResponse.json();

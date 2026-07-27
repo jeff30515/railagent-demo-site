@@ -1,18 +1,12 @@
 (() => {
   'use strict';
 
-  const DEFAULT_API_BASE_URL = 'http://127.0.0.1:7071';
-
-  function resolveApiBaseUrl(search) {
-    const configured = new URLSearchParams(search).get('apiBaseUrl');
-    try {
-      return new URL(configured || DEFAULT_API_BASE_URL).toString();
-    } catch {
-      return new URL(DEFAULT_API_BASE_URL).toString();
-    }
-  }
-
-  const apiBaseUrl = resolveApiBaseUrl(window.location.search);
+  const apiConfig = window.RailAgentApiConfig;
+  const apiBaseUrl = apiConfig.resolveApiBaseUrl(window.location.search);
+  const apiFetch = (url, init = {}) => fetch(url, {
+    ...init,
+    headers: apiConfig.withApiHeaders(url, init.headers),
+  });
   const lostFoundEndpoint = new URL('/api/lost-found/match', apiBaseUrl).toString();
   const chatEndpoint = new URL('/api/passenger-chat', apiBaseUrl).toString();
   const stationEndpoint = new URL('/api/friendly-transfer/station', apiBaseUrl).toString();
@@ -213,7 +207,7 @@
       answer.textContent = activeCopy.routeThinking;
       announceTransfer(activeCopy.routeThinking, 'route-thinking');
       try {
-        const response = await fetch(routeEndpoint, {
+        const response = await apiFetch(routeEndpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ origin, destination })
@@ -285,7 +279,7 @@
         announceTransfer(activeCopy.stationThinking, 'station-thinking');
         callResult.replaceChildren();
         try {
-          const response = await fetch(stationEndpoint, {
+          const response = await apiFetch(stationEndpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ spokenStation })
@@ -532,7 +526,7 @@
         const activeCopy = currentLocale().copy;
         const status = addChatMessage(messages, 'status', activeCopy.thinking);
         try {
-          const response = await fetch(chatEndpoint, {
+          const response = await apiFetch(chatEndpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ message: question })
@@ -586,7 +580,7 @@
       saveTrackedCase(record);
       button.textContent = copy.tracked;
       button.disabled = true;
-      void fetch(new URL('/api/lost-found/cases/track', apiBaseUrl), {
+      void apiFetch(new URL('/api/lost-found/cases/track', apiBaseUrl), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -629,7 +623,7 @@
     button.disabled = true;
     render(button, null, copy.searching, copy);
     try {
-      const response = await fetch(lostFoundEndpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(request) });
+      const response = await apiFetch(lostFoundEndpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(request) });
       const body = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(body.error || `HTTP ${response.status}`);
       render(button, body, null, copy);

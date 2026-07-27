@@ -316,7 +316,7 @@ function corsHeaders(origin: string | undefined): Record<string, string> {
 
   return {
     'Access-Control-Allow-Origin': origin,
-    'Access-Control-Allow-Headers': 'Content-Type, x-demo-user-id',
+    'Access-Control-Allow-Headers': 'Content-Type, x-demo-user-id, ngrok-skip-browser-warning',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     Vary: 'Origin'
   };

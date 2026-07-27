@@ -1,18 +1,19 @@
 (() => {
   'use strict';
-  const apiBaseStorageKey = 'railagent.api-base-url';
-  const queryBase = new URLSearchParams(location.search).get('apiBaseUrl');
-  if (queryBase) localStorage.setItem(apiBaseStorageKey, queryBase);
-  const base = queryBase || localStorage.getItem(apiBaseStorageKey);
+  const apiConfig = window.RailAgentApiConfig;
+  const base = apiConfig.resolveApiBaseUrl(location.search);
   const accounts = {
     'ntmetro-staff-banqiao': { label: '板橋站務', companyId: 'ntmetro', unitId: 'station-banqiao', station: '板橋' },
     'tymetro-staff-qingpu': { label: '桃園青埔站務', companyId: 'tymetro', unitId: 'station-qingpu', station: '桃園青埔' }
   };
-  const api = (path, init = {}) => fetch(new URL(path, base), init).then(async (response) => {
+  const api = (path, init = {}) => {
+    const url = new URL(path, base);
+    return fetch(url, { ...init, headers: apiConfig.withApiHeaders(url, init.headers) }).then(async (response) => {
     const body = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(body.error || `HTTP ${response.status}`);
     return body;
-  });
+    });
+  };
   function account() { return accounts[localStorage.getItem('railagent.mobile.account')]; }
   function chinese() { document.documentElement.lang = 'zh-TW'; }
   function taskCard(task) {
@@ -24,10 +25,6 @@
     chinese();
     const root = document.getElementById('root'); if (!root || root.dataset.staffRuntime === user.unitId) return;
     root.dataset.staffRuntime = user.unitId;
-    if (!base) {
-      root.innerHTML = '<main class="mp-shell"><section class="mp-stack"><div class="mp-hero-block"><h2>站務案件中心</h2><p>固定使用繁體中文 · ' + user.label + '</p></div><p class="mp-card">尚未連接遺失物系統。請先由含 Cloudflare Tunnel API 的旅客入口開啟一次，站務頁會自動共用同一個連線。</p></section></main>';
-      return;
-    }
     root.innerHTML = '<main class="mp-shell"><section class="mp-stack"><div class="mp-hero-block"><h2>站務案件中心</h2><p>固定使用繁體中文 · ' + user.label + '</p></div><p class="mp-card">載入案件資料中…</p></section></main>';
     try {
       const login = await api('/api/auth/demo-login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ accountId: localStorage.getItem('railagent.mobile.account') }) });
@@ -38,8 +35,7 @@
       const holder = document.getElementById('staff-found-items'); holder.innerHTML = (found.items || []).map((item) => `<p>${escape(item.color)}${escape(item.itemType)} · ${escape(item.foundLocation)} · ${escape(item.foundAt)}</p>`).join('') || '<p>目前沒有本單位登錄資料。</p>';
       document.getElementById('staff-found-form').addEventListener('submit', async (event) => { event.preventDefault(); const fields = Object.fromEntries(new FormData(event.currentTarget)); await api('/api/lost-found/items', {method:'POST',headers:{'Content-Type':'application/json','x-demo-user-id':login.demoToken},body:JSON.stringify({...fields,stationName:user.station})}); root.dataset.staffRuntime=''; render(); });
     } catch (error) {
-      if (!queryBase) localStorage.removeItem(apiBaseStorageKey);
-      root.innerHTML = '<main class="mp-shell"><section class="mp-stack"><div class="mp-hero-block"><h2>站務案件中心</h2><p>固定使用繁體中文 · ' + user.label + '</p></div><p class="mp-card">無法連線至遺失物系統：' + escape(error.message) + '。請確認 Cloudflare Tunnel 與本機 API 正在運作，再重新由旅客入口開啟。</p></section></main>';
+      root.innerHTML = '<main class="mp-shell"><section class="mp-stack"><div class="mp-hero-block"><h2>站務案件中心</h2><p>固定使用繁體中文 · ' + user.label + '</p></div><p class="mp-card">無法連線至遺失物系統：' + escape(error.message) + '。請確認 ngrok 與本機 API 正在運作，再重新由旅客入口開啟。</p></section></main>';
       console.warn('RailAgent staff API is unavailable.', error);
     }
   }
