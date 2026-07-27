@@ -188,7 +188,6 @@
   }
 
   async function loadTrackedCount() {
-    if (trackedRequest) return trackedRequest;
     const baseUrl = apiBaseUrl();
     if (!baseUrl) return localTrackedCount();
 
@@ -602,5 +601,6 @@
     historySnapshot = null;
     if (activeSupervisorPage(supervisorApp()) === 'history') scheduleEnhance(0);
   });
+  window.addEventListener('railagent:tracked-cases-changed', () => { trackedRequest = null; loadTrackedCount(); });
   STARTUP_DELAYS.forEach(scheduleEnhance);
 })();

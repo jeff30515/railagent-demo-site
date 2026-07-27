@@ -125,6 +125,7 @@ export interface TaskRepository {
   getVisibleTask(user: DemoUser, taskId: string): Promise<RailTask | null>;
   createTask(user: DemoUser, input: CreateTaskInput): Promise<RailTask>;
   trackLostItemCase(user: DemoUser, input: TrackLostItemCaseInput): Promise<RailTask>;
+  untrackLostItemCase(user: DemoUser, candidateId: string): Promise<boolean>;
   listFoundItems(user: DemoUser, unitId?: string): Promise<FoundItem[]>;
   createFoundItem(user: DemoUser, input: CreateFoundItemInput): Promise<FoundItem | null>;
   claimTask(user: DemoUser, taskId: string): Promise<RailTask | null>;
@@ -362,6 +363,16 @@ class FallbackTaskRepository implements TaskRepository {
     return clone(task);
   }
 
+  async untrackLostItemCase(user: DemoUser, candidateId: string): Promise<boolean> {
+    const index = this.tasks.findIndex((task) => isTrackedCaseOwnedBy(task, user, candidateId));
+    if (index < 0) return false;
+    const [removed] = this.tasks.splice(index, 1);
+    for (let index = this.events.length - 1; index >= 0; index -= 1) {
+      if (this.events[index].taskId === removed.taskId) this.events.splice(index, 1);
+    }
+    return true;
+  }
+
   async listFoundItems(user: DemoUser, unitId?: string): Promise<FoundItem[]> {
     if (user.role === 'public') return [];
     const scopedUnitId = resolveFoundItemUnit(user, unitId);
@@ -506,6 +517,19 @@ class AzureTableTaskRepository implements TaskRepository {
     await this.tasksClient.upsertEntity(taskToEntity(task), 'Replace');
     await this.eventsClient.upsertEntity(eventToEntity(makeEvent(task, user, 'created', '旅客已追蹤遺失物案件', task.createdAt)), 'Replace');
     return task;
+  }
+
+  async untrackLostItemCase(user: DemoUser, candidateId: string): Promise<boolean> {
+    await this.ensureReady();
+    const task = (await this.listAllTasks()).find((candidate) => isTrackedCaseOwnedBy(candidate, user, candidateId));
+    if (!task) return false;
+    await this.tasksClient.deleteEntity(task.companyId, task.taskId);
+    for await (const event of this.eventsClient.listEntities<TaskEventEntity>({
+      queryOptions: { filter: `PartitionKey eq '${escapeOData(task.taskId)}'` }
+    })) {
+      await this.eventsClient.deleteEntity(task.taskId, event.eventId);
+    }
+    return true;
   }
 
   async listFoundItems(user: DemoUser, unitId?: string): Promise<FoundItem[]> {
@@ -792,6 +816,12 @@ function optionalText(value: string | undefined): string | undefined {
 
 function trackedCaseId(candidateId: string): string {
   return `lost-found-${candidateId.trim()}`;
+}
+
+function isTrackedCaseOwnedBy(task: RailTask, user: DemoUser, candidateId: string): boolean {
+  return task.createdByUserId === user.userId &&
+    task.sourceAgent === 'lost-found' &&
+    task.caseId === trackedCaseId(candidateId);
 }
 
 function makeTrackedLostItemTask(user: DemoUser, input: TrackLostItemCaseInput): RailTask {

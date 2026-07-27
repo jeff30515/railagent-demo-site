@@ -395,6 +395,21 @@
     return true;
   }
 
+  function restoreTrackedCasesToApi() {
+    const records = readTrackedCases();
+    if (!records.length) return;
+    void Promise.all(records.map((record) => apiFetch(new URL('/api/lost-found/cases/track', apiBaseUrl), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        candidateId: record.id,
+        title: record.title,
+        stationName: record.stationName,
+        pickupDate: record.pickupDate
+      })
+    }))).then(() => window.dispatchEvent(new Event('railagent:tracked-cases-changed'))).catch(() => undefined);
+  }
+
   function removeLegacyBackpackCase() {
     const page = document.querySelector('[aria-label="public own case list"]');
     page?.querySelectorAll('article').forEach((article) => {
@@ -549,6 +564,7 @@
   }
 
   document.addEventListener('DOMContentLoaded', () => {
+    restoreTrackedCasesToApi();
     syncLocalModeUi();
     new MutationObserver(syncLocalModeUi).observe(document.body, { childList: true, subtree: true });
   });
@@ -589,7 +605,7 @@
           stationName: record.stationName,
           pickupDate: record.pickupDate
         })
-      }).catch(() => undefined);
+      }).then(() => window.dispatchEvent(new Event('railagent:tracked-cases-changed'))).catch(() => undefined);
       syncLocalModeUi();
       return;
     }

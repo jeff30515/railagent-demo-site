@@ -49,7 +49,7 @@ assert.match(
 );
 assert.match(
   indexHtml,
-  /lost-found-local-api\.js\?v=20260727-ngrok-default-1/,
+  /lost-found-local-api\.js\?v=20260727-tracking-sync-3/,
   'The entry page should force browsers to fetch the canonical passenger runtime.',
 );
 assert.match(
@@ -64,7 +64,7 @@ assert.match(
 );
 assert.match(
   indexHtml,
-  /passenger-case-unfollow\.js\?v=20260726-passenger-canonical-12/,
+  /passenger-case-unfollow\.js\?v=20260727-tracking-sync-2/,
   'The entry page should force browsers to fetch the updated case action runtime.',
 );
 const localeScriptIndex = indexHtml.indexOf('passenger-runtime-locales.js');

@@ -1,5 +1,6 @@
 (function () {
   const TRACKED_CASES_KEY = 'railagent-tracked-lost-found-cases';
+  const apiConfig = window.RailAgentApiConfig;
 
   function trackedRecords(list) {
     try {
@@ -22,6 +23,9 @@
       if (!Array.isArray(records)) return;
       const remaining = records.filter((entry) => entry.id !== recordId);
       window.localStorage.setItem(TRACKED_CASES_KEY, JSON.stringify(remaining));
+      const url = new URL('/api/lost-found/cases/untrack', apiConfig.resolveApiBaseUrl(window.location.search));
+      void fetch(url, { method: 'POST', headers: apiConfig.withApiHeaders(url, { 'Content-Type': 'application/json' }), body: JSON.stringify({ candidateId: recordId }) })
+        .then(() => window.dispatchEvent(new Event('railagent:tracked-cases-changed'))).catch(() => {});
     } catch {
       // Keep the visible cancellation state even if browser storage is unavailable.
     }

@@ -51,6 +51,7 @@ export function createLocalLostFoundServer() {
       route !== '/api/friendly-transfer/station' &&
       route !== '/api/friendly-transfer/route' &&
       route !== '/api/lost-found/cases/track' &&
+      route !== '/api/lost-found/cases/untrack' &&
       route !== '/api/lost-found/items' &&
       route !== '/api/auth/demo-login' &&
       route !== '/api/tasks'
@@ -163,6 +164,19 @@ export function createLocalLostFoundServer() {
         if (!passenger) throw new Error('Local passenger account is unavailable.');
         const task = await mobileTasks.trackLostItemCase(passenger, { candidateId, title, stationName, pickupDate });
         respond(response, 201, { task }, cors);
+        return;
+      }
+
+      if (route === '/api/lost-found/cases/untrack') {
+        const candidateId = textField(await readJson(request), 'candidateId');
+        if (!candidateId) {
+          respond(response, 400, { error: 'invalid_lost_found_case_payload' }, cors);
+          return;
+        }
+        const passenger = await mobileTasks.getDemoUserByAccount('ntmetro-public');
+        if (!passenger) throw new Error('Local passenger account is unavailable.');
+        const removed = await mobileTasks.untrackLostItemCase(passenger, candidateId);
+        respond(response, 200, { removed }, cors);
         return;
       }
 

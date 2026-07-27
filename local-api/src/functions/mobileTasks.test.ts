@@ -12,6 +12,7 @@ import {
   listTasks,
   resetMobileTaskRepository,
   trackLostItemCase,
+  untrackLostItemCase,
   transitionTask
 } from './mobileTasks.js';
 
@@ -94,6 +95,24 @@ describe('Mobile task API handlers', () => {
     const qingpu = await listTasks(authenticatedRequest('demo-staff-tymetro'), context());
     expect(qingpu.jsonBody.tasks).toEqual(expect.arrayContaining([
       expect.objectContaining({ taskId: response.jsonBody.task.taskId, caseId: 'lost-found-candidate-api-1' })
+    ]));
+  });
+
+  it('untracks a passenger-owned case and removes it from staff task lists', async () => {
+    const tracked = await trackLostItemCase(authenticatedRequest('demo-public-ntmetro', {
+      candidateId: 'candidate-api-untrack', title: 'Backpack', stationName: 'Banqiao', pickupDate: '2026-07-27'
+    }), context());
+
+    const untracked = await untrackLostItemCase(
+      authenticatedRequest('demo-public-ntmetro', { candidateId: 'candidate-api-untrack' }),
+      context()
+    );
+
+    expect(untracked.status).toBe(200);
+    expect(untracked.jsonBody).toEqual({ removed: true });
+    const banqiao = await listTasks(authenticatedRequest('demo-staff-banqiao'), context());
+    expect(banqiao.jsonBody.tasks).not.toEqual(expect.arrayContaining([
+      expect.objectContaining({ taskId: tracked.jsonBody.task.taskId })
     ]));
   });
 

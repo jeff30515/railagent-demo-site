@@ -31,6 +31,22 @@ afterEach(async () => {
 });
 
 describe('local friendly-transfer API', () => {
+  it('untracks a passenger lost-item case and removes it from the staff task list', async () => {
+    const tracked = await request('/api/lost-found/cases/track', {
+      candidateId: 'official-item-untrack', title: 'Backpack', stationName: 'Banqiao', pickupDate: '2026-07-27'
+    });
+    expect(tracked.status).toBe(201);
+
+    const untracked = await request('/api/lost-found/cases/untrack', { candidateId: 'official-item-untrack' });
+    expect(untracked.status).toBe(200);
+    expect(untracked.body).toEqual({ removed: true });
+
+    const staffTasks = await request('/api/tasks', undefined, { 'x-demo-user-id': 'demo-staff-banqiao' }, 'GET');
+    expect(staffTasks.body.tasks).not.toEqual(expect.arrayContaining([
+      expect.objectContaining({ taskId: tracked.body.task.taskId })
+    ]));
+  });
+
   it('logs a station staff account in and returns its visible cases', async () => {
     const login = await request('/api/auth/demo-login', {
       accountId: 'ntmetro-staff-banqiao'

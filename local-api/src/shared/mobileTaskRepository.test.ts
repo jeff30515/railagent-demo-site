@@ -68,6 +68,27 @@ describe('mobile task repository factory', () => {
       expect.objectContaining({ taskId: task.taskId })
     ]));
   });
+
+  it('removes a passenger-owned tracked lost-item case from passenger and staff task lists', async () => {
+    const repository = createFallbackTaskRepository();
+    const passenger = await repository.getDemoUserByAccount('ntmetro-public');
+    const banqiao = await repository.getDemoUserByAccount('ntmetro-staff-banqiao');
+
+    const task = await repository.trackLostItemCase(passenger!, {
+      candidateId: 'official-item-43',
+      title: 'Backpack',
+      stationName: 'Banqiao',
+      pickupDate: '2026-07-27'
+    });
+
+    await expect(repository.untrackLostItemCase(passenger!, 'official-item-43')).resolves.toBe(true);
+    await expect(repository.listTasksForUser(passenger!)).resolves.not.toEqual(expect.arrayContaining([
+      expect.objectContaining({ taskId: task.taskId })
+    ]));
+    await expect(repository.listTasksForUser(banqiao!)).resolves.not.toEqual(expect.arrayContaining([
+      expect.objectContaining({ taskId: task.taskId })
+    ]));
+  });
 });
 
 function restoreEnv(key: string, value: string | undefined): void {

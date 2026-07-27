@@ -44,6 +44,22 @@ test('all browser API clients use the shared endpoint resolver and ngrok warning
   }
 });
 
+test('tracked-case changes refresh supervisor totals and invalidate stale staff clients', () => {
+  const passenger = read('assets/lost-found-local-api.js');
+  const unfollow = read('assets/passenger-case-unfollow.js');
+  const supervisor = read('assets/supervisor-dashboard-enhancer.js');
+  const html = read('index.html');
+
+  assert.match(passenger, /railagent:tracked-cases-changed/);
+  assert.match(passenger, /function restoreTrackedCasesToApi\(\)/);
+  assert.match(passenger, /restoreTrackedCasesToApi\(\);/);
+  assert.match(unfollow, /\/api\/lost-found\/cases\/untrack/);
+  assert.match(unfollow, /railagent:tracked-cases-changed/);
+  assert.doesNotMatch(supervisor, /if \(trackedRequest\) return trackedRequest/);
+  assert.match(supervisor, /railagent:tracked-cases-changed/);
+  assert.match(html, /staff-lost-found-enhancer\.js\?v=20260727-live-tasks-1/);
+});
+
 test('the local API permits the ngrok warning bypass header from GitHub Pages', () => {
   const localServer = read('local-api/src/localServer.ts');
   const functionApi = read('local-api/src/functions/matchLostFound.ts');

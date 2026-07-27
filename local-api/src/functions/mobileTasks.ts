@@ -113,6 +113,17 @@ export async function trackLostItemCase(request: HttpRequest, _context: Invocati
   return json(201, { task });
 }
 
+export async function untrackLostItemCase(request: HttpRequest, _context: InvocationContext): Promise<HttpResponseInit> {
+  const user = await requireUser(request);
+  if (!user) return unauthorized();
+  const body = await readJson<{ candidateId?: string }>(request);
+  if (!body.candidateId?.trim()) {
+    return json(400, { error: 'invalid_lost_found_case_payload' });
+  }
+  const removed = await taskRepository.untrackLostItemCase(user, body.candidateId);
+  return json(200, { removed });
+}
+
 export async function listFoundItems(request: HttpRequest, _context: InvocationContext): Promise<HttpResponseInit> {
   const user = await requireUser(request);
   if (!user) return unauthorized();
@@ -291,6 +302,13 @@ app.http('trackLostItemCase', {
   authLevel: 'anonymous',
   route: 'lost-found/cases/track',
   handler: trackLostItemCase
+});
+
+app.http('untrackLostItemCase', {
+  methods: ['POST'],
+  authLevel: 'anonymous',
+  route: 'lost-found/cases/untrack',
+  handler: untrackLostItemCase
 });
 
 app.http('listFoundItems', {
