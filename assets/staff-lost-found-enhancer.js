@@ -78,7 +78,7 @@
     const title = document.createElement('h3');
     title.textContent = '最新任務';
     originalCard.append(title);
-    if (liveTasks.length) liveTasks.forEach((task) => originalCard.append(taskCard(task)));
+    if (liveTasks.length) liveTasks.slice(0, 3).forEach((task) => originalCard.append(taskCard(task)));
     else {
       const empty = document.createElement('p');
       empty.className = 'mp-footnote';

@@ -24,6 +24,7 @@ test('the original staff screens use a live-data enhancer instead of a replaceme
   assert.match(source, /ntmetro-staff-banqiao/);
   assert.match(source, /tymetro-staff-qingpu/);
   assert.match(source, /最新任務/);
+  assert.match(source, /liveTasks\.slice\(0, 3\)\.forEach/);
   assert.match(source, /task\.caseId && task\.lostItem/);
   assert.match(source, /最新任務/);
   assert.match(source, /removeFriendlyTransfer/);
@@ -89,6 +90,19 @@ test('the staff enhancer refreshes after an identity switch or tracked-case chan
   assert.match(source, /refresh\(true\)/);
   assert.match(source, /function scheduleEnhance\(\)/);
   assert.match(source, /document\.addEventListener\('click', scheduleEnhance\)/);
+});
+
+test('non-passenger account pages show only the unit staff identity, account, and return action', () => {
+  const index = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+  const source = fs.readFileSync(path.join(__dirname, '..', 'assets', 'role-account-enhancer.js'), 'utf8');
+
+  assert.match(index, /role-account-enhancer\.js/);
+  for (const accountId of ['ntmetro-staff-banqiao', 'ntmetro-supervisor', 'tymetro-staff-qingpu']) {
+    assert.match(source, new RegExp(accountId));
+  }
+  assert.match(source, /帳號：/);
+  assert.match(source, /replaceChildren\(card, returnButton\)/);
+  assert.doesNotMatch(source, /重設友善轉乘示範/);
 });
 
 test('the staff found-item screen removes the unrelated friendly-transfer controls', () => {
